@@ -3,10 +3,10 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Moodly — Förstå hur ditt barn mår</title>
-    <link rel="icon" href="data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'><text y='.9em' font-size='90'>🧠</text></svg>">
+    <title>Moodly — Förstå hur ditt barn mår på riktigt</title>
+    <link rel="icon" href="data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'><text y='.9em' font-size='90'>🧒</text></svg>">
     <meta name="theme-color" content="#6C5CE7">
-    <meta name="description" content="Moodly hjälper familjer att förstå hur skolan, fritids och hemmet påverkar barnens välmående.">
+    <meta name="description" content="Moodly visar hur skolan, idrotten och hemmet påverkar ditt barns välmående. Daglig emoji-checkin. Trender du kan agera på.">
     <style>
         :root {
             --p: #6C5CE7;
@@ -299,80 +299,111 @@
             margin-bottom: 14px;
         }
 
-        .phone-place {
-            background: var(--c1);
-            border-radius: 12px;
-            padding: 12px;
-            margin-bottom: 8px;
-            border: 1px solid rgba(255, 255, 255, 0.04);
-        }
-
-        .phone-place-header {
+        .phone-child-row {
             display: flex;
             align-items: center;
             gap: 8px;
             margin-bottom: 10px;
+            padding-bottom: 8px;
+            border-bottom: 1px solid rgba(255,255,255,0.04);
         }
 
-        .phone-place-icon {
-            width: 30px;
-            height: 30px;
-            border-radius: 8px;
+        .phone-child-avatar {
+            width: 28px;
+            height: 28px;
+            border-radius: 50%;
             display: flex;
             align-items: center;
             justify-content: center;
-            font-size: 0.9rem;
+            font-size: 0.8rem;
+            flex-shrink: 0;
         }
 
-        .phone-place-name {
+        .phone-child-name {
             font-size: 0.72rem;
             font-weight: 700;
+            flex-shrink: 0;
+            min-width: 36px;
         }
 
-        .phone-place-type {
-            font-size: 0.58rem;
-            color: var(--t2);
-        }
-
-        .phone-emojis {
+        .phone-child-moods {
             display: flex;
+            gap: 4px;
+            flex: 1;
+        }
+
+        .phone-child-mood {
+            flex: 1;
+            text-align: center;
+            font-size: 0.65rem;
+            background: var(--c1);
+            border-radius: 6px;
+            padding: 3px 2px;
+            display: flex;
+            flex-direction: column;
+            gap: 1px;
+        }
+
+        .phone-child-mood .place-label {
+            font-size: 0.45rem;
+            color: var(--t2);
+            line-height: 1;
+        }
+
+        .phone-child-mood .mood-emoji {
+            font-size: 0.75rem;
+            line-height: 1.2;
+        }
+
+        .phone-alert {
+            background: rgba(225, 112, 85, 0.12);
+            border: 1px solid rgba(225, 112, 85, 0.2);
+            border-radius: 8px;
+            padding: 8px 10px;
+            margin-top: 10px;
+        }
+
+        .phone-alert-title {
+            font-size: 0.6rem;
+            font-weight: 700;
+            color: var(--bad);
+            margin-bottom: 2px;
+            display: flex;
+            align-items: center;
             gap: 4px;
         }
 
-        .phone-emoji {
-            flex: 1;
-            text-align: center;
-            padding: 6px 2px;
-            border-radius: 8px;
-            border: 1.5px solid rgba(255, 255, 255, 0.06);
-            font-size: 1rem;
-            background: rgba(255, 255, 255, 0.02);
-            transition: all 0.2s;
-        }
-
-        .phone-emoji.active {
-            border-color: var(--p);
-            background: rgba(108, 92, 231, 0.15);
-            transform: scale(1.1);
-        }
-
-        .phone-streak {
-            display: flex;
-            align-items: center;
-            justify-content: center;
-            gap: 5px;
-            margin-top: 12px;
-            font-size: 0.72rem;
-        }
-
-        .phone-streak .num {
-            color: var(--g);
-            font-weight: 800;
-            font-size: 0.88rem;
-        }
-
-        .phone-streak .lbl {
+        .phone-alert-text {
+            font-size: 0.55rem;
             color: var(--t2);
+            line-height: 1.4;
+        }
+
+        .phone-trend {
+            margin-top: 10px;
+            background: var(--c1);
+            border-radius: 8px;
+            padding: 8px 10px;
+        }
+
+        .phone-trend-title {
+            font-size: 0.6rem;
+            font-weight: 700;
+            color: var(--t2);
+            margin-bottom: 6px;
+        }
+
+        .phone-trend-bars {
+            display: flex;
+            align-items: flex-end;
+            gap: 3px;
+            height: 32px;
+        }
+
+        .phone-trend-bar {
+            flex: 1;
+            border-radius: 3px 3px 0 0;
+            min-height: 4px;
         }
 
         .phone-glow {
@@ -426,6 +457,38 @@
             background: linear-gradient(180deg, var(--bg) 0%, rgba(26, 25, 40, 0.5) 50%, var(--bg) 100%);
         }
 
+        .problem-quote {
+            text-align: center;
+            margin-bottom: 48px;
+        }
+
+        .problem-quote blockquote {
+            font-size: clamp(1.2rem, 2.5vw, 1.6rem);
+            font-style: italic;
+            color: var(--t);
+            max-width: 640px;
+            margin: 0 auto 12px;
+            line-height: 1.5;
+            position: relative;
+            padding: 0 32px;
+        }
+
+        .problem-quote blockquote::before {
+            content: '\201C';
+            font-size: 4rem;
+            position: absolute;
+            top: -20px;
+            left: 0;
+            color: var(--pl);
+            opacity: 0.4;
+            line-height: 1;
+        }
+
+        .problem-quote .quote-answer {
+            font-size: 1rem;
+            color: var(--t2);
+        }
+
         .problem-grid {
             display: grid;
             grid-template-columns: repeat(3, 1fr);
@@ -459,10 +522,15 @@
             opacity: 0.6;
         }
 
-        .problem-icon {
-            font-size: 2.2rem;
-            margin-bottom: 16px;
+        .problem-stat {
+            font-size: 2.4rem;
+            font-weight: 800;
+            margin-bottom: 8px;
             display: block;
+            background: linear-gradient(135deg, var(--bad), var(--w));
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+            background-clip: text;
         }
 
         .problem-card h3 {
@@ -568,47 +636,190 @@
             margin-top: 10px;
         }
 
-        /* FEATURES */
-        .features {
+        /* DASHBOARD SECTION */
+        .dashboard-section {
             background: linear-gradient(180deg, var(--bg) 0%, rgba(26, 25, 40, 0.4) 50%, var(--bg) 100%);
         }
 
-        .features-grid {
-            display: grid;
-            grid-template-columns: repeat(3, 1fr);
-            gap: 16px;
-        }
-
-        .feature-card {
+        .dashboard-mockup {
+            max-width: 720px;
+            margin: 0 auto;
             background: var(--c1);
-            border: 1px solid rgba(255, 255, 255, 0.05);
-            border-radius: var(--r);
-            padding: 28px 22px;
-            transition: transform 0.3s, border-color 0.3s, box-shadow 0.3s;
+            border-radius: 20px;
+            border: 1px solid rgba(255, 255, 255, 0.06);
+            padding: 28px 24px;
+            box-shadow: 0 24px 80px rgba(0, 0, 0, 0.4), 0 0 60px rgba(108, 92, 231, 0.06);
         }
 
-        .feature-card:hover {
-            transform: translateY(-3px);
-            border-color: rgba(108, 92, 231, 0.2);
-            box-shadow: 0 8px 32px rgba(0, 0, 0, 0.3);
+        .dash-header {
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            margin-bottom: 24px;
+            flex-wrap: wrap;
+            gap: 12px;
         }
 
-        .feature-icon {
-            font-size: 1.8rem;
-            margin-bottom: 14px;
-            display: block;
-        }
-
-        .feature-card h3 {
-            font-size: 0.98rem;
+        .dash-title {
+            font-size: 1.1rem;
             font-weight: 700;
-            margin-bottom: 8px;
         }
 
-        .feature-card p {
-            font-size: 0.84rem;
+        .dash-period {
+            font-size: 0.78rem;
             color: var(--t2);
-            line-height: 1.55;
+            padding: 5px 14px;
+            background: rgba(255,255,255,0.05);
+            border-radius: 20px;
+        }
+
+        .dash-children {
+            display: grid;
+            grid-template-columns: repeat(2, 1fr);
+            gap: 16px;
+            margin-bottom: 20px;
+        }
+
+        .dash-child-card {
+            background: var(--bg);
+            border-radius: 14px;
+            padding: 18px 16px;
+            border: 1px solid rgba(255,255,255,0.04);
+        }
+
+        .dash-child-top {
+            display: flex;
+            align-items: center;
+            gap: 10px;
+            margin-bottom: 14px;
+        }
+
+        .dash-child-avatar {
+            width: 36px;
+            height: 36px;
+            border-radius: 50%;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 1rem;
+        }
+
+        .dash-child-info h4 {
+            font-size: 0.92rem;
+            font-weight: 700;
+        }
+
+        .dash-child-info span {
+            font-size: 0.7rem;
+            color: var(--t2);
+        }
+
+        .dash-places {
+            display: flex;
+            flex-direction: column;
+            gap: 8px;
+        }
+
+        .dash-place-row {
+            display: flex;
+            align-items: center;
+            gap: 10px;
+        }
+
+        .dash-place-name {
+            font-size: 0.72rem;
+            color: var(--t2);
+            min-width: 60px;
+        }
+
+        .dash-place-bar-bg {
+            flex: 1;
+            height: 8px;
+            background: rgba(255,255,255,0.06);
+            border-radius: 4px;
+            overflow: hidden;
+        }
+
+        .dash-place-bar {
+            height: 100%;
+            border-radius: 4px;
+            transition: width 1s cubic-bezier(0.23, 1, 0.32, 1);
+        }
+
+        .dash-place-score {
+            font-size: 0.72rem;
+            font-weight: 700;
+            min-width: 32px;
+            text-align: right;
+        }
+
+        .dash-alert-box {
+            background: rgba(225, 112, 85, 0.08);
+            border: 1px solid rgba(225, 112, 85, 0.2);
+            border-radius: 12px;
+            padding: 16px 18px;
+            display: flex;
+            align-items: flex-start;
+            gap: 12px;
+        }
+
+        .dash-alert-icon {
+            font-size: 1.3rem;
+            flex-shrink: 0;
+            margin-top: 2px;
+        }
+
+        .dash-alert-content h4 {
+            font-size: 0.88rem;
+            font-weight: 700;
+            color: var(--bad);
+            margin-bottom: 4px;
+        }
+
+        .dash-alert-content p {
+            font-size: 0.8rem;
+            color: var(--t2);
+            line-height: 1.5;
+        }
+
+        .dash-weekly-trend {
+            margin-top: 20px;
+            background: var(--bg);
+            border-radius: 14px;
+            padding: 18px 16px;
+            border: 1px solid rgba(255,255,255,0.04);
+        }
+
+        .dash-trend-header {
+            font-size: 0.82rem;
+            font-weight: 700;
+            margin-bottom: 12px;
+        }
+
+        .dash-trend-chart {
+            display: flex;
+            align-items: flex-end;
+            gap: 6px;
+            height: 60px;
+        }
+
+        .dash-trend-day {
+            flex: 1;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            gap: 4px;
+        }
+
+        .dash-trend-bar {
+            width: 100%;
+            border-radius: 4px 4px 0 0;
+            min-height: 4px;
+        }
+
+        .dash-trend-label {
+            font-size: 0.6rem;
+            color: var(--t2);
         }
 
         /* SCHOOLS SECTION */
@@ -657,7 +868,7 @@
             margin-bottom: 14px;
         }
 
-        .schools-inner p {
+        .schools-inner > p {
             font-size: 1rem;
             color: var(--t2);
             line-height: 1.65;
@@ -683,6 +894,61 @@
 
         .schools-feat .ico {
             font-size: 1.1rem;
+        }
+
+        /* PRIVACY SECTION */
+        .privacy-section {
+            position: relative;
+        }
+
+        .privacy-grid {
+            display: grid;
+            grid-template-columns: repeat(3, 1fr);
+            gap: 20px;
+        }
+
+        .privacy-card {
+            background: var(--c1);
+            border: 1px solid rgba(255, 255, 255, 0.05);
+            border-radius: var(--r);
+            padding: 28px 22px;
+            text-align: center;
+            transition: transform 0.3s, border-color 0.3s;
+        }
+
+        .privacy-card:hover {
+            transform: translateY(-3px);
+            border-color: rgba(0, 184, 148, 0.2);
+        }
+
+        .privacy-icon {
+            font-size: 2rem;
+            margin-bottom: 14px;
+            display: block;
+        }
+
+        .privacy-card h3 {
+            font-size: 1rem;
+            font-weight: 700;
+            margin-bottom: 8px;
+        }
+
+        .privacy-card p {
+            font-size: 0.84rem;
+            color: var(--t2);
+            line-height: 1.55;
+        }
+
+        .privacy-tagline {
+            text-align: center;
+            margin-top: 36px;
+            font-size: 1.05rem;
+            color: var(--t2);
+            font-style: italic;
+        }
+
+        .privacy-tagline strong {
+            color: var(--t);
         }
 
         /* FINAL CTA */
@@ -823,7 +1089,8 @@
             }
 
             .problem-grid,
-            .steps-grid {
+            .steps-grid,
+            .privacy-grid {
                 grid-template-columns: 1fr;
                 max-width: 420px;
                 margin: 0 auto;
@@ -834,8 +1101,8 @@
                 display: none;
             }
 
-            .features-grid {
-                grid-template-columns: 1fr 1fr;
+            .dash-children {
+                grid-template-columns: 1fr;
             }
 
             .schools-inner {
@@ -852,14 +1119,12 @@
                 padding: 120px 0 64px;
             }
 
-            .features-grid {
-                grid-template-columns: 1fr;
-                max-width: 420px;
-                margin: 0 auto;
-            }
-
             .phone-frame {
                 width: 240px;
+            }
+
+            .dashboard-mockup {
+                padding: 20px 16px;
             }
 
             .schools-features {
@@ -886,9 +1151,9 @@
 <nav class="topnav" id="topnav">
     <div class="container">
         <a href="#" class="logo">
-            <span class="logo-icon">🧠</span> Moodly
+            <span class="logo-icon">🧒</span> Moodly
         </a>
-        <a href="index.html" class="nav-cta">Prova gratis</a>
+        <a href="index.html" class="nav-cta">Kom igång gratis</a>
     </div>
 </nav>
 
@@ -897,16 +1162,16 @@
     <div class="container">
         <div class="hero-text">
             <div class="hero-badge reveal">
-                <span>🌱</span> För familjer som bryr sig
+                <span>👨‍👩‍👧‍👦</span> För föräldrar som vill förstå
             </div>
             <h1 class="reveal reveal-delay-1">
-                Vet du hur ditt barn mår — <span class="accent">på riktigt?</span>
+                Förstå hur ditt barn mår — <span class="accent">på riktigt</span>
             </h1>
             <p class="hero-sub reveal reveal-delay-2">
-                Moodly hjälper familjer att förstå hur skolan, fritids och hemmet påverkar barnens välmående — varje dag.
+                Moodly visar hur skolan, idrotten och hemmet påverkar ditt barns välmående. Daglig emoji-checkin. Trender du kan agera på.
             </p>
             <div class="hero-actions reveal reveal-delay-3">
-                <a href="index.html" class="btn-primary">Prova gratis &rarr;</a>
+                <a href="index.html" class="btn-primary">Kom igång gratis &rarr;</a>
                 <a href="#hur" class="btn-secondary">Så fungerar det</a>
             </div>
         </div>
@@ -915,47 +1180,61 @@
             <div class="phone-frame">
                 <div class="phone-notch"></div>
                 <div class="phone-screen">
-                    <div class="phone-greeting">God morgon! 👋</div>
-                    <div class="phone-title">Hur mår du idag?</div>
+                    <div class="phone-greeting">Föräldrapanelen</div>
+                    <div class="phone-title">Barnens mående idag</div>
 
-                    <div class="phone-place">
-                        <div class="phone-place-header">
-                            <div class="phone-place-icon" style="background:rgba(108,92,231,0.15)">🏫</div>
-                            <div>
-                                <div class="phone-place-name">Skolan</div>
-                                <div class="phone-place-type">Skola</div>
+                    <div class="phone-child-row">
+                        <div class="phone-child-avatar" style="background:rgba(108,92,231,0.15)">👧</div>
+                        <div class="phone-child-name">Lisa</div>
+                        <div class="phone-child-moods">
+                            <div class="phone-child-mood">
+                                <span class="place-label">Skola</span>
+                                <span class="mood-emoji">😕</span>
                             </div>
-                        </div>
-                        <div class="phone-emojis">
-                            <div class="phone-emoji">😢</div>
-                            <div class="phone-emoji">😕</div>
-                            <div class="phone-emoji">😐</div>
-                            <div class="phone-emoji active">😊</div>
-                            <div class="phone-emoji">🤩</div>
+                            <div class="phone-child-mood">
+                                <span class="place-label">Fotboll</span>
+                                <span class="mood-emoji">🤩</span>
+                            </div>
+                            <div class="phone-child-mood">
+                                <span class="place-label">Hem</span>
+                                <span class="mood-emoji">😊</span>
+                            </div>
                         </div>
                     </div>
 
-                    <div class="phone-place">
-                        <div class="phone-place-header">
-                            <div class="phone-place-icon" style="background:rgba(0,184,148,0.15)">⚽</div>
-                            <div>
-                                <div class="phone-place-name">Fotbollen</div>
-                                <div class="phone-place-type">Fritids</div>
+                    <div class="phone-child-row" style="border-bottom:none;margin-bottom:0;padding-bottom:0">
+                        <div class="phone-child-avatar" style="background:rgba(0,184,148,0.15)">👦</div>
+                        <div class="phone-child-name">Erik</div>
+                        <div class="phone-child-moods">
+                            <div class="phone-child-mood">
+                                <span class="place-label">Skola</span>
+                                <span class="mood-emoji">😊</span>
                             </div>
-                        </div>
-                        <div class="phone-emojis">
-                            <div class="phone-emoji">😢</div>
-                            <div class="phone-emoji">😕</div>
-                            <div class="phone-emoji">😐</div>
-                            <div class="phone-emoji">😊</div>
-                            <div class="phone-emoji active">🤩</div>
+                            <div class="phone-child-mood">
+                                <span class="place-label">Simning</span>
+                                <span class="mood-emoji">😊</span>
+                            </div>
+                            <div class="phone-child-mood">
+                                <span class="place-label">Hem</span>
+                                <span class="mood-emoji">🤩</span>
+                            </div>
                         </div>
                     </div>
 
-                    <div class="phone-streak">
-                        <span>🔥</span>
-                        <span class="num">7</span>
-                        <span class="lbl">dagars streak!</span>
+                    <div class="phone-alert">
+                        <div class="phone-alert-title">⚠️ Uppmaning</div>
+                        <div class="phone-alert-text">Lisa har rapporterat lågt mående på skolan 3 dagar i rad.</div>
+                    </div>
+
+                    <div class="phone-trend">
+                        <div class="phone-trend-title">Lisas veckotrend — Skolan</div>
+                        <div class="phone-trend-bars">
+                            <div class="phone-trend-bar" style="height:60%;background:var(--w)"></div>
+                            <div class="phone-trend-bar" style="height:40%;background:var(--bad)"></div>
+                            <div class="phone-trend-bar" style="height:45%;background:var(--bad)"></div>
+                            <div class="phone-trend-bar" style="height:35%;background:var(--bad)"></div>
+                            <div class="phone-trend-bar" style="height:55%;background:var(--w)"></div>
+                        </div>
                     </div>
                 </div>
             </div>
@@ -968,24 +1247,27 @@
     <div class="container">
         <div class="section-header reveal">
             <div class="section-label">💡 Problemet</div>
-            <h2>Barn berättar sällan hur de verkligen mår</h2>
-            <p>De flesta föräldrarna får veta "det var bra" — men verkligheten är ofta en annan.</p>
+            <h2>Du frågar "Hur var det i skolan?" och får "Bra" som svar</h2>
+        </div>
+        <div class="problem-quote reveal">
+            <blockquote>Barn berättar sällan hur de verkligen mår. När de gör det är det ofta för sent.</blockquote>
+            <div class="quote-answer">Moodly ger dig insikter — innan det blir ett problem.</div>
         </div>
         <div class="problem-grid">
             <div class="problem-card reveal reveal-delay-1">
-                <span class="problem-icon">📊</span>
-                <h3>1 av 4 barn upplever psykisk ohälsa</h3>
+                <span class="problem-stat">1 av 4</span>
+                <h3>Barn upplever psykisk ohälsa</h3>
                 <p>Ångest, stress och nedstämdhet ökar bland unga i Sverige — och trenden pekar uppåt.</p>
             </div>
             <div class="problem-card reveal reveal-delay-2">
-                <span class="problem-icon">⏰</span>
-                <h3>Föräldrar upptäcker det ofta för sent</h3>
-                <p>Utan dagliga signaler är det svårt att fånga upp förändringar innan de blir allvarliga.</p>
+                <span class="problem-stat">70%</span>
+                <h3>Av föräldrar märker inte tidiga signaler</h3>
+                <p>Utan daglig data är det nästan omöjligt att fånga upp gradvisa förändringar i barnets mående.</p>
             </div>
             <div class="problem-card reveal reveal-delay-3">
-                <span class="problem-icon">🏠</span>
-                <h3>Miljön spelar större roll än vi tror</h3>
-                <p>Hur barnet mår på skolan, fritids eller hemma kan skilja sig markant — och det är viktig information.</p>
+                <span class="problem-stat">3x</span>
+                <h3>Skillnad mellan miljöer</h3>
+                <p>Ett barn kan må bra hemma men dåligt på skolan. Platsen spelar större roll än vi tror.</p>
             </div>
         </div>
     </div>
@@ -995,74 +1277,154 @@
 <section class="steps" id="hur">
     <div class="container">
         <div class="section-header reveal">
-            <div class="section-label">✨ Steg för steg</div>
-            <h2>Så fungerar Moodly</h2>
-            <p>Från daglig checkin till djup förståelse — på under en minut.</p>
+            <div class="section-label">✨ Så fungerar det</div>
+            <h2>Tre steg till bättre förståelse</h2>
+            <p>Du sätter upp det på en minut. Barnet checkar in på 30 sekunder.</p>
         </div>
         <div class="steps-grid">
             <div class="step-card reveal reveal-delay-1">
                 <div class="step-number">1</div>
-                <span class="step-emoji">📱</span>
-                <h3>Barnet checkar in</h3>
-                <p>30 sekunder per dag. Barnet väljer en emoji för varje plats — skola, fritids, hem.</p>
-                <div class="step-meta">⚡ 30 sek/dag</div>
+                <span class="step-emoji">👨‍👩‍👧</span>
+                <h3>Föräldern lägger till barn + platser</h3>
+                <p>Skapa profiler för dina barn och lägg till deras miljöer — skola, idrott, hem, hobbyverksamhet.</p>
+                <div class="step-meta">⚡ 1 minut setup</div>
             </div>
             <div class="step-card reveal reveal-delay-2">
                 <div class="step-number">2</div>
-                <span class="step-emoji">📈</span>
-                <h3>Mönster blir synliga</h3>
-                <p>AI analyserar trender, veckodagsmönster och benchmarks. Du ser vad data visar.</p>
-                <div class="step-meta">🤖 AI-drivet</div>
+                <span class="step-emoji">😊</span>
+                <h3>Barnet checkar in dagligen</h3>
+                <p>En emoji per plats — från 😢 till 🤩. Tar 30 sekunder. Krävs ingen text eller förklaring.</p>
+                <div class="step-meta">🎯 30 sek/dag</div>
             </div>
             <div class="step-card reveal reveal-delay-3">
                 <div class="step-number">3</div>
-                <span class="step-emoji">👨‍👩‍👧‍👦</span>
-                <h3>Föräldern förstår</h3>
-                <p>Familjepanelen visar hur varje barn mår per miljö — tydligt och överskådligt.</p>
-                <div class="step-meta">👁️ Full överblick</div>
+                <span class="step-emoji">📊</span>
+                <h3>Föräldern ser trender och får varningar</h3>
+                <p>Dashboarden visar mönster, veckovisa trender och automatiska varningar när något förändras.</p>
+                <div class="step-meta">🔔 Smarta alerts</div>
             </div>
         </div>
     </div>
 </section>
 
-<!-- FEATURES -->
-<section class="features">
+<!-- WHAT YOU SEE AS PARENT -->
+<section class="dashboard-section">
     <div class="container">
         <div class="section-header reveal">
-            <div class="section-label">🛠️ Funktioner</div>
-            <h2>Allt du behöver — inget du inte behöver</h2>
-            <p>Byggt för att vara enkelt för barn och kraftfullt för föräldrar.</p>
+            <div class="section-label">👁️ Föräldrapanelen</div>
+            <h2>Allt du behöver — i en överblick</h2>
+            <p>Se hur varje barn mår på varje plats. Upptäck mönster. Få varningar innan problem växer.</p>
         </div>
-        <div class="features-grid">
-            <div class="feature-card reveal reveal-delay-1">
-                <span class="feature-icon">📍</span>
-                <h3>Platsbaserat mående</h3>
-                <p>Koppla välmående till specifika miljöer — skola, fritids, hem. Se var barnet mår bäst och sämst.</p>
+        <div class="dashboard-mockup reveal">
+            <div class="dash-header">
+                <div class="dash-title">📊 Familjeöversikt</div>
+                <div class="dash-period">Denna vecka</div>
             </div>
-            <div class="feature-card reveal reveal-delay-1">
-                <span class="feature-icon">👨‍👩‍👧</span>
-                <h3>Familjepanel</h3>
-                <p>Överblick över alla barns mående i en vy. Perfekt för familjer med flera barn.</p>
+
+            <div class="dash-children">
+                <!-- Child 1 -->
+                <div class="dash-child-card">
+                    <div class="dash-child-top">
+                        <div class="dash-child-avatar" style="background:rgba(108,92,231,0.15)">👧</div>
+                        <div class="dash-child-info">
+                            <h4>Lisa, 9 år</h4>
+                            <span>3 platser · 5 dagars streak</span>
+                        </div>
+                    </div>
+                    <div class="dash-places">
+                        <div class="dash-place-row">
+                            <div class="dash-place-name">🏫 Skolan</div>
+                            <div class="dash-place-bar-bg">
+                                <div class="dash-place-bar" style="width:40%;background:var(--bad)"></div>
+                            </div>
+                            <div class="dash-place-score" style="color:var(--bad)">2.0</div>
+                        </div>
+                        <div class="dash-place-row">
+                            <div class="dash-place-name">⚽ Fotboll</div>
+                            <div class="dash-place-bar-bg">
+                                <div class="dash-place-bar" style="width:90%;background:var(--ok)"></div>
+                            </div>
+                            <div class="dash-place-score" style="color:var(--ok)">4.5</div>
+                        </div>
+                        <div class="dash-place-row">
+                            <div class="dash-place-name">🏠 Hemma</div>
+                            <div class="dash-place-bar-bg">
+                                <div class="dash-place-bar" style="width:70%;background:var(--w)"></div>
+                            </div>
+                            <div class="dash-place-score" style="color:var(--w)">3.5</div>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Child 2 -->
+                <div class="dash-child-card">
+                    <div class="dash-child-top">
+                        <div class="dash-child-avatar" style="background:rgba(0,184,148,0.15)">👦</div>
+                        <div class="dash-child-info">
+                            <h4>Erik, 12 år</h4>
+                            <span>3 platser · 12 dagars streak</span>
+                        </div>
+                    </div>
+                    <div class="dash-places">
+                        <div class="dash-place-row">
+                            <div class="dash-place-name">🏫 Skolan</div>
+                            <div class="dash-place-bar-bg">
+                                <div class="dash-place-bar" style="width:80%;background:var(--ok)"></div>
+                            </div>
+                            <div class="dash-place-score" style="color:var(--ok)">4.0</div>
+                        </div>
+                        <div class="dash-place-row">
+                            <div class="dash-place-name">🏊 Simning</div>
+                            <div class="dash-place-bar-bg">
+                                <div class="dash-place-bar" style="width:76%;background:var(--ok)"></div>
+                            </div>
+                            <div class="dash-place-score" style="color:var(--ok)">3.8</div>
+                        </div>
+                        <div class="dash-place-row">
+                            <div class="dash-place-name">🏠 Hemma</div>
+                            <div class="dash-place-bar-bg">
+                                <div class="dash-place-bar" style="width:94%;background:var(--ok)"></div>
+                            </div>
+                            <div class="dash-place-score" style="color:var(--ok)">4.7</div>
+                        </div>
+                    </div>
+                </div>
             </div>
-            <div class="feature-card reveal reveal-delay-2">
-                <span class="feature-icon">🏫</span>
-                <h3>Jämför med andra</h3>
-                <p>Se hur din skola ligger till jämfört med andra i området. Anonymiserad och säker.</p>
+
+            <!-- Alert -->
+            <div class="dash-alert-box">
+                <div class="dash-alert-icon">⚠️</div>
+                <div class="dash-alert-content">
+                    <h4>Lisa har rapporterat lågt mående på skolan 3 dagar i rad</h4>
+                    <p>Snittet har sjunkit från 3.8 till 2.0 senaste veckan. Det kan vara bra att prata med henne om hur det går i skolan.</p>
+                </div>
             </div>
-            <div class="feature-card reveal reveal-delay-2">
-                <span class="feature-icon">🏆</span>
-                <h3>Belöningar för barn</h3>
-                <p>Poäng, streaks och avatarer motiverar daglig checkin. Det ska vara kul att checka in!</p>
-            </div>
-            <div class="feature-card reveal reveal-delay-3">
-                <span class="feature-icon">🔒</span>
-                <h3>Integritet först</h3>
-                <p>All data stannar på enheten. GDPR-säkert. Inga tredjepartstjänster har tillgång till barnens data.</p>
-            </div>
-            <div class="feature-card reveal reveal-delay-3">
-                <span class="feature-icon">💬</span>
-                <h3>AI-samtal</h3>
-                <p>Barnet kan prata med en snäll AI-kompis när det behöver prata av sig eller reflektera.</p>
+
+            <!-- Weekly trend -->
+            <div class="dash-weekly-trend">
+                <div class="dash-trend-header">📈 Lisas veckotrend — Skolan</div>
+                <div class="dash-trend-chart">
+                    <div class="dash-trend-day">
+                        <div class="dash-trend-bar" style="height:70%;background:var(--ok)"></div>
+                        <div class="dash-trend-label">Mån</div>
+                    </div>
+                    <div class="dash-trend-day">
+                        <div class="dash-trend-bar" style="height:60%;background:var(--w)"></div>
+                        <div class="dash-trend-label">Tis</div>
+                    </div>
+                    <div class="dash-trend-day">
+                        <div class="dash-trend-bar" style="height:40%;background:var(--bad)"></div>
+                        <div class="dash-trend-label">Ons</div>
+                    </div>
+                    <div class="dash-trend-day">
+                        <div class="dash-trend-bar" style="height:35%;background:var(--bad)"></div>
+                        <div class="dash-trend-label">Tor</div>
+                    </div>
+                    <div class="dash-trend-day">
+                        <div class="dash-trend-bar" style="height:30%;background:var(--bad)"></div>
+                        <div class="dash-trend-label">Fre</div>
+                    </div>
+                </div>
             </div>
         </div>
     </div>
@@ -1075,9 +1437,9 @@
             <div class="coming-badge">🚀 Kommer snart</div>
             <h2>För skolor och kommuner</h2>
             <p>
-                I framtiden erbjuder Moodly anonymiserad, aggregerad data som hjälper
-                skolor och kommuner att förstå välmåendet i sina verksamheter — och
-                agera innan problem växer.
+                Anonymiserad data som visar hur barn mår på din skola jämfört med andra.
+                Moodly ger skolor och kommuner verktyg att förstå välmåendet i sina verksamheter
+                — och agera innan problem växer.
             </p>
             <div class="schools-features">
                 <div class="schools-feat">
@@ -1089,7 +1451,41 @@
                 <div class="schools-feat">
                     <span class="ico">🏛️</span> Kommun-överblick
                 </div>
+                <div class="schools-feat">
+                    <span class="ico">📈</span> Benchmarks mellan skolor
+                </div>
             </div>
+        </div>
+    </div>
+</section>
+
+<!-- PRIVACY -->
+<section class="privacy-section">
+    <div class="container">
+        <div class="section-header reveal">
+            <div class="section-label">🔒 Integritet</div>
+            <h2>Barnet checkar in. Du ser trender.</h2>
+            <p>Aldrig samtalstexter. Aldrig delning med tredje part. Alltid barnsäkert.</p>
+        </div>
+        <div class="privacy-grid">
+            <div class="privacy-card reveal reveal-delay-1">
+                <span class="privacy-icon">🇪🇺</span>
+                <h3>GDPR-kompatibelt</h3>
+                <p>All datahantering följer europeisk dataskyddslagstiftning. Barnens integritet är värlagd i varje designbeslut.</p>
+            </div>
+            <div class="privacy-card reveal reveal-delay-2">
+                <span class="privacy-icon">📱</span>
+                <h3>Lokal lagring</h3>
+                <p>Data sparas på din enhet. Ingen molntjänst har tillgång till ditt barns mående-data om du inte väljer det.</p>
+            </div>
+            <div class="privacy-card reveal reveal-delay-3">
+                <span class="privacy-icon">🛡️</span>
+                <h3>Barnsäkert</h3>
+                <p>Designat för barn från start. Inga annonser, inga sociala funktioner, inga skadliga jämförelser mellan barn.</p>
+            </div>
+        </div>
+        <div class="privacy-tagline reveal">
+            <strong>Du ser trender och mönster</strong> — aldrig någonting som bryter barnets tillit.
         </div>
     </div>
 </section>
@@ -1097,12 +1493,12 @@
 <!-- FINAL CTA -->
 <section class="final-cta">
     <div class="container">
-        <h2 class="reveal">Börja förstå hur miljöer påverkar ditt barn</h2>
+        <h2 class="reveal">Börja förstå ditt barn bättre idag</h2>
         <p class="reveal reveal-delay-1">
-            Det tar 30 sekunder att komma igång. Helt gratis. Ingen registrering krävs.
+            Det tar 1 minut att sätta upp. Helt gratis. Ingen registrering krävs.
         </p>
         <div class="reveal reveal-delay-2">
-            <a href="index.html" class="btn-large">Öppna Moodly — helt gratis &rarr;</a>
+            <a href="index.html" class="btn-large">Kom igång gratis &rarr;</a>
         </div>
         <div class="cta-trust reveal reveal-delay-3">
             <span>🔒 GDPR-säkert</span>
@@ -1117,7 +1513,7 @@
     <div class="container">
         <div class="footer-inner">
             <div class="footer-left">
-                <span>🧠</span> Moodly 2026 — Gjord i Sverige med ❤️
+                <span>🧒</span> Moodly 2026 — Gjord i Sverige
             </div>
             <div class="footer-links">
                 <a href="index.html">Appen</a>
@@ -1149,6 +1545,26 @@
     });
 
     document.querySelectorAll('.reveal').forEach(el => observer.observe(el));
+
+    // ANIMATE DASHBOARD BARS ON REVEAL
+    const dashObserver = new IntersectionObserver((entries) => {
+        entries.forEach(entry => {
+            if (entry.isIntersecting) {
+                const bars = entry.target.querySelectorAll('.dash-place-bar');
+                bars.forEach((bar, i) => {
+                    const width = bar.style.width;
+                    bar.style.width = '0%';
+                    setTimeout(() => {
+                        bar.style.width = width;
+                    }, 200 + i * 150);
+                });
+                dashObserver.unobserve(entry.target);
+            }
+        });
+    }, { threshold: 0.3 });
+
+    const mockup = document.querySelector('.dashboard-mockup');
+    if (mockup) dashObserver.observe(mockup);
 </script>
 
 </body>
