@@ -217,17 +217,17 @@
         .modal-box input{width:100%;padding:12px;background:rgba(255,255,255,.06);border:1px solid rgba(255,255,255,.12);border-radius:var(--rs);color:var(--t);font-size:.95rem;outline:none;margin-bottom:12px}
         .modal-box input::placeholder{color:var(--t2)}
 
-        /* Google Places Autocomplete dark theme */
-        .pac-container{background:#1A1928!important;border:1px solid rgba(255,255,255,.12)!important;border-radius:10px!important;margin-top:4px!important;font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',Roboto,sans-serif!important;box-shadow:0 8px 24px rgba(0,0,0,.5)!important}
-        .pac-item{padding:10px 14px!important;color:#FFFFFE!important;border-top:1px solid rgba(255,255,255,.06)!important;cursor:pointer!important;font-size:.84rem!important;line-height:1.4!important}
-        .pac-item:hover,.pac-item-selected{background:#232240!important}
-        .pac-item-query{color:#FFFFFE!important;font-weight:600!important;font-size:.84rem!important}
-        .pac-matched{font-weight:700!important;color:#A29BFE!important}
-        .pac-icon{display:none!important}
-        .pac-item span{color:#A7A9BE!important;font-size:.76rem!important}
-        .pac-item-query span{color:#FFFFFE!important;font-size:.84rem!important}
-        .pac-logo::after{display:none!important}
+        /* Place autocomplete dropdown */
+        .ac-dropdown{position:absolute;left:0;right:0;top:100%;background:var(--c1);border:1px solid rgba(255,255,255,.12);border-radius:10px;margin-top:4px;box-shadow:0 8px 24px rgba(0,0,0,.5);z-index:260;max-height:240px;overflow-y:auto;display:none}
+        .ac-dropdown.on{display:block}
+        .ac-item{padding:10px 14px;cursor:pointer;border-bottom:1px solid rgba(255,255,255,.04);transition:background .1s}
+        .ac-item:last-child{border-bottom:none}
+        .ac-item:active,.ac-item:hover{background:var(--c2)}
+        .ac-item .ac-name{font-size:.84rem;font-weight:600;color:var(--t)}
+        .ac-item .ac-addr{font-size:.7rem;color:var(--t2);margin-top:2px;line-height:1.3}
+        .ac-loading{padding:12px;text-align:center;font-size:.78rem;color:var(--t2)}
         .place-address{font-size:.68rem;color:var(--t2);margin-top:2px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+        .ac-wrap{position:relative}
     </style>
 </head>
 <body>
@@ -247,7 +247,11 @@
 <div class="modal" id="add-place-modal">
     <div class="modal-box">
         <h2>Lägg till plats</h2>
-        <input type="text" id="new-place-name" placeholder="Namn (t.ex. Ytterbyskolan)" maxlength="40">
+        <div class="ac-wrap">
+            <input type="text" id="new-place-name" placeholder="Sök plats (t.ex. Ytterbyskolan)" maxlength="80" autocomplete="off">
+            <div class="ac-dropdown" id="ac-drop-modal"></div>
+        </div>
+        <div id="new-place-addr" class="place-address" style="margin-bottom:8px"></div>
         <div class="pt-grid" id="new-place-types"></div>
         <button class="btn ba" onclick="saveNewPlace()">Lägg till</button>
         <button class="btn bs" onclick="closeModal()" style="margin-top:8px">Avbryt</button>
@@ -282,7 +286,11 @@
         <h1>Lägg till dina platser</h1>
         <p>Vilka platser vill du mäta ditt mående på? Lägg till minst en.</p>
         <div id="ob-places-list" style="width:100%;margin-bottom:12px"></div>
-        <input type="text" id="ob-place-name" placeholder="Namn (t.ex. Ytterbyskolan)" maxlength="40" style="margin-bottom:8px">
+        <div class="ac-wrap" style="width:100%">
+            <input type="text" id="ob-place-name" placeholder="Sök plats (t.ex. Ytterbyskolan)" maxlength="80" autocomplete="off" style="width:100%;padding:14px;background:rgba(255,255,255,.06);border:1px solid rgba(255,255,255,.12);border-radius:var(--rs);color:var(--t);font-size:1.1rem;text-align:center;outline:none">
+            <div class="ac-dropdown" id="ac-drop-ob"></div>
+        </div>
+        <div id="ob-place-addr" class="place-address" style="margin-bottom:8px;text-align:center"></div>
         <div class="pt-grid" id="ob-place-types" style="margin-bottom:12px"></div>
         <button class="btn ba" onclick="obAddPlace()" style="margin-bottom:12px">+ Lägg till plats</button>
         <button class="btn bp" onclick="obNext(4)" id="ob3-next" disabled>Nästa</button>
@@ -401,49 +409,74 @@ let APK=PARENT_KEY;
 let D={places:[],placeCheckins:[],checkins:[],micro:[],xp:0,level:1,firstVisit:true,baseline:null,userName:'',aiName:'Luna',personality:'warm',onboarded:null,alertsSeen:[],familyId:'',role:'self',familyProfiles:[],parentKey:'',googleApiKey:''};
 let sok=false;try{localStorage.setItem('_','1');localStorage.removeItem('_');sok=true}catch(e){}
 
-// ===== GOOGLE MAPS / PLACES AUTOCOMPLETE =====
-let gmapsLoaded=false;
-let gmapsLoading=false;
-let selectedGooglePlace=null;
+// ===== NOMINATIM PLACE SEARCH (OpenStreetMap — free, no API key) =====
+let selectedPlace=null;
+let acDebounce=null;
 
-function loadGoogleMaps(apiKey){
-    if(gmapsLoaded||gmapsLoading||!apiKey)return Promise.resolve();
-    gmapsLoading=true;
-    return new Promise((resolve)=>{
-        window._gmapsReady=()=>{gmapsLoaded=true;gmapsLoading=false;resolve()};
-        const s=document.createElement('script');
-        s.src=`https://maps.googleapis.com/maps/api/js?key=${encodeURIComponent(apiKey)}&libraries=places&callback=_gmapsReady`;
-        s.async=true;
-        s.onerror=()=>{gmapsLoading=false;resolve()};
-        document.head.appendChild(s);
+function setupPlaceSearch(inputId,dropdownId,addrId){
+    const input=document.getElementById(inputId);
+    const dropdown=document.getElementById(dropdownId);
+    if(!input||!dropdown)return;
+
+    input.addEventListener('input',()=>{
+        clearTimeout(acDebounce);
+        selectedPlace=null;
+        const q=input.value.trim();
+        if(q.length<3){dropdown.classList.remove('on');return}
+        dropdown.innerHTML='<div class="ac-loading">Söker...</div>';
+        dropdown.classList.add('on');
+        acDebounce=setTimeout(()=>searchNominatim(q,dropdown,input,addrId),350);
+    });
+
+    input.addEventListener('blur',()=>{
+        // Delay to allow click on dropdown item
+        setTimeout(()=>dropdown.classList.remove('on'),200);
+    });
+
+    input.addEventListener('focus',()=>{
+        if(dropdown.children.length>0&&input.value.trim().length>=3)dropdown.classList.add('on');
     });
 }
 
-function initAutocomplete(inputId){
-    if(!gmapsLoaded||!window.google?.maps?.places)return null;
-    const input=document.getElementById(inputId);
-    if(!input)return null;
-    const ac=new google.maps.places.Autocomplete(input,{
-        componentRestrictions:{country:'se'},
-        fields:['place_id','name','formatted_address','geometry']
-    });
-    ac.addListener('place_changed',()=>{
-        const place=ac.getPlace();
-        if(place&&place.place_id){
-            selectedGooglePlace={
-                googlePlaceId:place.place_id,
-                name:place.name||input.value,
-                address:place.formatted_address||'',
-                lat:place.geometry?.location?.lat()||null,
-                lng:place.geometry?.location?.lng()||null
-            };
-            // Show address feedback
-            let addrEl=input.parentElement.querySelector('.place-address');
-            if(!addrEl){addrEl=document.createElement('div');addrEl.className='place-address';input.parentElement.appendChild(addrEl)}
-            addrEl.textContent=place.formatted_address||'';
+async function searchNominatim(query,dropdown,input,addrId){
+    try{
+        const url=`https://nominatim.openstreetmap.org/search?q=${encodeURIComponent(query)}&format=json&countrycodes=se&limit=5&addressdetails=1`;
+        const res=await fetch(url,{headers:{'Accept-Language':'sv'}});
+        if(!res.ok)throw new Error();
+        const results=await res.json();
+
+        if(!results.length){
+            dropdown.innerHTML='<div class="ac-loading">Inga resultat</div>';
+            return;
         }
-    });
-    return ac;
+
+        dropdown.innerHTML=results.map((r,i)=>{
+            const name=r.display_name.split(',')[0];
+            const addr=r.display_name.split(',').slice(1,3).join(',').trim();
+            return`<div class="ac-item" data-idx="${i}"><div class="ac-name">${name}</div><div class="ac-addr">${addr}</div></div>`;
+        }).join('');
+
+        dropdown.querySelectorAll('.ac-item').forEach((el,i)=>{
+            el.addEventListener('mousedown',(e)=>{
+                e.preventDefault();
+                const r=results[i];
+                const name=r.display_name.split(',')[0];
+                selectedPlace={
+                    osmId:r.osm_type+'_'+r.osm_id,
+                    name:name,
+                    address:r.display_name,
+                    lat:parseFloat(r.lat),
+                    lng:parseFloat(r.lon)
+                };
+                input.value=name;
+                dropdown.classList.remove('on');
+                const addrEl=document.getElementById(addrId);
+                if(addrEl)addrEl.textContent=r.display_name.split(',').slice(0,3).join(',');
+            });
+        });
+    }catch(e){
+        dropdown.innerHTML='<div class="ac-loading">Sökfel — skriv platsnamn manuellt</div>';
+    }
 }
 
 // Migrate old data
@@ -512,16 +545,16 @@ function calcPlaceStreak(d){
 }
 
 // ===== ADD/REMOVE PLACE =====
-function addPlace(name,type,googleData){
+function addPlace(name,type,placeData){
     const d=ld();
     const place={
         id:'p_'+Date.now()+'_'+Math.random().toString(36).slice(2,6),
-        name:googleData?.name||name,
+        name:placeData?.name||name,
         type,
-        googlePlaceId:googleData?.googlePlaceId||'',
-        address:googleData?.address||'',
-        lat:googleData?.lat||null,
-        lng:googleData?.lng||null
+        osmId:placeData?.osmId||'',
+        address:placeData?.address||'',
+        lat:placeData?.lat||null,
+        lng:placeData?.lng||null
     };
     d.places.push(place);
     sv(d);
@@ -804,14 +837,14 @@ function selectPlaceType(type,containerId){
 
 function openAddPlace(){
     selectedPlaceType='school';
-    selectedGooglePlace=null;
+    selectedPlace=null;
     document.getElementById('new-place-name').value='';
-    const addrEl=document.querySelector('#add-place-modal .place-address');
-    if(addrEl)addrEl.textContent='';
+    document.getElementById('new-place-addr').textContent='';
+    document.getElementById('ac-drop-modal').classList.remove('on');
+    document.getElementById('ac-drop-modal').innerHTML='';
     renderPlaceTypeGrid('new-place-types');
     document.getElementById('add-place-modal').classList.add('on');
-    // Init autocomplete if Google Maps is loaded
-    setTimeout(()=>initAutocomplete('new-place-name'),100);
+    setupPlaceSearch('new-place-name','ac-drop-modal','new-place-addr');
 }
 
 function closeModal(){
@@ -821,12 +854,12 @@ function closeModal(){
 function saveNewPlace(){
     const name=document.getElementById('new-place-name').value.trim();
     if(!name){toast('Ange ett namn');return}
-    const gd=selectedGooglePlace?{...selectedGooglePlace}:null;
-    addPlace(name,selectedPlaceType,gd);
-    selectedGooglePlace=null;
+    const pd=selectedPlace?{...selectedPlace}:null;
+    addPlace(name,selectedPlaceType,pd);
+    selectedPlace=null;
     closeModal();
     renderHome();
-    toast(`${(gd?.name||name)} tillagd!`);
+    toast(`${(pd?.name||name)} tillagd!`);
 }
 
 // ===== ONBOARDING =====
@@ -836,10 +869,10 @@ function obNext(step){
     document.getElementById('ob'+step).classList.add('on');
     if(step===3){
         selectedPlaceType='school';
-        selectedGooglePlace=null;
+        selectedPlace=null;
         renderPlaceTypeGrid('ob-place-types');
         renderObPlaces();
-        setTimeout(()=>initAutocomplete('ob-place-name'),100);
+        setupPlaceSearch('ob-place-name','ac-drop-ob','ob-place-addr');
     }
 }
 
@@ -855,15 +888,13 @@ function renderObPlaces(){
 function obAddPlace(){
     const name=document.getElementById('ob-place-name').value.trim();
     if(!name){toast('Ange ett namn');return}
-    const gd=selectedGooglePlace?{...selectedGooglePlace}:null;
-    obPlaces.push({name:gd?.name||name,type:selectedPlaceType,googlePlaceId:gd?.googlePlaceId||'',address:gd?.address||'',lat:gd?.lat||null,lng:gd?.lng||null});
-    selectedGooglePlace=null;
+    const pd=selectedPlace?{...selectedPlace}:null;
+    obPlaces.push({name:pd?.name||name,type:selectedPlaceType,osmId:pd?.osmId||'',address:pd?.address||'',lat:pd?.lat||null,lng:pd?.lng||null});
+    selectedPlace=null;
     document.getElementById('ob-place-name').value='';
-    const addrEl=document.querySelector('#ob3 .place-address');
-    if(addrEl)addrEl.textContent='';
+    document.getElementById('ob-place-addr').textContent='';
+    document.getElementById('ac-drop-ob').classList.remove('on');
     renderObPlaces();
-    // Re-init autocomplete for next place
-    setTimeout(()=>initAutocomplete('ob-place-name'),100);
 }
 
 function obRemovePlace(i){obPlaces.splice(i,1);renderObPlaces()}
@@ -874,7 +905,7 @@ function finishOnboarding(){
     d.firstVisit=false;
     d.userName=userName;
     d.onboarded=new Date().toISOString();
-    obPlaces.forEach(p=>d.places.push({id:'p_'+Date.now()+'_'+Math.random().toString(36).slice(2,6),name:p.name,type:p.type,googlePlaceId:p.googlePlaceId||'',address:p.address||'',lat:p.lat||null,lng:p.lng||null}));
+    obPlaces.forEach(p=>d.places.push({id:'p_'+Date.now()+'_'+Math.random().toString(36).slice(2,6),name:p.name,type:p.type,osmId:p.osmId||'',address:p.address||'',lat:p.lat||null,lng:p.lng||null}));
     sv(d);
     document.getElementById('ob').classList.add('h');
     document.getElementById('app').style.display='';
@@ -921,13 +952,12 @@ function renderSettings(){
         d.places.forEach(p=>{
             const pt=PT[p.type]||PT.other;
             const addr=p.address?`<div style="font-size:.62rem;color:var(--t2);opacity:.7;margin-top:1px">${p.address}</div>`:'';
-            const linked=p.googlePlaceId?'<span style="font-size:.55rem;color:var(--ok);margin-left:4px">linked</span>':'';
+            const linked=p.osmId?'<span style="font-size:.55rem;color:var(--ok);margin-left:4px">kopplad</span>':'';
             html+=`<div class="sett-place"><span style="font-size:1.1rem">${pt.icon}</span><div class="info"><div class="nm">${p.name}${linked}</div><div class="tp">${pt.label}</div>${addr}</div><button class="alert-dismiss" onclick="if(confirm('Ta bort ${p.name}?')){removePlace('${p.id}');renderSettings()}" title="Ta bort">×</button></div>`;
         });
     }
     html+=`<button class="btn ba" onclick="openAddPlace()" style="margin-top:10px">+ Lägg till plats</button>
-        <div class="sett-row" style="margin-top:12px;flex-wrap:wrap;gap:6px"><span style="font-size:.78rem">Google Maps API-nyckel</span><input class="sett-input" id="sett-apikey" value="${d.googleApiKey||''}" placeholder="Valfri — för platssök" style="width:100%;text-align:left;font-size:.76rem;margin-top:4px"></div>
-        <p style="font-size:.66rem;color:var(--t2);margin-top:4px;line-height:1.4">Gratis nyckel från <strong>Google Cloud Console</strong> → Places API. Ger autocomplete-sök så att platser kopplas ihop mellan användare.</p>
+        <p style="font-size:.66rem;color:var(--t2);margin-top:8px;line-height:1.4">Sök efter platser för att koppla dem till riktiga adresser. Platser markerade <span style="color:var(--ok)">kopplad</span> kan jämföras med andra användare på samma plats.</p>
     </div>`;
 
     // Profile
