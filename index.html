@@ -659,10 +659,26 @@ function trySpeak(text){
     try{
         speechSynthesis.cancel();
         const u=new SpeechSynthesisUtterance(text);
-        u.lang='sv-SE';u.rate=.95;u.pitch=1.05;
+        u.lang='sv-SE';
+
+        // Pick the best available Swedish voice — prefer natural/premium
         const voices=speechSynthesis.getVoices();
-        const sv=voices.find(v=>v.lang.startsWith('sv'));
-        if(sv)u.voice=sv;
+        const svVoices=voices.filter(v=>v.lang.startsWith('sv'));
+        let best=null;
+        if(svVoices.length){
+            // Prefer voices with Natural/Premium/Enhanced/Neural/Online in name
+            best=svVoices.find(v=>/natural|premium|enhanced|neural|online|wavenet/i.test(v.name));
+            // Fallback: prefer female-sounding voices for Luna
+            if(!best)best=svVoices.find(v=>/female|kvinn/i.test(v.name));
+            if(!best)best=svVoices[0];
+        }
+        if(best)u.voice=best;
+
+        // More natural speech: slightly slower, warmer pitch, softer volume
+        u.rate=0.9;
+        u.pitch=1.1;
+        u.volume=0.9;
+
         speechSynthesis.speak(u);
     }catch(e){}
 }
@@ -798,41 +814,46 @@ function startListening(){
     rec.continuous=false;
     rec.interimResults=true;
     rec.maxAlternatives=1;
-    let bestResult='';
+
+    let finalTranscript='';
+    let sent=false; // Prevent double-send
+
+    function sendOnce(text){
+        if(sent)return;
+        sent=true;
+        stopListening();
+        if(text.trim())userSend(text.trim());
+    }
 
     rec.onresult=(e)=>{
-        // Only use the latest/best transcript — no accumulation
-        let transcript='';
-        for(let i=0;i<e.results.length;i++){
-            transcript=e.results[i][0].transcript;
-        }
-        bestResult=transcript;
+        if(sent)return;
+        // With continuous=false, there's only one result at index 0
+        const result=e.results[0];
+        const transcript=result[0].transcript;
         document.getElementById('conv-text').value=transcript;
-        if(e.results[e.results.length-1].isFinal){
-            // Final result — auto-send after brief pause
+
+        if(result.isFinal){
+            finalTranscript=transcript;
             document.getElementById('listen-ind').textContent='✓ Skickar...';
-            setTimeout(()=>{
-                stopListening();
-                if(bestResult.trim())userSend(bestResult.trim());
-            },400);
+            sendOnce(transcript);
         }
     };
 
     rec.onend=()=>{
-        if(convState.listening){
-            // Recognition ended — send what we have or reset
-            if(bestResult.trim()){
-                stopListening();
-                userSend(bestResult.trim());
-            }else{
-                stopListening();
-                document.getElementById('listen-ind').textContent='Inget ljud uppfattat — försök igen';
-                setTimeout(()=>{document.getElementById('listen-ind').textContent=''},2000);
-            }
+        if(sent)return;
+        // Recognition ended without isFinal — send best effort or reset
+        const field=document.getElementById('conv-text').value;
+        if(field.trim()){
+            sendOnce(field);
+        }else{
+            stopListening();
+            document.getElementById('listen-ind').textContent='Inget ljud uppfattat — försök igen';
+            setTimeout(()=>{document.getElementById('listen-ind').textContent=''},2000);
         }
     };
 
     rec.onerror=(e)=>{
+        if(sent)return;
         stopListening();
         if(e.error==='no-speech'){
             document.getElementById('listen-ind').textContent='Inget tal uppfattat — försök igen';
@@ -852,8 +873,9 @@ function startListening(){
 
     // Safety timeout: 15 seconds max
     setTimeout(()=>{
-        if(convState.listening){
-            if(bestResult.trim()){stopListening();userSend(bestResult.trim())}
+        if(!sent&&convState.listening){
+            const field=document.getElementById('conv-text').value;
+            if(field.trim())sendOnce(field);
             else stopListening();
         }
     },15000);
