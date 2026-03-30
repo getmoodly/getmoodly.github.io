@@ -1,6 +1,8 @@
 -- ============================================
 -- Moodly Analytics Views & Functions
 -- Kör detta i Supabase SQL Editor
+-- Tabeller: profiles, places, place_checkins,
+--           families, family_members, chat_sessions
 -- ============================================
 
 -- 1. Antal signups per dag
@@ -20,43 +22,43 @@ SELECT
   COUNT(*) FILTER (WHERE created_at > NOW() - INTERVAL '30 days') AS new_last_30d
 FROM auth.users;
 
--- 3. Dagliga check-ins (baserat på entries-tabellen)
+-- 3. Dagliga check-ins (baserat på place_checkins)
 CREATE OR REPLACE VIEW analytics_checkins_daily AS
 SELECT
-  DATE(created_at) AS day,
+  DATE(checked_at) AS day,
   COUNT(*) AS checkins,
   COUNT(DISTINCT user_id) AS unique_users
-FROM entries
-GROUP BY DATE(created_at)
+FROM place_checkins
+GROUP BY DATE(checked_at)
 ORDER BY day DESC;
 
 -- 4. Veckovis aktiva användare (WAU)
 CREATE OR REPLACE VIEW analytics_wau AS
 SELECT
-  DATE_TRUNC('week', created_at)::date AS week_start,
+  DATE_TRUNC('week', checked_at)::date AS week_start,
   COUNT(DISTINCT user_id) AS active_users
-FROM entries
-GROUP BY DATE_TRUNC('week', created_at)
+FROM place_checkins
+GROUP BY DATE_TRUNC('week', checked_at)
 ORDER BY week_start DESC;
 
 -- 5. Månadsvis aktiva användare (MAU)
 CREATE OR REPLACE VIEW analytics_mau AS
 SELECT
-  DATE_TRUNC('month', created_at)::date AS month_start,
+  DATE_TRUNC('month', checked_at)::date AS month_start,
   COUNT(DISTINCT user_id) AS active_users
-FROM entries
-GROUP BY DATE_TRUNC('month', created_at)
+FROM place_checkins
+GROUP BY DATE_TRUNC('month', checked_at)
 ORDER BY month_start DESC;
 
 -- 6. Aktiva kommuner
 CREATE OR REPLACE VIEW analytics_kommuner AS
 SELECT
   p.kommun,
-  COUNT(DISTINCT p.user_id) AS families,
-  COUNT(e.id) AS total_checkins,
-  MAX(e.created_at) AS last_activity
+  COUNT(DISTINCT p.id) AS families,
+  COUNT(pc.id) AS total_checkins,
+  MAX(pc.checked_at) AS last_activity
 FROM profiles p
-LEFT JOIN entries e ON e.user_id = p.user_id
+LEFT JOIN place_checkins pc ON pc.user_id = p.id
 WHERE p.kommun IS NOT NULL AND p.kommun != ''
 GROUP BY p.kommun
 ORDER BY families DESC;
@@ -81,13 +83,13 @@ RETURNS TABLE(cohort_day date, d1_pct numeric, d7_pct numeric, d30_pct numeric)
 LANGUAGE sql STABLE AS $$
   WITH cohorts AS (
     SELECT
-      user_id,
+      id AS user_id,
       DATE(created_at) AS signup_day
     FROM auth.users
   ),
   activity AS (
-    SELECT DISTINCT user_id, DATE(created_at) AS active_day
-    FROM entries
+    SELECT DISTINCT user_id, DATE(checked_at) AS active_day
+    FROM place_checkins
   )
   SELECT
     c.signup_day AS cohort_day,
@@ -105,24 +107,25 @@ $$;
 -- 9. Genomsnittligt MoodScore per dag (alla användare)
 CREATE OR REPLACE VIEW analytics_mood_trend AS
 SELECT
-  DATE(created_at) AS day,
+  DATE(checked_at) AS day,
   ROUND(AVG(score), 2) AS avg_score,
-  COUNT(*) AS entries
-FROM entries
+  COUNT(*) AS total_checkins
+FROM place_checkins
 WHERE score IS NOT NULL
-GROUP BY DATE(created_at)
+GROUP BY DATE(checked_at)
 ORDER BY day DESC;
 
--- 10. Plats-checkins fördelning
+-- 10. Plats-checkins fördelning (join med places för platsnamn)
 CREATE OR REPLACE VIEW analytics_places AS
 SELECT
-  place,
-  COUNT(*) AS checkins,
-  ROUND(AVG(score), 2) AS avg_score,
-  COUNT(DISTINCT user_id) AS unique_users
-FROM entries
-WHERE place IS NOT NULL AND place != ''
-GROUP BY place
+  pl.name AS place_name,
+  pl.type AS place_type,
+  COUNT(pc.id) AS checkins,
+  ROUND(AVG(pc.score), 2) AS avg_score,
+  COUNT(DISTINCT pc.user_id) AS unique_users
+FROM place_checkins pc
+JOIN places pl ON pl.id = pc.place_id
+GROUP BY pl.name, pl.type
 ORDER BY checkins DESC;
 
 -- ============================================
@@ -134,12 +137,12 @@ LANGUAGE sql STABLE AS $$
   SELECT json_build_object(
     'total_users', (SELECT COUNT(*) FROM auth.users),
     'new_users_7d', (SELECT COUNT(*) FROM auth.users WHERE created_at > NOW() - INTERVAL '7 days'),
-    'checkins_today', (SELECT COUNT(*) FROM entries WHERE DATE(created_at) = CURRENT_DATE),
-    'checkins_7d', (SELECT COUNT(*) FROM entries WHERE created_at > NOW() - INTERVAL '7 days'),
-    'wau', (SELECT COUNT(DISTINCT user_id) FROM entries WHERE created_at > NOW() - INTERVAL '7 days'),
-    'mau', (SELECT COUNT(DISTINCT user_id) FROM entries WHERE created_at > NOW() - INTERVAL '30 days'),
+    'checkins_today', (SELECT COUNT(*) FROM place_checkins WHERE DATE(checked_at) = CURRENT_DATE),
+    'checkins_7d', (SELECT COUNT(*) FROM place_checkins WHERE checked_at > NOW() - INTERVAL '7 days'),
+    'wau', (SELECT COUNT(DISTINCT user_id) FROM place_checkins WHERE checked_at > NOW() - INTERVAL '7 days'),
+    'mau', (SELECT COUNT(DISTINCT user_id) FROM place_checkins WHERE checked_at > NOW() - INTERVAL '30 days'),
     'total_families', (SELECT COUNT(*) FROM families),
-    'active_kommuner', (SELECT COUNT(DISTINCT kommun) FROM profiles WHERE kommun IS NOT NULL AND kommun != ''),
-    'avg_mood_7d', (SELECT ROUND(AVG(score), 2) FROM entries WHERE created_at > NOW() - INTERVAL '7 days' AND score IS NOT NULL)
+    'active_kommuner', (SELECT COUNT(DISTINCT kommun) FROM profiles WHERE kommun IS NOT NULL AND kommun != ''::text),
+    'avg_mood_7d', (SELECT ROUND(AVG(score), 2) FROM place_checkins WHERE checked_at > NOW() - INTERVAL '7 days' AND score IS NOT NULL)
   );
 $$;
