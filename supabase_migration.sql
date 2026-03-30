@@ -248,3 +248,49 @@ $$;
 CREATE TRIGGER on_auth_user_created
   AFTER INSERT ON auth.users
   FOR EACH ROW EXECUTE FUNCTION handle_new_user();
+
+-- ==========================================
+-- PART 4: KOMMUN BENCHMARKS
+-- ==========================================
+
+-- Add kommun column to profiles
+ALTER TABLE profiles ADD COLUMN IF NOT EXISTS kommun TEXT NOT NULL DEFAULT '';
+CREATE INDEX IF NOT EXISTS idx_profiles_kommun ON profiles(kommun) WHERE kommun != '';
+
+-- RPC: Get kommun-level mood statistics
+-- Returns aggregated wellbeing data for all users in a given kommun
+CREATE OR REPLACE FUNCTION get_kommun_stats(p_kommun TEXT)
+RETURNS TABLE(
+  avg_score NUMERIC,
+  total_users BIGINT,
+  total_checkins BIGINT,
+  week_avg NUMERIC,
+  prev_week_avg NUMERIC
+)
+LANGUAGE sql STABLE SECURITY DEFINER
+AS $$
+  SELECT
+    ROUND(AVG(pc.score)::numeric, 1) as avg_score,
+    COUNT(DISTINCT pr.id) as total_users,
+    COUNT(pc.id) as total_checkins,
+    ROUND(AVG(CASE WHEN pc.checked_at >= CURRENT_DATE - 7 THEN pc.score END)::numeric, 1) as week_avg,
+    ROUND(AVG(CASE WHEN pc.checked_at >= CURRENT_DATE - 14 AND pc.checked_at < CURRENT_DATE - 7 THEN pc.score END)::numeric, 1) as prev_week_avg
+  FROM profiles pr
+  JOIN places pl ON pl.user_id = pr.id
+  JOIN place_checkins pc ON pc.place_id = pl.id
+  WHERE LOWER(TRIM(pr.kommun)) = LOWER(TRIM(p_kommun))
+    AND pr.kommun != ''
+    AND pc.checked_at >= CURRENT_DATE - 30
+$$;
+
+-- RPC: Get kommun user count (lightweight check)
+CREATE OR REPLACE FUNCTION get_kommun_user_count(p_kommun TEXT)
+RETURNS BIGINT
+LANGUAGE sql STABLE SECURITY DEFINER
+AS $$
+  SELECT COUNT(DISTINCT id)
+  FROM profiles
+  WHERE LOWER(TRIM(kommun)) = LOWER(TRIM(p_kommun))
+    AND kommun != ''
+    AND onboarded IS NOT NULL
+$$;

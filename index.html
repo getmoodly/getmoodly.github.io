@@ -147,6 +147,24 @@
         .bench-row.is-you .b-name{font-weight:700;color:var(--p)}
         .bench-note{font-size:.68rem;color:var(--t2);margin-top:8px;text-align:center;font-style:italic}
 
+        /* KOMMUN INSIGHTS */
+        .kommun-card{background:linear-gradient(135deg,rgba(0,184,148,.08),rgba(108,92,231,.12));border:1px solid rgba(0,184,148,.15);border-radius:var(--r);padding:20px;margin-bottom:14px}
+        .kommun-title{font-size:1rem;font-weight:800;margin-bottom:4px;display:flex;align-items:center;gap:8px}
+        .kommun-sub{font-size:.76rem;color:var(--t2);margin-bottom:16px}
+        .kommun-compare{display:flex;gap:12px;margin-bottom:14px}
+        .kommun-compare .kc-box{flex:1;background:rgba(255,255,255,.05);border-radius:var(--rs);padding:14px;text-align:center}
+        .kommun-compare .kc-val{font-size:1.5rem;font-weight:800}
+        .kommun-compare .kc-lbl{font-size:.7rem;color:var(--t2);margin-top:2px}
+        .kommun-diff{text-align:center;padding:10px;border-radius:var(--rs);font-size:.85rem;font-weight:700;margin-bottom:14px}
+        .kommun-diff.pos{background:rgba(0,184,148,.1);color:var(--ok)}
+        .kommun-diff.neg{background:rgba(225,112,85,.1);color:var(--bad)}
+        .kommun-diff.neu{background:rgba(255,255,255,.05);color:var(--t2)}
+        .kommun-meta{display:flex;justify-content:space-between;font-size:.72rem;color:var(--t2);margin-bottom:8px}
+        .kommun-cta{text-align:center;margin-top:14px;padding-top:12px;border-top:1px solid rgba(255,255,255,.06)}
+        .kommun-cta p{font-size:.78rem;color:var(--t2);margin-bottom:8px}
+        .kommun-empty{text-align:center;padding:16px}
+        .kommun-empty p{font-size:.82rem;color:var(--t2);line-height:1.5;margin-bottom:12px}
+
         /* ALERTS */
         .alert-card{display:flex;align-items:flex-start;gap:12px;padding:14px;border-radius:var(--r);margin-bottom:10px;animation:fu .3s ease}
         .alert-card.warn{background:rgba(253,203,110,.08);border:1px solid rgba(253,203,110,.18)}
@@ -359,9 +377,11 @@
 
     <div class="ob-step" id="ob2">
         <div style="font-size:2.5rem;margin-bottom:10px">👤</div>
-        <h1>Ditt namn</h1>
+        <h1>Om dig</h1>
         <p>Du som förälder administrerar appen. Dina barn checkar in — du följer med.</p>
         <input type="text" id="user-name-input" placeholder="Ditt namn..." maxlength="30">
+        <input type="text" id="user-kommun-input" placeholder="Hemkommun (t.ex. Täby, Göteborg)" maxlength="50">
+        <p style="font-size:.7rem;color:var(--t2);margin-top:-10px;margin-bottom:16px">Kommun används för att jämföra välmående med andra familjer i ditt område</p>
         <button class="btn bp" onclick="obNext(3)">Nästa</button>
     </div>
 
@@ -649,7 +669,8 @@ async function migrateLocalToRemote(){
         xp:d.xp||0,points:d.points||0,streak:d.streak||0,
         selected_avatar:d.selectedAvatar||'default',
         unlocked_avatars:d.unlockedAvatars||['default'],
-        onboarded:d.onboarded||null
+        onboarded:d.onboarded||null,
+        kommun:d.kommun||''
     }).eq('id',sbUser.id);
 
     // Sync places
@@ -694,6 +715,7 @@ async function pullRemoteData(){
             d.xp=Math.max(d.xp||0,prof.xp||0);
             d.streak=Math.max(d.streak||0,prof.streak||0);
             d.selectedAvatar=prof.selected_avatar||d.selectedAvatar;
+            if(prof.kommun)d.kommun=prof.kommun;
             // Merge unlocked avatars
             const merged=new Set([...(d.unlockedAvatars||[]),...(prof.unlocked_avatars||[])]);
             d.unlockedAvatars=[...merged];
@@ -774,6 +796,7 @@ function syncProfile(d){
         streak:d.streak||0,selected_avatar:d.selectedAvatar||'default',
         unlocked_avatars:d.unlockedAvatars||['default'],
         daily_reward_claimed:d.dailyRewardClaimed||null,
+        kommun:d.kommun||'',
         updated_at:new Date().toISOString()
     });
 }
@@ -783,7 +806,7 @@ window.addEventListener('online',()=>flushPendingChanges());
 
 const PARENT_KEY='moodly';
 let APK=PARENT_KEY;
-let D={places:[],placeCheckins:[],benchmarks:[],checkins:[],micro:[],xp:0,level:1,points:0,streak:0,firstVisit:true,baseline:null,userName:'',aiName:'Luna',personality:'warm',onboarded:null,alertsSeen:[],familyId:'',role:'self',familyProfiles:[],parentKey:'',unlockedAvatars:['default'],selectedAvatar:'default',dailyRewardClaimed:null};
+let D={places:[],placeCheckins:[],benchmarks:[],checkins:[],micro:[],xp:0,level:1,points:0,streak:0,firstVisit:true,baseline:null,userName:'',aiName:'Luna',personality:'warm',onboarded:null,alertsSeen:[],familyId:'',role:'self',familyProfiles:[],parentKey:'',unlockedAvatars:['default'],selectedAvatar:'default',dailyRewardClaimed:null,kommun:''};
 const AVATARS={default:{emoji:'😊',label:'Standard',cost:0},fox:{emoji:'🦊',label:'Räv',cost:50},cat:{emoji:'🐱',label:'Katt',cost:50},dog:{emoji:'🐶',label:'Hund',cost:50},unicorn:{emoji:'🦄',label:'Enhörning',cost:100},dragon:{emoji:'🐉',label:'Drake',cost:150},star:{emoji:'⭐',label:'Stjärna',cost:200},rocket:{emoji:'🚀',label:'Raket',cost:300}};
 let sok=false;try{localStorage.setItem('_','1');localStorage.removeItem('_');sok=true}catch(e){}
 
@@ -889,7 +912,7 @@ async function searchNominatim(query,dropdown,input,addrId){
 // Migrate old data
 (function(){if(!sok)return;try{const old=localStorage.getItem('kf3');const nw=localStorage.getItem('moodly');if(old&&!nw)localStorage.setItem('moodly',old)}catch(e){}})();
 
-function ld(){if(!sok)return{...D};try{const r=localStorage.getItem(APK);if(!r)return{...D};const d=JSON.parse(r);if(!d.places)d.places=[];if(!d.placeCheckins)d.placeCheckins=[];if(!d.benchmarks)d.benchmarks=[];if(!d.micro)d.micro=[];if(!d.checkins)d.checkins=[];if(!d.alertsSeen)d.alertsSeen=[];if(!d.familyProfiles)d.familyProfiles=[];if(!d.points)d.points=0;if(!d.unlockedAvatars)d.unlockedAvatars=['default'];if(!d.selectedAvatar)d.selectedAvatar='default';return d}catch(e){return{...D}}}
+function ld(){if(!sok)return{...D};try{const r=localStorage.getItem(APK);if(!r)return{...D};const d=JSON.parse(r);if(!d.places)d.places=[];if(!d.placeCheckins)d.placeCheckins=[];if(!d.benchmarks)d.benchmarks=[];if(!d.micro)d.micro=[];if(!d.checkins)d.checkins=[];if(!d.alertsSeen)d.alertsSeen=[];if(!d.familyProfiles)d.familyProfiles=[];if(!d.points)d.points=0;if(!d.unlockedAvatars)d.unlockedAvatars=['default'];if(!d.selectedAvatar)d.selectedAvatar='default';if(!d.kommun)d.kommun='';return d}catch(e){return{...D}}}
 function sv(d){D=d;if(sok)try{localStorage.setItem(APK,JSON.stringify(d))}catch(e){}}
 function pick(arr){return arr[Math.floor(Math.random()*arr.length)]}
 function toast(m){const t=document.getElementById('toast');t.textContent=m;t.classList.add('show');setTimeout(()=>t.classList.remove('show'),3000)}
@@ -1294,7 +1317,150 @@ function renderParentView(){
                 <div class="ins-summary row"><span>Mår sämst</span><span class="worst">${PT[worst.type]?.icon||'📍'} ${worst.child} @ ${worst.place} (${worst.avg}/5)</span></div>
             </div>`;
     }else{insEl.innerHTML=''}
-    benchEl.innerHTML='';
+    // Kommun insights
+    renderKommunInsights(d,benchEl);
+}
+
+// ===== KOMMUN INSIGHTS =====
+let kommunStatsCache={kommun:'',data:null,ts:0};
+
+async function fetchKommunStats(kommun){
+    if(!kommun||!sb||!sbUser)return null;
+    // Cache for 5 minutes
+    if(kommunStatsCache.kommun===kommun.toLowerCase()&&kommunStatsCache.data&&Date.now()-kommunStatsCache.ts<300000)return kommunStatsCache.data;
+    try{
+        const{data,error}=await sb.rpc('get_kommun_stats',{p_kommun:kommun});
+        if(error||!data||!data.length)return null;
+        kommunStatsCache={kommun:kommun.toLowerCase(),data:data[0],ts:Date.now()};
+        return data[0];
+    }catch(e){return null}
+}
+
+async function fetchKommunUserCount(kommun){
+    if(!kommun||!sb||!sbUser)return 0;
+    try{
+        const{data,error}=await sb.rpc('get_kommun_user_count',{p_kommun:kommun});
+        if(error)return 0;
+        return data||0;
+    }catch(e){return 0}
+}
+
+function getLocalFamilyAvg(d){
+    let scores=[];
+    (d.familyProfiles||[]).forEach(fp=>{
+        const cd=getFullChildData(fp.storageKey);
+        if(!cd)return;
+        const last30=(cd.placeCheckins||[]).filter(c=>Date.now()-new Date(c.ts).getTime()<30*864e5);
+        last30.forEach(c=>scores.push(c.score));
+    });
+    if(!scores.length)return null;
+    return Math.round(scores.reduce((a,b)=>a+b,0)/scores.length*10)/10;
+}
+
+function getLocalFamilyWeekAvg(d){
+    let scores=[];
+    (d.familyProfiles||[]).forEach(fp=>{
+        const cd=getFullChildData(fp.storageKey);
+        if(!cd)return;
+        const last7=(cd.placeCheckins||[]).filter(c=>Date.now()-new Date(c.ts).getTime()<7*864e5);
+        last7.forEach(c=>scores.push(c.score));
+    });
+    if(!scores.length)return null;
+    return Math.round(scores.reduce((a,b)=>a+b,0)/scores.length*10)/10;
+}
+
+function renderKommunInsights(d,container){
+    const kommun=d.kommun;
+    if(!kommun){
+        container.innerHTML=`<div class="section-sep"></div><div class="ct">📊 Kommun-insikter</div>
+            <div class="kommun-card"><div class="kommun-empty">
+                <div style="font-size:2rem;margin-bottom:8px">🏘️</div>
+                <p>Ange din hemkommun för att se hur barnen i ditt område mår.</p>
+                <button class="btn bp" onclick="go('family')" style="max-width:220px;margin:0 auto;font-size:.82rem">Ange kommun</button>
+            </div></div>`;
+        return;
+    }
+
+    const familyAvg=getLocalFamilyAvg(d);
+    const familyWeekAvg=getLocalFamilyWeekAvg(d);
+    const childCount=d.familyProfiles?d.familyProfiles.length:0;
+
+    // Start with local data, then fetch remote
+    let html=`<div class="section-sep"></div><div class="ct">📊 Kommun-insikter</div>`;
+    html+=`<div class="kommun-card" id="kommun-card">`;
+    html+=`<div class="kommun-title">🏘️ Mående i ${kommun}</div>`;
+    html+=`<div class="kommun-sub">Aggregerat välmående för barn i din kommun</div>`;
+
+    // Local family stats
+    if(familyAvg!==null){
+        const col=familyAvg>=4?'var(--ok)':familyAvg>=3?'var(--w)':'var(--bad)';
+        html+=`<div class="kommun-compare">
+            <div class="kc-box"><div class="kc-val" style="color:${col}">${familyAvg}</div><div class="kc-lbl">Dina barn (30d)</div></div>
+            <div class="kc-box" id="kommun-avg-box"><div class="kc-val" style="color:var(--t2)" id="kommun-avg-val">...</div><div class="kc-lbl" id="kommun-avg-lbl">Kommunsnitt</div></div>
+        </div>`;
+        html+=`<div id="kommun-diff-area"></div>`;
+    }
+
+    html+=`<div id="kommun-remote-area">`;
+    html+=`<div class="kommun-meta"><span>Laddar kommundata...</span></div>`;
+    html+=`</div>`;
+
+    html+=`<div class="kommun-cta"><p>Fler föräldrar i ${kommun} = bättre insikter</p>
+        <button class="btn bp" onclick="shareInvite()" style="font-size:.82rem;padding:10px 20px">📤 Bjud in föräldrar</button></div>`;
+    html+=`</div>`;
+    container.innerHTML=html;
+
+    // Fetch remote kommun stats async
+    loadKommunRemoteData(kommun,familyAvg);
+}
+
+async function loadKommunRemoteData(kommun,familyAvg){
+    const remoteArea=document.getElementById('kommun-remote-area');
+    const avgVal=document.getElementById('kommun-avg-val');
+    const avgLbl=document.getElementById('kommun-avg-lbl');
+    const diffArea=document.getElementById('kommun-diff-area');
+    if(!remoteArea)return;
+
+    const stats=await fetchKommunStats(kommun);
+    const userCount=await fetchKommunUserCount(kommun);
+
+    if(!stats||!stats.avg_score||userCount<3){
+        // Not enough data
+        const msg=userCount>0
+            ?`${userCount} förälder${userCount>1?'ar':''} i ${kommun} — behöver minst 3 för jämförelse`
+            :`Du är först i ${kommun}! Bjud in fler föräldrar.`;
+        remoteArea.innerHTML=`<div class="kommun-meta"><span>👥 ${msg}</span></div>`;
+        if(avgVal){avgVal.textContent='—';avgLbl.textContent='Väntar på data'}
+        if(diffArea)diffArea.innerHTML='';
+        return;
+    }
+
+    // We have real kommun data!
+    const kAvg=parseFloat(stats.avg_score);
+    const kCol=kAvg>=4?'var(--ok)':kAvg>=3?'var(--w)':'var(--bad)';
+    if(avgVal){avgVal.textContent=kAvg.toFixed(1);avgVal.style.color=kCol;avgLbl.textContent=`${kommun} (${stats.total_users} barn)`}
+
+    // Comparison
+    if(diffArea&&familyAvg!==null){
+        const diff=Math.round((familyAvg-kAvg)*10)/10;
+        const cls=diff>0.2?'pos':diff<-0.2?'neg':'neu';
+        const txt=diff>0.2?`↑ Dina barn mår ${diff.toFixed(1)} bättre än snittet i ${kommun}`
+                 :diff<-0.2?`↓ Dina barn mår ${Math.abs(diff).toFixed(1)} under snittet i ${kommun}`
+                 :`→ Dina barn ligger i linje med snittet i ${kommun}`;
+        diffArea.innerHTML=`<div class="kommun-diff ${cls}">${txt}</div>`;
+    }
+
+    // Trend
+    let trendHtml='';
+    if(stats.week_avg&&stats.prev_week_avg){
+        const wAvg=parseFloat(stats.week_avg);
+        const pwAvg=parseFloat(stats.prev_week_avg);
+        const tDiff=Math.round((wAvg-pwAvg)*10)/10;
+        const tIcon=tDiff>0.2?'📈':tDiff<-0.2?'📉':'➡️';
+        const tText=tDiff>0.2?`Uppåt i ${kommun} (+${tDiff.toFixed(1)})`:tDiff<-0.2?`Nedåt i ${kommun} (${tDiff.toFixed(1)})`:`Stabilt i ${kommun}`;
+        trendHtml=`<div class="kommun-meta"><span>${tIcon} Trend: ${tText}</span><span>${stats.total_checkins} checkins</span></div>`;
+    }
+    remoteArea.innerHTML=`<div class="kommun-meta"><span>👥 ${stats.total_users} barn i ${kommun}</span><span>📊 ${stats.total_checkins} checkins</span></div>${trendHtml}`;
 }
 
 function saveComment(placeId,comment){
@@ -1643,9 +1809,11 @@ function obNextChild(){
 
 function finishOnboarding(){
     const userName=document.getElementById('user-name-input').value.trim();
+    const kommun=(document.getElementById('user-kommun-input')?.value||'').trim();
     const d=ld();
     d.firstVisit=false;
     d.userName=userName;
+    d.kommun=kommun;
     d.onboarded=new Date().toISOString();
     d.role='parent';
     d.familyId=d.familyId||'fam_'+Date.now();
@@ -1657,7 +1825,7 @@ function finishOnboarding(){
         const storageKey='moodly_child_'+id;
         const childPlaces=child.places.map(p=>({id:'p_'+Date.now()+'_'+Math.random().toString(36).slice(2,6),name:p.name,type:p.type,osmId:p.osmId||'',address:p.address||'',lat:p.lat||null,lng:p.lng||null}));
         d.familyProfiles.push({id,name:child.name,ageGroup:child.ageGroup,storageKey});
-        const childData={places:childPlaces,placeCheckins:[],benchmarks:[],checkins:[],micro:[],xp:0,level:1,points:0,streak:0,firstVisit:false,baseline:null,userName:child.name,aiName:'Luna',personality:'warm',onboarded:new Date().toISOString(),alertsSeen:[],familyId:d.familyId,role:'child',familyProfiles:[],parentKey:PARENT_KEY,unlockedAvatars:['default'],selectedAvatar:'default',dailyRewardClaimed:null};
+        const childData={places:childPlaces,placeCheckins:[],benchmarks:[],checkins:[],micro:[],xp:0,level:1,points:0,streak:0,firstVisit:false,baseline:null,userName:child.name,aiName:'Luna',personality:'warm',onboarded:new Date().toISOString(),alertsSeen:[],familyId:d.familyId,role:'child',familyProfiles:[],parentKey:PARENT_KEY,unlockedAvatars:['default'],selectedAvatar:'default',dailyRewardClaimed:null,kommun:d.kommun};
         if(sok)localStorage.setItem(storageKey,JSON.stringify(childData));
         childPlaces.forEach(p=>syncPlace(p));
     });
@@ -1701,8 +1869,14 @@ function renderChat(){
 function saveProfile(){
     const d=ld();
     d.userName=document.getElementById('sett-username').value.trim();
+    d.kommun=(document.getElementById('sett-kommun')?.value||'').trim();
     d.aiName=document.getElementById('sett-ainame').value.trim()||'Luna';
     d.personality=document.getElementById('sett-pers').value;
+    // Propagate kommun to children
+    (d.familyProfiles||[]).forEach(fp=>{
+        const cd=getFullChildData(fp.storageKey);
+        if(cd){cd.kommun=d.kommun;if(sok)localStorage.setItem(fp.storageKey,JSON.stringify(cd))}
+    });
     sv(d);syncProfile(d);toast('Sparat!');renderHome();
 }
 
@@ -1714,7 +1888,7 @@ function exportData(){
 function confirmDeleteAll(){
     if(!confirm('Är du säker? All data raderas permanent.'))return;
     if(sok){const d=ld();if(d.familyProfiles)d.familyProfiles.forEach(fp=>localStorage.removeItem(fp.storageKey));localStorage.removeItem(APK)}
-    D={places:[],placeCheckins:[],checkins:[],micro:[],xp:0,level:1,firstVisit:true,baseline:null,userName:'',aiName:'Luna',personality:'warm',onboarded:null,alertsSeen:[],familyId:'',role:'self',familyProfiles:[],parentKey:''};
+    D={places:[],placeCheckins:[],checkins:[],micro:[],xp:0,level:1,firstVisit:true,baseline:null,userName:'',aiName:'Luna',personality:'warm',onboarded:null,alertsSeen:[],familyId:'',role:'self',familyProfiles:[],parentKey:'',kommun:''};
     if(sok)localStorage.setItem(APK,JSON.stringify(D));
     toast('All data raderad.');renderHome();
 }
@@ -1750,7 +1924,7 @@ function addChild(){
     checkboxes.forEach(cb=>{if(cb.checked)selectedIds.add(cb.value)});
     const childPlaces=selectedIds.size>0?d.places.filter(p=>selectedIds.has(p.id)):[];
     d.familyProfiles.push({id,name,ageGroup,storageKey});sv(d);
-    const childData={places:childPlaces.map(p=>({...p})),placeCheckins:[],benchmarks:[],checkins:[],micro:[],xp:0,level:1,points:0,streak:0,firstVisit:false,baseline:null,userName:name,aiName:d.aiName||'Luna',personality:'warm',onboarded:new Date().toISOString(),alertsSeen:[],familyId:d.familyId,role:'child',familyProfiles:[],parentKey:PARENT_KEY,unlockedAvatars:['default'],selectedAvatar:'default',dailyRewardClaimed:null};
+    const childData={places:childPlaces.map(p=>({...p})),placeCheckins:[],benchmarks:[],checkins:[],micro:[],xp:0,level:1,points:0,streak:0,firstVisit:false,baseline:null,userName:name,aiName:d.aiName||'Luna',personality:'warm',onboarded:new Date().toISOString(),alertsSeen:[],familyId:d.familyId,role:'child',familyProfiles:[],parentKey:PARENT_KEY,unlockedAvatars:['default'],selectedAvatar:'default',dailyRewardClaimed:null,kommun:d.kommun||''};
     if(sok)localStorage.setItem(storageKey,JSON.stringify(childData));
     toast(name+' tillagd! Öppna profilen för att lägga till platser.');
 }
@@ -1922,6 +2096,7 @@ function renderFamily(){
     // Profile settings
     html+=`<div class="cd"><div class="ct">👤 Profil</div>
         <div class="sett-row"><span>Ditt namn</span><input class="sett-input" id="sett-username" value="${d.userName||''}"></div>
+        <div class="sett-row"><span>Hemkommun</span><input class="sett-input" id="sett-kommun" value="${d.kommun||''}" placeholder="T.ex. Täby"></div>
         <div class="sett-row"><span>AI-namn</span><input class="sett-input" id="sett-ainame" value="${d.aiName||'Luna'}"></div>
         <div class="sett-row"><span>Personlighet</span><select id="sett-pers">
             <option value="warm"${d.personality==='warm'?' selected':''}>Varm</option>
