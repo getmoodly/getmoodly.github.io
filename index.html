@@ -71,6 +71,35 @@
         .emoji-btn .em{font-size:1.4rem}
         .emoji-btn .el{font-size:.55rem;color:var(--t2);font-weight:600}
         .place-done{font-size:.72rem;color:var(--ok);text-align:center;margin-top:6px;font-weight:600}
+        .place-comment-row{margin-top:8px;overflow:hidden;max-height:0;transition:max-height .3s ease}
+        .place-comment-row.show{max-height:60px}
+        .place-comment{width:100%;padding:8px 12px;background:rgba(255,255,255,.06);border:1px solid rgba(255,255,255,.1);border-radius:var(--rs);color:var(--t);font-size:.8rem;outline:none}
+        .place-comment::placeholder{color:var(--t2)}
+        .place-prev-comment{font-size:.7rem;color:var(--t2);margin-top:4px;font-style:italic;padding:0 4px}
+        .rewards-bar{display:flex;align-items:center;justify-content:center;gap:16px;padding:10px 16px;margin:-6px 0 10px;font-size:.82rem}
+        .rewards-bar .pts{display:flex;align-items:center;gap:4px;font-weight:700;color:var(--g)}
+        .rewards-bar .streak-mini{display:flex;align-items:center;gap:4px;font-weight:700;color:var(--bad)}
+        .daily-reward{background:linear-gradient(135deg,rgba(255,215,0,.12),rgba(255,165,0,.08));border:1px solid rgba(255,215,0,.2);border-radius:var(--r);padding:14px;text-align:center;margin-bottom:12px;cursor:pointer;animation:glow-pulse 2s infinite}
+        @keyframes glow-pulse{0%,100%{box-shadow:0 0 0 0 rgba(255,215,0,.15)}50%{box-shadow:0 0 12px 4px rgba(255,215,0,.1)}}
+        .avatar-shop{display:grid;grid-template-columns:repeat(4,1fr);gap:8px;margin-top:10px}
+        .shop-item{padding:10px 6px;background:var(--c2);border-radius:var(--rs);text-align:center;cursor:pointer;border:2px solid transparent;transition:all .15s}
+        .shop-item.owned{border-color:var(--ok)}
+        .shop-item.sel{border-color:var(--p);background:rgba(108,92,231,.15)}
+        .shop-item.locked{opacity:.4}
+        .shop-item .s-emoji{font-size:1.4rem}
+        .shop-item .s-label{font-size:.6rem;color:var(--t2);margin-top:2px}
+        .shop-item .s-cost{font-size:.58rem;color:var(--g);font-weight:700}
+        .section-sep{margin:20px 0 14px;padding-top:16px;border-top:1px solid rgba(255,255,255,.08)}
+        .fam-child-card{background:var(--c1);border-radius:var(--r);padding:16px;margin-bottom:12px;border:1px solid rgba(255,255,255,.04)}
+        .fam-child-header{display:flex;align-items:center;gap:12px;margin-bottom:12px}
+        .fam-child-avatar{font-size:1.8rem;width:48px;height:48px;display:flex;align-items:center;justify-content:center;background:rgba(108,92,231,.12);border-radius:50%}
+        .fam-child-info{flex:1}
+        .fam-child-name{font-weight:700;font-size:.95rem}
+        .fam-child-meta{font-size:.72rem;color:var(--t2);margin-top:2px;display:flex;gap:12px}
+        .fam-place-row{display:flex;align-items:center;gap:8px;padding:8px 0;border-bottom:1px solid rgba(255,255,255,.04);font-size:.82rem}
+        .fam-place-row:last-child{border-bottom:none}
+        .fam-place-score{font-weight:700;margin-left:auto;width:30px;text-align:right}
+        .fam-place-comment{font-size:.7rem;color:var(--t2);font-style:italic;margin-left:28px;margin-top:-4px;padding-bottom:4px}
         .add-place{background:var(--c1);border-radius:var(--r);padding:18px;margin-bottom:10px;border:2px dashed rgba(255,255,255,.1);cursor:pointer;text-align:center;color:var(--t2);font-size:.84rem;transition:all .2s}
         .add-place:active{border-color:var(--p);color:var(--pl)}
 
@@ -370,12 +399,14 @@
         <div id="home-summary"></div>
         <div id="home-alerts"></div>
         <div id="home-places"></div>
+        <div id="home-insights" style="margin-top:16px"></div>
+        <div id="home-benchmarks"></div>
     </div>
 
-    <!-- INSIKTER -->
-    <div class="pg" id="pg-insights">
-        <h2 style="font-size:1.15rem;margin-bottom:12px">📈 Insikter</h2>
-        <div id="insights-content"></div>
+    <!-- FAMILJ -->
+    <div class="pg" id="pg-family">
+        <h2 style="font-size:1.15rem;margin-bottom:12px">👨‍👩‍👧‍👦 Familj</h2>
+        <div id="family-content"></div>
     </div>
 
     <!-- SAMTAL -->
@@ -412,17 +443,10 @@
         <button class="btn bs" onclick="go('home')" style="margin-top:6px">Tillbaka</button>
     </div>
 
-    <!-- SETTINGS -->
-    <div class="pg" id="pg-settings">
-        <h2 style="font-size:1.15rem;margin-bottom:12px">Inställningar</h2>
-        <div id="settings-content"></div>
-    </div>
-
     <nav class="nav">
-        <div class="ni on" data-p="home"><svg viewBox="0 0 24 24"><path d="M12 2C6.48 2 2 6.48 2 12s4.48 10 10 10 10-4.48 10-10S17.52 2 12 2zm-2 15l-5-5 1.41-1.41L10 14.17l7.59-7.59L19 8l-9 9z"/></svg>Idag</div>
-        <div class="ni" data-p="insights"><svg viewBox="0 0 24 24"><path d="M3 13h2v8H3zm4-3h2v11H7zm4-3h2v14h-2zm4-3h2v17h-2zm4-2h2v19h-2z"/></svg>Insikter</div>
+        <div class="ni on" data-p="home"><svg viewBox="0 0 24 24"><path d="M10 20v-6h4v6h5v-8h3L12 3 2 12h3v8z"/></svg>Hem</div>
         <div class="ni" data-p="chat"><svg viewBox="0 0 24 24"><path d="M20 2H4c-1.1 0-2 .9-2 2v18l4-4h14c1.1 0 2-.9 2-2V4c0-1.1-.9-2-2-2zm0 14H6l-2 2V4h16v12z"/></svg>Samtal</div>
-        <div class="ni" data-p="settings"><svg viewBox="0 0 24 24"><path d="M19.14 12.94c.04-.3.06-.61.06-.94 0-.32-.02-.64-.07-.94l2.03-1.58a.49.49 0 00.12-.61l-1.92-3.32a.49.49 0 00-.59-.22l-2.39.96c-.5-.38-1.03-.7-1.62-.94l-.36-2.54a.48.48 0 00-.48-.41h-3.84a.48.48 0 00-.48.41l-.36 2.54c-.59.24-1.13.57-1.62.94l-2.39-.96a.49.49 0 00-.59.22L2.74 8.87a.48.48 0 00.12.61l2.03 1.58c-.05.3-.07.63-.07.94s.02.64.07.94l-2.03 1.58a.49.49 0 00-.12.61l1.92 3.32c.12.22.37.29.59.22l2.39-.96c.5.38 1.03.7 1.62.94l.36 2.54c.05.24.26.41.48.41h3.84c.24 0 .44-.17.48-.41l.36-2.54c.59-.24 1.13-.56 1.62-.94l2.39.96c.22.08.47 0 .59-.22l1.92-3.32c.12-.22.07-.47-.12-.61l-2.01-1.58zM12 15.6A3.6 3.6 0 1115.6 12 3.6 3.6 0 0112 15.6z"/></svg>Inst.</div>
+        <div class="ni" data-p="family"><svg viewBox="0 0 24 24"><path d="M16 11c1.66 0 2.99-1.34 2.99-3S17.66 5 16 5c-1.66 0-3 1.34-3 3s1.34 3 3 3zm-8 0c1.66 0 2.99-1.34 2.99-3S9.66 5 8 5C6.34 5 5 6.34 5 8s1.34 3 3 3zm0 2c-2.33 0-7 1.17-7 3.5V19h14v-2.5c0-2.33-4.67-3.5-7-3.5zm8 0c-.29 0-.62.02-.97.05 1.16.84 1.97 1.97 1.97 3.45V19h6v-2.5c0-2.33-4.67-3.5-7-3.5z"/></svg>Familj</div>
     </nav>
 </div>
 
@@ -435,7 +459,8 @@
 
 const PARENT_KEY='moodly';
 let APK=PARENT_KEY;
-let D={places:[],placeCheckins:[],benchmarks:[],checkins:[],micro:[],xp:0,level:1,firstVisit:true,baseline:null,userName:'',aiName:'Luna',personality:'warm',onboarded:null,alertsSeen:[],familyId:'',role:'self',familyProfiles:[],parentKey:''};
+let D={places:[],placeCheckins:[],benchmarks:[],checkins:[],micro:[],xp:0,level:1,points:0,streak:0,firstVisit:true,baseline:null,userName:'',aiName:'Luna',personality:'warm',onboarded:null,alertsSeen:[],familyId:'',role:'self',familyProfiles:[],parentKey:'',unlockedAvatars:['default'],selectedAvatar:'default',dailyRewardClaimed:null};
+const AVATARS={default:{emoji:'😊',label:'Standard',cost:0},fox:{emoji:'🦊',label:'Räv',cost:50},cat:{emoji:'🐱',label:'Katt',cost:50},dog:{emoji:'🐶',label:'Hund',cost:50},unicorn:{emoji:'🦄',label:'Enhörning',cost:100},dragon:{emoji:'🐉',label:'Drake',cost:150},star:{emoji:'⭐',label:'Stjärna',cost:200},rocket:{emoji:'🚀',label:'Raket',cost:300}};
 let sok=false;try{localStorage.setItem('_','1');localStorage.removeItem('_');sok=true}catch(e){}
 
 // ===== NOMINATIM PLACE SEARCH (OpenStreetMap — free, no API key) =====
@@ -540,7 +565,7 @@ async function searchNominatim(query,dropdown,input,addrId){
 // Migrate old data
 (function(){if(!sok)return;try{const old=localStorage.getItem('kf3');const nw=localStorage.getItem('moodly');if(old&&!nw)localStorage.setItem('moodly',old)}catch(e){}})();
 
-function ld(){if(!sok)return{...D};try{const r=localStorage.getItem(APK);if(!r)return{...D};const d=JSON.parse(r);if(!d.places)d.places=[];if(!d.placeCheckins)d.placeCheckins=[];if(!d.benchmarks)d.benchmarks=[];if(!d.micro)d.micro=[];if(!d.checkins)d.checkins=[];if(!d.alertsSeen)d.alertsSeen=[];if(!d.familyProfiles)d.familyProfiles=[];return d}catch(e){return{...D}}}
+function ld(){if(!sok)return{...D};try{const r=localStorage.getItem(APK);if(!r)return{...D};const d=JSON.parse(r);if(!d.places)d.places=[];if(!d.placeCheckins)d.placeCheckins=[];if(!d.benchmarks)d.benchmarks=[];if(!d.micro)d.micro=[];if(!d.checkins)d.checkins=[];if(!d.alertsSeen)d.alertsSeen=[];if(!d.familyProfiles)d.familyProfiles=[];if(!d.points)d.points=0;if(!d.unlockedAvatars)d.unlockedAvatars=['default'];if(!d.selectedAvatar)d.selectedAvatar='default';return d}catch(e){return{...D}}}
 function sv(d){D=d;if(sok)try{localStorage.setItem(APK,JSON.stringify(d))}catch(e){}}
 function pick(arr){return arr[Math.floor(Math.random()*arr.length)]}
 function toast(m){const t=document.getElementById('toast');t.textContent=m;t.classList.add('show');setTimeout(()=>t.classList.remove('show'),3000)}
@@ -566,17 +591,34 @@ const MOODS=[
 function checkInPlace(placeId,score){
     const d=ld();
     const today=new Date().toDateString();
+    const commentEl=document.getElementById('comment-'+placeId);
+    const comment=commentEl?commentEl.value.trim():'';
     const idx=d.placeCheckins.findIndex(c=>c.placeId===placeId&&new Date(c.ts).toDateString()===today);
+    let pts=0;
     if(idx>=0){
         d.placeCheckins[idx].score=score;
         d.placeCheckins[idx].ts=new Date().toISOString();
+        if(comment)d.placeCheckins[idx].comment=comment;
     }else{
-        d.placeCheckins.push({ts:new Date().toISOString(),placeId,score});
+        d.placeCheckins.push({ts:new Date().toISOString(),placeId,score,comment});
         d.xp=(d.xp||0)+5;
+        pts+=5;
+        if(comment)pts+=2;
     }
+    // Check if all places done today
+    const todayAll=d.placeCheckins.filter(c=>new Date(c.ts).toDateString()===today);
+    const uniqueToday=new Set(todayAll.map(c=>c.placeId));
+    if(d.places.length>1&&uniqueToday.size>=d.places.length)pts+=10;
+    // Streak bonus
+    const streak=calcPlaceStreak(d);
+    if(streak===3)pts+=25;
+    if(streak===7)pts+=50;
+    if(streak===30)pts+=200;
+    d.points=(d.points||0)+pts;
     if(d.placeCheckins.length>5000)d.placeCheckins=d.placeCheckins.slice(-5000);
     sv(d);
     renderHome();
+    if(pts>5)toast(`+${pts} poäng!`);
 }
 
 function getTodayCheckins(d){
@@ -673,10 +715,10 @@ async function fetchBenchmarks(){
             });
             changed=true;
             // Save incrementally so partial results show
-            sv(d);renderInsights();
+            sv(d);renderHome();
         }
     }
-    if(!changed)renderInsights(); // Remove loading if nothing found
+    if(!changed)renderHome(); // Remove loading if nothing found
 }
 
 // ===== ADD/REMOVE PLACE =====
@@ -701,22 +743,24 @@ function removePlace(id){
     sv(d);
 }
 
-// ===== RENDER HOME (Idag) =====
+// ===== RENDER HOME =====
 function renderHome(){
     const d=ld();
     const hr=new Date().getHours();
     const greet=hr<10?'God morgon':hr<17?'Hej':hr<21?'God kväll':'God natt';
-    document.getElementById('home-greeting').textContent=`${greet}, ${d.userName||'du'}!`;
+    const avatar=AVATARS[d.selectedAvatar||'default']?.emoji||'😊';
+    document.getElementById('home-greeting').innerHTML=`${d.role==='child'?avatar+' ':''}${greet}, ${d.userName||'du'}!`;
 
     const todayChecks=getTodayCheckins(d);
     const totalPlaces=d.places.length;
-    const checkedCount=todayChecks.length;
+    const checkedCount=new Set(todayChecks.map(c=>c.placeId)).size;
     const allDone=totalPlaces>0&&checkedCount>=totalPlaces;
 
     document.getElementById('home-sub').textContent=totalPlaces===0?'Lägg till dina platser för att börja':allDone?`Alla ${totalPlaces} platser checkade idag!`:`${checkedCount}/${totalPlaces} platser checkade idag`;
 
-    // Streak
-    document.getElementById('s-num').textContent=calcPlaceStreak(d);
+    // Streak + points
+    const streak=calcPlaceStreak(d);
+    document.getElementById('s-num').textContent=streak;
 
     // Summary if all done
     const summaryEl=document.getElementById('home-summary');
@@ -736,6 +780,30 @@ function renderHome(){
         summaryEl.innerHTML='';
     }
 
+    // Daily reward (for child profiles)
+    let rewardHtml='';
+    if(d.role==='child'||d.points>0){
+        const today=new Date().toDateString();
+        const claimed=d.dailyRewardClaimed&&new Date(d.dailyRewardClaimed).toDateString()===today;
+        rewardHtml+=`<div class="rewards-bar"><span class="pts">🪙 ${d.points||0}</span><span class="streak-mini">🔥 ${streak}</span></div>`;
+        if(!claimed){
+            rewardHtml+=`<div class="daily-reward" onclick="claimDailyReward()"><div style="font-size:1.5rem">🎁</div><div style="font-size:.85rem;font-weight:700;margin-top:4px">Hämta daglig belöning!</div><div style="font-size:.7rem;color:var(--t2)">Tryck för att få bonuspoäng</div></div>`;
+        }
+        // Avatar shop for child profiles
+        if(d.role==='child'){
+            rewardHtml+=`<div class="cd"><div class="ct" style="font-size:.85rem">🎭 Avatarer</div><div class="avatar-shop">`;
+            Object.entries(AVATARS).forEach(([k,av])=>{
+                const owned=(d.unlockedAvatars||[]).includes(k);
+                const sel=d.selectedAvatar===k;
+                const cls=sel?'shop-item sel':owned?'shop-item owned':'shop-item locked';
+                const action=sel?'':`onclick="buyAvatar('${k}')"`;
+                rewardHtml+=`<div class="${cls}" ${action}><div class="s-emoji">${av.emoji}</div><div class="s-label">${av.label}</div>${owned?'<div class="s-cost">Ägd</div>':`<div class="s-cost">🪙 ${av.cost}</div>`}</div>`;
+            });
+            rewardHtml+=`</div></div>`;
+        }
+    }
+    summaryEl.insertAdjacentHTML('afterbegin',rewardHtml);
+
     // Place cards
     const placesEl=document.getElementById('home-places');
     if(!d.places.length){
@@ -743,6 +811,8 @@ function renderHome(){
             <div style="font-size:2.5rem;margin-bottom:10px">📍</div>
             <p style="margin-bottom:16px">Inga platser tillagda ännu.<br>Lägg till skola, jobb, hem eller fritid!</p>
             <button class="btn ba" onclick="openAddPlace()" style="max-width:240px;margin:0 auto">+ Lägg till plats</button></div>`;
+        document.getElementById('home-insights').innerHTML='';
+        document.getElementById('home-benchmarks').innerHTML='';
         return;
     }
 
@@ -751,11 +821,12 @@ function renderHome(){
         const pt=PT[place.type]||PT.other;
         const todayCheck=todayChecks.find(c=>c.placeId===place.id);
         const currentScore=todayCheck?todayCheck.score:0;
+        const prevComment=todayCheck?.comment||'';
 
         html+=`<div class="place-card">
             <div class="place-header">
                 <div class="place-icon" style="background:${pt.bg}">${pt.icon}</div>
-                <div><div class="place-name">${place.name}${place.osmId?' <span title="Kopplad till karta" style="font-size:.7rem;opacity:.5">📍</span>':''}</div><div class="place-type-label">${pt.label}${place.address?' — '+place.address.split(',').slice(0,2).join(','):''}</div></div>
+                <div><div class="place-name">${place.name}</div><div class="place-type-label">${pt.label}</div></div>
             </div>
             <div class="emoji-row">`;
         MOODS.forEach(m=>{
@@ -763,7 +834,11 @@ function renderHome(){
             html+=`<div class="emoji-btn ${sel}" onclick="checkInPlace('${place.id}',${m.score})">
                 <span class="em">${m.emoji}</span><span class="el">${m.label}</span></div>`;
         });
-        html+=`</div>`;
+        html+=`</div>
+            <div class="place-comment-row${currentScore?' show':''}">
+                <input class="place-comment" id="comment-${place.id}" placeholder="Kort kommentar (valfritt)..." maxlength="100" value="${prevComment.replace(/"/g,'&quot;')}"
+                    onchange="saveComment('${place.id}',this.value)">
+            </div>`;
         if(todayCheck)html+=`<div class="place-done">Checkad idag</div>`;
         html+=`</div>`;
     });
@@ -772,6 +847,94 @@ function renderHome(){
     placesEl.innerHTML=html;
 
     renderAlerts();
+    renderHomeInsights(d);
+}
+
+function saveComment(placeId,comment){
+    const d=ld();const today=new Date().toDateString();
+    const idx=d.placeCheckins.findIndex(c=>c.placeId===placeId&&new Date(c.ts).toDateString()===today);
+    if(idx>=0){d.placeCheckins[idx].comment=comment.trim();sv(d)}
+}
+
+function claimDailyReward(){
+    const d=ld();
+    const pts=10+Math.floor(Math.random()*16);
+    d.points=(d.points||0)+pts;
+    d.dailyRewardClaimed=new Date().toISOString();
+    sv(d);renderHome();toast(`🎁 +${pts} bonuspoäng!`);
+}
+
+function buyAvatar(key){
+    const d=ld();const av=AVATARS[key];if(!av)return;
+    if((d.unlockedAvatars||[]).includes(key)){d.selectedAvatar=key;sv(d);renderHome();toast(`${av.emoji} ${av.label} vald!`);return}
+    if((d.points||0)<av.cost){toast(`Du behöver ${av.cost} poäng (har ${d.points||0})`);return}
+    d.points-=av.cost;
+    if(!d.unlockedAvatars)d.unlockedAvatars=[];
+    d.unlockedAvatars.push(key);
+    d.selectedAvatar=key;
+    sv(d);renderHome();toast(`${av.emoji} ${av.label} upplåst!`);
+}
+
+// ===== INLINE INSIGHTS ON HOME =====
+function renderHomeInsights(d){
+    const insEl=document.getElementById('home-insights');
+    const benchEl=document.getElementById('home-benchmarks');
+
+    // Benchmarks
+    const benchHtml=renderBenchmarks(d);
+    benchEl.innerHTML=benchHtml?`<div class="section-sep"></div><div class="ct">📊 Jämför med andra</div>`+benchHtml:'';
+
+    if(!d.placeCheckins.length){insEl.innerHTML='';return}
+
+    const placeStats=d.places.map(p=>{
+        const checks=getPlaceCheckins(d,p.id,30);
+        if(!checks.length)return{...p,avg:0,count:0,trend:'flat'};
+        const scores=checks.map(c=>c.score);
+        const avg=scores.reduce((a,b)=>a+b,0)/scores.length;
+        const last7=getPlaceCheckins(d,p.id,7).map(c=>c.score);
+        const prev7=(d.placeCheckins||[]).filter(c=>{const age=Date.now()-new Date(c.ts).getTime();return c.placeId===p.id&&age>=7*864e5&&age<14*864e5}).map(c=>c.score);
+        let trend='flat';
+        if(last7.length>=2&&prev7.length>=2){const l=last7.reduce((a,b)=>a+b,0)/last7.length;const p2=prev7.reduce((a,b)=>a+b,0)/prev7.length;if(l-p2>0.3)trend='up';else if(p2-l>0.3)trend='dn'}
+        return{...p,avg:Math.round(avg*10)/10,count:checks.length,trend};
+    }).filter(p=>p.count>0).sort((a,b)=>b.avg-a.avg);
+
+    if(!placeStats.length){insEl.innerHTML='';return}
+
+    let html='<div class="section-sep"></div><div class="ct">📈 Insikter</div>';
+
+    if(placeStats.length>=2){
+        const best=placeStats[0],worst=placeStats[placeStats.length-1];
+        html+=`<div class="ins-summary">
+            <div class="title">Senaste 30 dagarna</div>
+            <div class="ins-summary row"><span>Mår bäst</span><span class="best">${PT[best.type]?.icon||'📍'} ${best.name} (${best.avg}/5)</span></div>
+            <div class="ins-summary row"><span>Mår sämst</span><span class="worst">${PT[worst.type]?.icon||'📍'} ${worst.name} (${worst.avg}/5)</span></div>
+        </div>`;
+    }
+
+    placeStats.forEach(ps=>{
+        const pt=PT[ps.type]||PT.other;
+        const col=ps.avg>=4?'var(--ok)':ps.avg>=3?'var(--w)':'var(--bad)';
+        const trendLabel=ps.trend==='up'?'Uppåt':ps.trend==='dn'?'Nedåt':'Stabil';
+        const last7=getPlaceCheckins(d,ps.id,7).slice(-7);
+        let bars='';
+        for(let i=0;i<7;i++){const e=last7[i];if(e){const h=Math.round((e.score/5)*100);const bc=e.score>=4?'var(--ok)':e.score>=3?'var(--w)':'var(--bad)';bars+=`<div class="ins-bar" style="height:${h}%;background:${bc}"></div>`}else{bars+=`<div class="ins-bar" style="height:10%;background:rgba(255,255,255,.06)"></div>`}}
+        // Recent comments
+        const recentComments=getPlaceCheckins(d,ps.id,7).filter(c=>c.comment).slice(-2);
+        let commHtml=recentComments.map(c=>`<div class="place-prev-comment">"${c.comment}"</div>`).join('');
+
+        html+=`<div class="ins-card">
+            <div class="ins-header"><div class="ins-place"><span class="ico">${pt.icon}</span><span class="nm">${ps.name}</span></div><div class="ins-avg" style="color:${col}">${ps.avg}</div></div>
+            <div style="display:flex;justify-content:space-between;align-items:center">
+                <span class="ins-trend ${ps.trend}">${ps.trend==='up'?'↑':ps.trend==='dn'?'↓':'→'} ${trendLabel}</span>
+                <span style="font-size:.68rem;color:var(--t2)">${ps.count} checkins</span>
+            </div>
+            <div class="ins-bars">${bars}</div>
+            <div class="ins-meta"><span>7 dagar sedan</span><span>Idag</span></div>
+            ${commHtml}
+        </div>`;
+    });
+
+    insEl.innerHTML=html;
 }
 
 // ===== RENDER INSIGHTS =====
@@ -820,148 +983,6 @@ function renderBenchmarks(d){
     return html;
 }
 
-function renderInsights(){
-    const d=ld();
-    const el=document.getElementById('insights-content');
-
-    const benchHtml=renderBenchmarks(d);
-
-    if(!d.places.length||(!d.placeCheckins.length&&!benchHtml)){
-        el.innerHTML=`<div style="text-align:center;padding:30px 16px;color:var(--t2)">
-            <div style="font-size:2.5rem;margin-bottom:10px">📈</div>
-            <p>Checka in ditt mående på dina platser för att se insikter här.</p></div>`;
-        return;
-    }
-
-    if(!d.placeCheckins.length&&benchHtml){
-        el.innerHTML=`<div style="text-align:center;padding:16px;margin-bottom:8px">
-            <div style="font-size:1.8rem;margin-bottom:6px">📊</div>
-            <h2 style="font-size:1.1rem;font-weight:800;margin-bottom:4px">Dina platser vs andra i området</h2>
-            <p style="font-size:.8rem;color:var(--t2)">Baserat på aggregerad data. Checka in dagligen för att se din egen position.</p>
-        </div>`+benchHtml;
-        return;
-    }
-
-    let html='';
-
-    // Summary: best & worst places (last 30 days)
-    const placeStats=d.places.map(p=>{
-        const checks=getPlaceCheckins(d,p.id,30);
-        if(!checks.length)return{...p,avg:0,count:0,trend:'flat'};
-        const scores=checks.map(c=>c.score);
-        const avg=scores.reduce((a,b)=>a+b,0)/scores.length;
-
-        // Trend: last 7 vs previous 7
-        const last7=getPlaceCheckins(d,p.id,7).map(c=>c.score);
-        const prev7=(d.placeCheckins||[]).filter(c=>{
-            const age=Date.now()-new Date(c.ts).getTime();
-            return c.placeId===p.id&&age>=7*864e5&&age<14*864e5;
-        }).map(c=>c.score);
-
-        let trend='flat';
-        if(last7.length>=2&&prev7.length>=2){
-            const l=last7.reduce((a,b)=>a+b,0)/last7.length;
-            const p2=prev7.reduce((a,b)=>a+b,0)/prev7.length;
-            if(l-p2>0.3)trend='up';else if(p2-l>0.3)trend='dn';
-        }
-        return{...p,avg:Math.round(avg*10)/10,count:checks.length,trend,last7Scores:last7};
-    }).filter(p=>p.count>0).sort((a,b)=>b.avg-a.avg);
-
-    if(placeStats.length>=2){
-        const best=placeStats[0];
-        const worst=placeStats[placeStats.length-1];
-        html+=`<div class="ins-summary">
-            <div class="title">Senaste 30 dagarna</div>
-            <div class="ins-summary row"><span>Mår bäst</span><span class="best">${PT[best.type]?.icon||'📍'} ${best.name} (${best.avg}/5)</span></div>
-            <div class="ins-summary row"><span>Mår sämst</span><span class="worst">${PT[worst.type]?.icon||'📍'} ${worst.name} (${worst.avg}/5)</span></div>
-        </div>`;
-    }
-
-    // Per-place cards
-    placeStats.forEach(ps=>{
-        const pt=PT[ps.type]||PT.other;
-        const col=ps.avg>=4?'var(--ok)':ps.avg>=3?'var(--w)':'var(--bad)';
-        const trendLabel=ps.trend==='up'?'Uppåt':ps.trend==='dn'?'Nedåt':'Stabil';
-        const trendClass=ps.trend;
-
-        // Mini bar chart (last 7 entries)
-        const last7=getPlaceCheckins(d,ps.id,7).slice(-7);
-        let bars='';
-        for(let i=0;i<7;i++){
-            const entry=last7[i];
-            if(entry){
-                const h=Math.round((entry.score/5)*100);
-                const bc=entry.score>=4?'var(--ok)':entry.score>=3?'var(--w)':'var(--bad)';
-                bars+=`<div class="ins-bar" style="height:${h}%;background:${bc}"></div>`;
-            }else{
-                bars+=`<div class="ins-bar" style="height:10%;background:rgba(255,255,255,.06)"></div>`;
-            }
-        }
-
-        html+=`<div class="ins-card">
-            <div class="ins-header">
-                <div class="ins-place"><span class="ico">${pt.icon}</span><span class="nm">${ps.name}</span></div>
-                <div class="ins-avg" style="color:${col}">${ps.avg}</div>
-            </div>
-            <div style="display:flex;justify-content:space-between;align-items:center">
-                <span class="ins-trend ${trendClass}">${ps.trend==='up'?'↑':ps.trend==='dn'?'↓':'→'} ${trendLabel}</span>
-                <span style="font-size:.68rem;color:var(--t2)">${ps.count} checkins</span>
-            </div>
-            <div class="ins-bars">${bars}</div>
-            <div class="ins-meta"><span>7 dagar sedan</span><span>Idag</span></div>
-        </div>`;
-    });
-
-    // Patterns
-    if(placeStats.length>=2){
-        html+=`<div class="cd"><div class="ct">🔍 Mönster</div><div id="pattern-list">`;
-        const pats=[];
-
-        // Best/worst day of week per place
-        placeStats.forEach(ps=>{
-            const checks=getPlaceCheckins(d,ps.id,30);
-            if(checks.length<7)return;
-            const byDay=[0,0,0,0,0,0,0];
-            const byDayCount=[0,0,0,0,0,0,0];
-            checks.forEach(c=>{const dow=(new Date(c.ts).getDay()+6)%7;byDay[dow]+=c.score;byDayCount[dow]++});
-            const dayNames=['mån','tis','ons','tor','fre','lör','sön'];
-            let bestDay=0,worstDay=0,bestAvg=0,worstAvg=99;
-            for(let i=0;i<7;i++){
-                if(byDayCount[i]>=2){
-                    const a=byDay[i]/byDayCount[i];
-                    if(a>bestAvg){bestAvg=a;bestDay=i}
-                    if(a<worstAvg){worstAvg=a;worstDay=i}
-                }
-            }
-            if(bestAvg-worstAvg>0.5){
-                pats.push(`<strong>${ps.name}</strong>: Bäst på ${dayNames[bestDay]}ar (${bestAvg.toFixed(1)}), sämst på ${dayNames[worstDay]}ar (${worstAvg.toFixed(1)})`);
-            }
-        });
-
-        // Overall avg trend
-        const allChecks=[...d.placeCheckins].sort((a,b)=>new Date(a.ts)-new Date(b.ts));
-        if(allChecks.length>=10){
-            const first5=allChecks.slice(0,5).reduce((a,c)=>a+c.score,0)/5;
-            const last5=allChecks.slice(-5).reduce((a,c)=>a+c.score,0)/5;
-            const diff=last5-first5;
-            if(Math.abs(diff)>0.3){
-                pats.push(`Ditt övergripande mående har ${diff>0?'förbättrats':'försämrats'} med <strong>${Math.abs(diff).toFixed(1)}</strong> poäng sedan du började.`);
-            }
-        }
-
-        if(pats.length){
-            html+=pats.map(p=>`<div style="padding:7px 0;border-bottom:1px solid rgba(255,255,255,.04);font-size:.8rem;color:var(--t2);line-height:1.45">${p}</div>`).join('');
-        }else{
-            html+=`<p style="font-size:.8rem;color:var(--t2)">Fler checkins behövs för mönster.</p>`;
-        }
-        html+=`</div></div>`;
-    }
-
-    // Append benchmarks at the end
-    if(benchHtml)html+=`<div style="margin-top:16px"><div style="font-size:.92rem;font-weight:700;margin-bottom:10px">📊 Jämför med andra i ditt område</div>`+benchHtml+`</div>`;
-
-    el.innerHTML=html;
-}
 
 // ===== ALERTS =====
 function detectAlerts(d){
@@ -1167,25 +1188,18 @@ function finishOnboarding(){
     document.getElementById('ob').classList.add('h');
     document.getElementById('app').style.display='';
 
-    // Go directly to Insights and show benchmarks
-    go('insights');
+    go('home');
 
-    // Show loading state while fetching benchmarks
-    const el=document.getElementById('insights-content');
-    el.innerHTML=`<div style="text-align:center;padding:40px 16px">
-        <div style="font-size:2.2rem;margin-bottom:12px">🔍</div>
-        <h2 style="font-size:1.1rem;font-weight:800;margin-bottom:8px">Hämtar data för ditt område...</h2>
-        <p style="font-size:.8rem;color:var(--t2);margin-bottom:16px">Vi letar efter liknande platser nära dig för att visa hur dina platser ligger till.</p>
-        <div class="ac-loading" style="padding:0">⏳</div>
+    // Show loading in benchmarks area
+    const benchEl=document.getElementById('home-benchmarks');
+    benchEl.innerHTML=`<div style="text-align:center;padding:24px 16px">
+        <div style="font-size:1.8rem;margin-bottom:8px">🔍</div>
+        <p style="font-size:.82rem;font-weight:700;margin-bottom:4px">Hämtar data för ditt område...</p>
+        <p style="font-size:.75rem;color:var(--t2)">Vi letar efter liknande platser nära dig</p>
     </div>`;
 
     // Fetch benchmarks in background
-    fetchBenchmarks().then(()=>{
-        const d2=ld();
-        if(!d2.benchmarks||!d2.benchmarks.length){
-            renderInsights();
-        }
-    }).catch(()=>renderInsights());
+    fetchBenchmarks().then(()=>renderHome()).catch(()=>renderHome());
 }
 
 // ===== NAV =====
@@ -1194,9 +1208,8 @@ function go(p){
     document.querySelectorAll('.ni').forEach(i=>i.classList.toggle('on',i.dataset.p===p));
     document.querySelectorAll('.pg').forEach(pg=>pg.classList.toggle('on',pg.id==='pg-'+p));
     if(p==='home')renderHome();
-    if(p==='insights')renderInsights();
+    if(p==='family')renderFamily();
     if(p==='chat')renderChat();
-    if(p==='settings')renderSettings();
     window.scrollTo(0,0);
 }
 
@@ -1217,84 +1230,12 @@ function renderChat(){
     }).join('')}</div>`;
 }
 
-// ===== SETTINGS =====
-function renderSettings(){
-    const d=ld();
-    let html='';
-
-    // Places
-    html+=`<div class="cd"><div class="ct">📍 Dina platser</div>`;
-    if(d.places.length){
-        d.places.forEach(p=>{
-            const pt=PT[p.type]||PT.other;
-            const addr=p.address?`<div style="font-size:.62rem;color:var(--t2);opacity:.7;margin-top:1px">${p.address}</div>`:'';
-            const linked=p.osmId?'<span style="font-size:.55rem;color:var(--ok);margin-left:4px">kopplad</span>':'';
-            html+=`<div class="sett-place"><span style="font-size:1.1rem">${pt.icon}</span><div class="info"><div class="nm">${p.name}${linked}</div><div class="tp">${pt.label}</div>${addr}</div><button class="alert-dismiss" onclick="if(confirm('Ta bort ${p.name}?')){removePlace('${p.id}');renderSettings()}" title="Ta bort">×</button></div>`;
-        });
-    }
-    html+=`<button class="btn ba" onclick="openAddPlace()" style="margin-top:10px">+ Lägg till plats</button>
-        <p style="font-size:.66rem;color:var(--t2);margin-top:8px;line-height:1.4">Sök efter platser för att koppla dem till riktiga adresser. Platser markerade <span style="color:var(--ok)">kopplad</span> kan jämföras med andra användare på samma plats.</p>
-    </div>`;
-
-    // Profile
-    html+=`<div class="cd"><div class="ct">👤 Profil</div>
-        <div class="sett-row"><span>Ditt namn</span><input class="sett-input" id="sett-username" value="${d.userName||''}"></div>
-        <div class="sett-row"><span>AI-namn</span><input class="sett-input" id="sett-ainame" value="${d.aiName||'Luna'}"></div>
-        <div class="sett-row"><span>Personlighet</span><select id="sett-pers">
-            <option value="warm"${d.personality==='warm'?' selected':''}>Varm</option>
-            <option value="direct"${d.personality==='direct'?' selected':''}>Direkt</option>
-            <option value="coach"${d.personality==='coach'?' selected':''}>Coach</option>
-        </select></div>
-        <button class="btn bp" onclick="saveProfile()" style="margin-top:10px">Spara</button></div>`;
-
-    // Family
-    html+=`<div class="cd"><div class="ct">👨‍👩‍👧‍👦 Familj</div>`;
-    if(APK!==PARENT_KEY){
-        html+=`<p style="font-size:.82rem;color:var(--t2)">Gå tillbaka till föräldern för att hantera familjen.</p>`;
-    }else if(!d.familyId){
-        html+=`<p style="font-size:.82rem;color:var(--t2);margin-bottom:10px">Skapa en familj för att följa dina barns mående.</p>
-            <button class="btn ba" onclick="createFamily()">Skapa familj</button>`;
-    }else{
-        html+=`<button class="btn bp" onclick="showFamilyDashboard()" style="margin-bottom:12px">📊 Familje-dashboard</button>`;
-        if(d.familyProfiles&&d.familyProfiles.length>0){
-            d.familyProfiles.forEach(function(fp,i){
-                html+=`<div class="fam-member"><div class="fam-avatar">👧</div><div class="fam-info"><div class="fam-name">${fp.name}</div><div class="fam-stat">${fp.ageGroup}</div></div><button class="btn bs" style="width:auto;padding:6px 12px;font-size:.72rem" onclick="switchToProfile('${fp.storageKey}','${fp.name}')">Visa</button><button class="alert-dismiss" onclick="removeChild(${i})" title="Ta bort">×</button></div>`;
-            });
-        }
-        html+=`<div style="margin-top:12px;padding-top:12px;border-top:1px solid rgba(255,255,255,.06)">
-            <div class="sett-row"><span>Barnets namn</span><input class="sett-input" id="new-child-name" placeholder=""></div>
-            <div class="sett-row"><span>Åldersgrupp</span><select id="new-child-age">
-                <option value="6-9">6-9 år</option><option value="10-13">10-13 år</option><option value="14-17">14-17 år</option>
-            </select></div>
-            <button class="btn ba" onclick="addChild()" style="margin-top:8px">+ Lägg till barn</button></div>`;
-    }
-    html+=`</div>`;
-
-    // Data
-    html+=`<div class="cd"><div class="ct">💾 Data</div>
-        <button class="btn bs" onclick="exportData()" style="margin-bottom:8px">Exportera data</button>
-        <button class="btn bs" onclick="confirmDeleteAll()" style="background:rgba(225,112,85,.1);color:var(--bad)">Radera all data</button></div>`;
-
-    html+=`<div class="cd"><div class="ct">ℹ️ Om</div><p style="font-size:.76rem;color:var(--t2);line-height:1.5">Moodly v5.0 — All data lagras lokalt. Inget skickas till servrar.</p></div>`;
-
-    document.getElementById('settings-content').innerHTML=html;
-}
-
 function saveProfile(){
     const d=ld();
     d.userName=document.getElementById('sett-username').value.trim();
     d.aiName=document.getElementById('sett-ainame').value.trim()||'Luna';
     d.personality=document.getElementById('sett-pers').value;
-    const keyEl=document.getElementById('sett-apikey');
-    if(keyEl){
-        const newKey=keyEl.value.trim();
-        if(newKey&&newKey!==d.googleApiKey){
-            d.googleApiKey=newKey;
-            loadGoogleMaps(newKey);
-        }
-        d.googleApiKey=newKey;
-    }
-    sv(d);toast('Sparat!');
+    sv(d);toast('Sparat!');renderHome();
 }
 
 function exportData(){
@@ -1307,12 +1248,12 @@ function confirmDeleteAll(){
     if(sok){const d=ld();if(d.familyProfiles)d.familyProfiles.forEach(fp=>localStorage.removeItem(fp.storageKey));localStorage.removeItem(APK)}
     D={places:[],placeCheckins:[],checkins:[],micro:[],xp:0,level:1,firstVisit:true,baseline:null,userName:'',aiName:'Luna',personality:'warm',onboarded:null,alertsSeen:[],familyId:'',role:'self',familyProfiles:[],parentKey:''};
     if(sok)localStorage.setItem(APK,JSON.stringify(D));
-    toast('All data raderad.');renderSettings();renderHome();
+    toast('All data raderad.');renderHome();
 }
 
 // ===== FAMILY =====
 function createFamily(){
-    const d=ld();d.familyId='fam_'+Date.now();d.role='parent';d.familyProfiles=[];sv(d);renderSettings();toast('Familj skapad!');
+    const d=ld();d.familyId='fam_'+Date.now();d.role='parent';d.familyProfiles=[];sv(d);toast('Familj skapad!');
 }
 
 function addChild(){
@@ -1322,15 +1263,15 @@ function addChild(){
     const id='child_'+Date.now();const storageKey='moodly_child_'+id;
     const d=ld();
     d.familyProfiles.push({id,name,ageGroup,storageKey});sv(d);
-    const childData={places:[...d.places],placeCheckins:[],checkins:[],micro:[],xp:0,level:1,firstVisit:false,baseline:null,userName:name,aiName:d.aiName||'Luna',personality:'warm',onboarded:new Date().toISOString(),alertsSeen:[],familyId:d.familyId,role:'child',familyProfiles:[],parentKey:PARENT_KEY};
+    const childData={places:[...d.places],placeCheckins:[],benchmarks:[],checkins:[],micro:[],xp:0,level:1,points:0,streak:0,firstVisit:false,baseline:null,userName:name,aiName:d.aiName||'Luna',personality:'warm',onboarded:new Date().toISOString(),alertsSeen:[],familyId:d.familyId,role:'child',familyProfiles:[],parentKey:PARENT_KEY,unlockedAvatars:['default'],selectedAvatar:'default',dailyRewardClaimed:null};
     if(sok)localStorage.setItem(storageKey,JSON.stringify(childData));
-    renderSettings();toast(name+' tillagd!');
+    toast(name+' tillagd!');
 }
 
 function removeChild(idx){
     const d=ld();if(!d.familyProfiles[idx])return;
     if(sok)localStorage.removeItem(d.familyProfiles[idx].storageKey);
-    d.familyProfiles.splice(idx,1);sv(d);renderSettings();
+    d.familyProfiles.splice(idx,1);sv(d);
 }
 
 function switchToProfile(storageKey,name){
@@ -1387,6 +1328,168 @@ function showFamilyDashboard(){
 }
 
 function closeFamilyDashboard(){document.getElementById('fam-overlay').style.display='none'}
+
+// ===== RENDER FAMILY PAGE =====
+function renderFamily(){
+    const d=ld();
+    let html='';
+
+    // If viewing child profile, show back button
+    if(APK!==PARENT_KEY){
+        html+=`<div class="cd" style="text-align:center"><p style="font-size:.82rem;color:var(--t2);margin-bottom:10px">Du visar ett barnprofil. Gå tillbaka för att hantera familjen.</p>
+            <button class="btn bp" onclick="switchToParent()">Tillbaka till föräldern</button></div>`;
+        document.getElementById('family-content').innerHTML=html;
+        return;
+    }
+
+    // Family setup
+    if(!d.familyId){
+        html+=`<div class="cd" style="text-align:center;padding:28px 18px">
+            <div style="font-size:2.5rem;margin-bottom:10px">👨‍👩‍👧‍👦</div>
+            <h3 style="font-size:1rem;margin-bottom:8px">Skapa din familj</h3>
+            <p style="font-size:.82rem;color:var(--t2);margin-bottom:16px;line-height:1.5">Följ dina barns mående över platser som skola, idrott och hem. Du ser trender och mönster — aldrig samtalstexter.</p>
+            <button class="btn ba" onclick="createFamily();renderFamily()">Skapa familj</button>
+        </div>`;
+    } else {
+        // Children dashboard
+        if(d.familyProfiles&&d.familyProfiles.length>0){
+            d.familyProfiles.forEach((fp,i)=>{
+                const childData=getChildDetailedData(fp.storageKey);
+                const avatar=childData?.avatar||'😊';
+                html+=`<div class="fam-child-card">
+                    <div class="fam-child-header">
+                        <div class="fam-child-avatar">${avatar}</div>
+                        <div class="fam-child-info">
+                            <div class="fam-child-name">${fp.name}</div>
+                            <div class="fam-child-meta"><span>${fp.ageGroup}</span>${childData?`<span>${childData.streak} dagars streak</span><span>🪙 ${childData.points}</span>`:''}</div>
+                        </div>
+                        <button class="btn bs" style="width:auto;padding:6px 12px;font-size:.72rem" onclick="switchToProfile('${fp.storageKey}','${fp.name}')">Visa</button>
+                    </div>`;
+
+                if(!childData||!childData.places.length){
+                    html+=`<p style="font-size:.78rem;color:var(--t2);padding:8px 0">Ingen data ännu</p>`;
+                }else{
+                    // Per-place mood for this child
+                    childData.places.forEach(cp=>{
+                        const pt=PT[cp.type]||PT.other;
+                        const col=cp.avg>=4?'var(--ok)':cp.avg>=3?'var(--w)':'var(--bad)';
+                        const trendIcon=cp.trend==='up'?'↑':cp.trend==='dn'?'↓':'→';
+                        html+=`<div class="fam-place-row">
+                            <span>${pt.icon}</span><span style="flex:1">${cp.name}</span>
+                            <span style="font-size:.68rem;color:var(--t2)">${trendIcon}</span>
+                            <span class="fam-place-score" style="color:${col}">${cp.avg>0?cp.avg:'—'}</span>
+                        </div>`;
+                        if(cp.lastComment){
+                            html+=`<div class="fam-place-comment">"${cp.lastComment}"</div>`;
+                        }
+                    });
+
+                    // Alerts for this child
+                    if(childData.alerts.length){
+                        html+=`<div style="margin-top:8px">`;
+                        childData.alerts.forEach(a=>{
+                            html+=`<div style="font-size:.72rem;padding:6px 8px;border-radius:6px;margin-top:4px;background:${a.sev==='bad'?'rgba(225,112,85,.1)':'rgba(253,203,110,.1)'};color:${a.sev==='bad'?'var(--bad)':'var(--w)'}">${a.ico} ${a.title}</div>`;
+                        });
+                        html+=`</div>`;
+                    }
+                }
+                html+=`<div style="display:flex;gap:8px;margin-top:10px;padding-top:8px;border-top:1px solid rgba(255,255,255,.04)">
+                    <button class="btn bs" style="padding:6px;font-size:.7rem" onclick="removeChild(${i});renderFamily()">Ta bort</button>
+                </div></div>`;
+            });
+        }
+
+        // Add child form
+        html+=`<div class="cd"><div class="ct">+ Lägg till barn</div>
+            <div class="sett-row"><span>Namn</span><input class="sett-input" id="new-child-name" placeholder=""></div>
+            <div class="sett-row"><span>Åldersgrupp</span><select id="new-child-age">
+                <option value="6-9">6-9 år</option><option value="10-13">10-13 år</option><option value="14-17">14-17 år</option>
+            </select></div>
+            <button class="btn ba" onclick="addChild();renderFamily()" style="margin-top:8px">+ Lägg till barn</button>
+        </div>`;
+
+        // Invite
+        html+=`<div class="cd"><div class="ct">📤 Bjud in</div>
+            <p style="font-size:.78rem;color:var(--t2);margin-bottom:10px">Bjud in familjemedlemmar att använda Moodly.</p>
+            <button class="btn bp" onclick="shareInvite()">Dela inbjudan</button>
+        </div>`;
+    }
+
+    // Settings section (always shown)
+    html+=`<div class="section-sep"></div>
+    <div class="ct">⚙️ Inställningar</div>`;
+
+    // Profile settings
+    html+=`<div class="cd"><div class="ct">👤 Profil</div>
+        <div class="sett-row"><span>Ditt namn</span><input class="sett-input" id="sett-username" value="${d.userName||''}"></div>
+        <div class="sett-row"><span>AI-namn</span><input class="sett-input" id="sett-ainame" value="${d.aiName||'Luna'}"></div>
+        <div class="sett-row"><span>Personlighet</span><select id="sett-pers">
+            <option value="warm"${d.personality==='warm'?' selected':''}>Varm</option>
+            <option value="direct"${d.personality==='direct'?' selected':''}>Direkt</option>
+            <option value="coach"${d.personality==='coach'?' selected':''}>Coach</option>
+        </select></div>
+        <button class="btn bp" onclick="saveProfile()" style="margin-top:10px">Spara</button></div>`;
+
+    // Places management
+    html+=`<div class="cd"><div class="ct">📍 Dina platser</div>`;
+    if(d.places.length){
+        d.places.forEach(p=>{
+            const pt=PT[p.type]||PT.other;
+            const linked=p.osmId?'<span style="font-size:.55rem;color:var(--ok);margin-left:4px">kopplad</span>':'';
+            html+=`<div class="sett-place"><span style="font-size:1.1rem">${pt.icon}</span><div class="info"><div class="nm">${p.name}${linked}</div><div class="tp">${pt.label}</div></div><button class="alert-dismiss" onclick="if(confirm('Ta bort ${p.name}?')){removePlace('${p.id}');renderFamily()}" title="Ta bort">×</button></div>`;
+        });
+    }
+    html+=`<button class="btn ba" onclick="openAddPlace()" style="margin-top:10px">+ Lägg till plats</button></div>`;
+
+    // Data
+    html+=`<div class="cd"><div class="ct">💾 Data</div>
+        <button class="btn bs" onclick="exportData()" style="margin-bottom:8px">Exportera data</button>
+        <button class="btn bs" onclick="confirmDeleteAll()" style="background:rgba(225,112,85,.1);color:var(--bad)">Radera all data</button></div>`;
+
+    html+=`<div class="cd"><div class="ct">ℹ️ Om</div><p style="font-size:.76rem;color:var(--t2);line-height:1.5">Moodly v5.0 — All data lagras lokalt. Inget skickas till servrar.</p></div>`;
+
+    document.getElementById('family-content').innerHTML=html;
+}
+
+function getChildDetailedData(storageKey){
+    if(!sok)return null;
+    try{
+        const raw=localStorage.getItem(storageKey);if(!raw)return null;
+        const cd=JSON.parse(raw);
+        const streak=calcPlaceStreak(cd);
+        const places=(cd.places||[]).map(p=>{
+            const checks=(cd.placeCheckins||[]).filter(c=>c.placeId===p.id);
+            const last30=checks.filter(c=>Date.now()-new Date(c.ts).getTime()<30*864e5);
+            const avg=last30.length?Math.round(last30.reduce((a,c)=>a+c.score,0)/last30.length*10)/10:0;
+            const last7=checks.filter(c=>Date.now()-new Date(c.ts).getTime()<7*864e5).map(c=>c.score);
+            const prev7=checks.filter(c=>{const age=Date.now()-new Date(c.ts).getTime();return age>=7*864e5&&age<14*864e5}).map(c=>c.score);
+            let trend='flat';
+            if(last7.length>=2&&prev7.length>=2){const l=last7.reduce((a,b)=>a+b,0)/last7.length;const p2=prev7.reduce((a,b)=>a+b,0)/prev7.length;if(l-p2>0.3)trend='up';else if(p2-l>0.3)trend='dn'}
+            const recentComments=checks.filter(c=>c.comment).slice(-1);
+            return{...p,avg,trend,lastComment:recentComments[0]?.comment||''};
+        });
+        const alerts=[];
+        (cd.places||[]).forEach(p=>{
+            const recent=(cd.placeCheckins||[]).filter(c=>c.placeId===p.id).slice(-3);
+            if(recent.length>=3&&recent.every(c=>c.score<=2)){
+                alerts.push({sev:'bad',ico:'📉',title:`Lågt mående: ${p.name} (3+ dagar)`});
+            }
+        });
+        const avatar=AVATARS[cd.selectedAvatar||'default']?.emoji||'😊';
+        return{places,streak,points:cd.points||0,alerts,avatar};
+    }catch(e){return null}
+}
+
+function shareInvite(){
+    const d=ld();
+    const msg=`${d.userName||'Jag'} vill att du testar Moodly — en app för att mäta välmående kopplat till platser som skola, jobb och fritid.`;
+    const url='https://guslinmarcus.github.io/kanslaflow/';
+    if(navigator.share){
+        navigator.share({title:'Prova Moodly',text:msg,url}).catch(()=>{});
+    }else{
+        navigator.clipboard.writeText(msg+' '+url).then(()=>toast('Länk kopierad!')).catch(()=>toast('Kunde inte kopiera'));
+    }
+}
 
 // ===== SENTIMENT (for chat) =====
 const EMO={glad:{w:['glad','lycklig','nöjd','fantastisk','underbar','toppen','skratta','rolig','kul','bra','härlig','glädje','positiv','tacksam','stolt','energisk','pigg','motiverad','hoppfull','avslappnad','älskar','kärlek','awesome','nice','stark','kraftfull','lättad','superbra','jättebra','perfekt','duktig','grym','levande','taggad','peppad','inspirerad','fokuserad'],v:.85},lugn:{w:['lugn','avslappnad','fridful','harmonisk','balanserad','trygg','bekväm','stabil','okej','neutral','fine','helt ok','chill','tillfreds'],v:.65},ledsen:{w:['ledsen','sorglig','nere','gråter','ensam','tom','hopplös','deprimerad','melankolisk','saknar','besviken','uppgiven','mörkt','tungt','svårt','deppig','trist','knäckt','trasig','värdelös'],v:.25},stressad:{w:['stressad','pressad','överväldigad','kaos','panik','deadline','hinner inte','sliten','utbränd','utmattad','nervös','hektisk','jäktad','överbelastad'],v:.3},orolig:{w:['orolig','ångest','rädd','osäker','ängslig','oro','skrämmande','otrygg','spänd','grubblar','bekymrad'],v:.28},arg:{w:['arg','irriterad','frustrerad','sur','rasande','ilsken','förbannad','less','upprörd','lack'],v:.2},trott:{w:['trött','utmattad','slut','dränerad','sömnig','orkeslös','seg','slutkörd'],v:.35}};
@@ -1625,8 +1728,6 @@ document.getElementById('conv-text').addEventListener('focus',()=>{setTimeout(()
 // ===== INIT =====
 try{speechSynthesis.getVoices();speechSynthesis.onvoiceschanged=()=>speechSynthesis.getVoices()}catch(e){}
 const d0=ld();
-// Load Google Maps if API key exists
-if(d0.googleApiKey)loadGoogleMaps(d0.googleApiKey);
 if(!d0.firstVisit){document.getElementById('ob').classList.add('h');document.getElementById('app').style.display='';renderHome()}
 </script>
 </body>

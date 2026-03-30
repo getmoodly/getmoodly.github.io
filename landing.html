@@ -1,0 +1,1155 @@
+<!DOCTYPE html>
+<html lang="sv">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Moodly — Förstå hur ditt barn mår</title>
+    <link rel="icon" href="data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'><text y='.9em' font-size='90'>🧠</text></svg>">
+    <meta name="theme-color" content="#6C5CE7">
+    <meta name="description" content="Moodly hjälper familjer att förstå hur skolan, fritids och hemmet påverkar barnens välmående.">
+    <style>
+        :root {
+            --p: #6C5CE7;
+            --pl: #A29BFE;
+            --pd: #5A4BD1;
+            --a: #00CEC9;
+            --al: #81ECEC;
+            --bg: #0F0E17;
+            --c1: #1A1928;
+            --c2: #232240;
+            --t: #FFFFFE;
+            --t2: #A7A9BE;
+            --ok: #00B894;
+            --w: #FDCB6E;
+            --bad: #E17055;
+            --g: #FFD700;
+            --r: 16px;
+            --rs: 10px;
+        }
+
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        html {
+            scroll-behavior: smooth;
+        }
+
+        body {
+            font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+            background: var(--bg);
+            color: var(--t);
+            overflow-x: hidden;
+            line-height: 1.6;
+        }
+
+        /* UTILITY */
+        .container {
+            max-width: 1080px;
+            margin: 0 auto;
+            padding: 0 24px;
+        }
+
+        section {
+            padding: 80px 0;
+        }
+
+        /* REVEAL ANIMATIONS */
+        .reveal {
+            opacity: 0;
+            transform: translateY(32px);
+            transition: opacity 0.7s cubic-bezier(0.23, 1, 0.32, 1), transform 0.7s cubic-bezier(0.23, 1, 0.32, 1);
+        }
+
+        .reveal.visible {
+            opacity: 1;
+            transform: translateY(0);
+        }
+
+        .reveal-delay-1 { transition-delay: 0.1s; }
+        .reveal-delay-2 { transition-delay: 0.2s; }
+        .reveal-delay-3 { transition-delay: 0.25s; }
+
+        /* NAV BAR */
+        .topnav {
+            position: fixed;
+            top: 0;
+            left: 0;
+            right: 0;
+            z-index: 100;
+            padding: 16px 0;
+            transition: background 0.3s, box-shadow 0.3s;
+        }
+
+        .topnav.scrolled {
+            background: rgba(15, 14, 23, 0.92);
+            backdrop-filter: blur(16px);
+            -webkit-backdrop-filter: blur(16px);
+            box-shadow: 0 1px 0 rgba(255,255,255,0.04);
+        }
+
+        .topnav .container {
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+        }
+
+        .logo {
+            font-size: 1.25rem;
+            font-weight: 800;
+            color: var(--t);
+            text-decoration: none;
+            display: flex;
+            align-items: center;
+            gap: 8px;
+        }
+
+        .logo-icon {
+            font-size: 1.4rem;
+        }
+
+        .nav-cta {
+            padding: 10px 24px;
+            background: linear-gradient(135deg, var(--p), var(--pd));
+            color: var(--t);
+            border: none;
+            border-radius: var(--rs);
+            font-size: 0.88rem;
+            font-weight: 700;
+            cursor: pointer;
+            text-decoration: none;
+            transition: transform 0.15s, box-shadow 0.3s;
+        }
+
+        .nav-cta:hover {
+            transform: translateY(-1px);
+            box-shadow: 0 6px 24px rgba(108, 92, 231, 0.35);
+        }
+
+        /* HERO */
+        .hero {
+            padding: 140px 0 100px;
+            position: relative;
+            overflow: hidden;
+        }
+
+        .hero::before {
+            content: '';
+            position: absolute;
+            top: -40%;
+            left: -20%;
+            width: 600px;
+            height: 600px;
+            background: radial-gradient(circle, rgba(108, 92, 231, 0.12) 0%, transparent 70%);
+            pointer-events: none;
+        }
+
+        .hero::after {
+            content: '';
+            position: absolute;
+            bottom: -30%;
+            right: -15%;
+            width: 500px;
+            height: 500px;
+            background: radial-gradient(circle, rgba(0, 206, 201, 0.08) 0%, transparent 70%);
+            pointer-events: none;
+        }
+
+        .hero .container {
+            display: flex;
+            align-items: center;
+            gap: 60px;
+            position: relative;
+            z-index: 1;
+        }
+
+        .hero-text {
+            flex: 1;
+            min-width: 0;
+        }
+
+        .hero-badge {
+            display: inline-flex;
+            align-items: center;
+            gap: 6px;
+            padding: 6px 14px;
+            background: rgba(108, 92, 231, 0.15);
+            border: 1px solid rgba(108, 92, 231, 0.25);
+            border-radius: 24px;
+            font-size: 0.78rem;
+            font-weight: 600;
+            color: var(--pl);
+            margin-bottom: 20px;
+        }
+
+        .hero h1 {
+            font-size: clamp(2rem, 5vw, 3.2rem);
+            font-weight: 800;
+            line-height: 1.15;
+            margin-bottom: 18px;
+            letter-spacing: -0.02em;
+        }
+
+        .hero h1 .accent {
+            background: linear-gradient(135deg, var(--pl), var(--al));
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+            background-clip: text;
+        }
+
+        .hero-sub {
+            font-size: 1.1rem;
+            color: var(--t2);
+            line-height: 1.65;
+            margin-bottom: 32px;
+            max-width: 520px;
+        }
+
+        .hero-actions {
+            display: flex;
+            gap: 14px;
+            flex-wrap: wrap;
+        }
+
+        .btn-primary {
+            display: inline-flex;
+            align-items: center;
+            gap: 8px;
+            padding: 15px 32px;
+            background: linear-gradient(135deg, var(--p), var(--pd));
+            color: var(--t);
+            border: none;
+            border-radius: var(--rs);
+            font-size: 1rem;
+            font-weight: 700;
+            cursor: pointer;
+            text-decoration: none;
+            transition: transform 0.15s, box-shadow 0.3s;
+        }
+
+        .btn-primary:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 8px 32px rgba(108, 92, 231, 0.4);
+        }
+
+        .btn-secondary {
+            display: inline-flex;
+            align-items: center;
+            gap: 8px;
+            padding: 15px 28px;
+            background: rgba(255, 255, 255, 0.06);
+            border: 1px solid rgba(255, 255, 255, 0.1);
+            color: var(--t);
+            border-radius: var(--rs);
+            font-size: 1rem;
+            font-weight: 600;
+            cursor: pointer;
+            text-decoration: none;
+            transition: background 0.2s;
+        }
+
+        .btn-secondary:hover {
+            background: rgba(255, 255, 255, 0.1);
+        }
+
+        /* PHONE MOCKUP */
+        .hero-visual {
+            flex: 0 0 320px;
+            position: relative;
+        }
+
+        .phone-frame {
+            width: 280px;
+            background: var(--c1);
+            border-radius: 36px;
+            border: 2px solid rgba(255, 255, 255, 0.08);
+            padding: 16px;
+            box-shadow:
+                0 24px 80px rgba(0, 0, 0, 0.5),
+                0 0 0 1px rgba(255, 255, 255, 0.03) inset,
+                0 0 80px rgba(108, 92, 231, 0.08);
+            position: relative;
+        }
+
+        .phone-notch {
+            width: 100px;
+            height: 24px;
+            background: var(--bg);
+            border-radius: 0 0 16px 16px;
+            margin: -16px auto 12px;
+        }
+
+        .phone-screen {
+            background: var(--bg);
+            border-radius: 20px;
+            padding: 18px 14px;
+        }
+
+        .phone-greeting {
+            font-size: 0.72rem;
+            color: var(--t2);
+            margin-bottom: 2px;
+        }
+
+        .phone-title {
+            font-size: 0.92rem;
+            font-weight: 700;
+            margin-bottom: 14px;
+        }
+
+        .phone-place {
+            background: var(--c1);
+            border-radius: 12px;
+            padding: 12px;
+            margin-bottom: 8px;
+            border: 1px solid rgba(255, 255, 255, 0.04);
+        }
+
+        .phone-place-header {
+            display: flex;
+            align-items: center;
+            gap: 8px;
+            margin-bottom: 10px;
+        }
+
+        .phone-place-icon {
+            width: 30px;
+            height: 30px;
+            border-radius: 8px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 0.9rem;
+        }
+
+        .phone-place-name {
+            font-size: 0.72rem;
+            font-weight: 700;
+        }
+
+        .phone-place-type {
+            font-size: 0.58rem;
+            color: var(--t2);
+        }
+
+        .phone-emojis {
+            display: flex;
+            gap: 4px;
+        }
+
+        .phone-emoji {
+            flex: 1;
+            text-align: center;
+            padding: 6px 2px;
+            border-radius: 8px;
+            border: 1.5px solid rgba(255, 255, 255, 0.06);
+            font-size: 1rem;
+            background: rgba(255, 255, 255, 0.02);
+            transition: all 0.2s;
+        }
+
+        .phone-emoji.active {
+            border-color: var(--p);
+            background: rgba(108, 92, 231, 0.15);
+            transform: scale(1.1);
+        }
+
+        .phone-streak {
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            gap: 5px;
+            margin-top: 12px;
+            font-size: 0.72rem;
+        }
+
+        .phone-streak .num {
+            color: var(--g);
+            font-weight: 800;
+            font-size: 0.88rem;
+        }
+
+        .phone-streak .lbl {
+            color: var(--t2);
+        }
+
+        .phone-glow {
+            position: absolute;
+            top: 50%;
+            left: 50%;
+            transform: translate(-50%, -50%);
+            width: 350px;
+            height: 350px;
+            background: radial-gradient(circle, rgba(108, 92, 231, 0.12) 0%, transparent 70%);
+            pointer-events: none;
+            z-index: -1;
+        }
+
+        /* SECTION HEADERS */
+        .section-header {
+            text-align: center;
+            margin-bottom: 52px;
+        }
+
+        .section-label {
+            display: inline-flex;
+            align-items: center;
+            gap: 6px;
+            padding: 5px 14px;
+            background: rgba(108, 92, 231, 0.12);
+            border-radius: 20px;
+            font-size: 0.74rem;
+            font-weight: 600;
+            color: var(--pl);
+            margin-bottom: 16px;
+        }
+
+        .section-header h2 {
+            font-size: clamp(1.6rem, 3.5vw, 2.4rem);
+            font-weight: 800;
+            margin-bottom: 14px;
+            letter-spacing: -0.01em;
+        }
+
+        .section-header p {
+            font-size: 1.05rem;
+            color: var(--t2);
+            max-width: 560px;
+            margin: 0 auto;
+            line-height: 1.6;
+        }
+
+        /* PROBLEM SECTION */
+        .problem {
+            background: linear-gradient(180deg, var(--bg) 0%, rgba(26, 25, 40, 0.5) 50%, var(--bg) 100%);
+        }
+
+        .problem-grid {
+            display: grid;
+            grid-template-columns: repeat(3, 1fr);
+            gap: 20px;
+        }
+
+        .problem-card {
+            background: var(--c1);
+            border: 1px solid rgba(255, 255, 255, 0.05);
+            border-radius: var(--r);
+            padding: 32px 24px;
+            text-align: center;
+            position: relative;
+            overflow: hidden;
+            transition: transform 0.3s, border-color 0.3s;
+        }
+
+        .problem-card:hover {
+            transform: translateY(-4px);
+            border-color: rgba(225, 112, 85, 0.2);
+        }
+
+        .problem-card::before {
+            content: '';
+            position: absolute;
+            top: 0;
+            left: 0;
+            right: 0;
+            height: 3px;
+            background: linear-gradient(90deg, var(--bad), var(--w));
+            opacity: 0.6;
+        }
+
+        .problem-icon {
+            font-size: 2.2rem;
+            margin-bottom: 16px;
+            display: block;
+        }
+
+        .problem-card h3 {
+            font-size: 1.05rem;
+            font-weight: 700;
+            margin-bottom: 10px;
+            line-height: 1.35;
+        }
+
+        .problem-card p {
+            font-size: 0.85rem;
+            color: var(--t2);
+            line-height: 1.55;
+        }
+
+        /* HOW IT WORKS */
+        .steps {
+            position: relative;
+        }
+
+        .steps-grid {
+            display: grid;
+            grid-template-columns: repeat(3, 1fr);
+            gap: 28px;
+            position: relative;
+        }
+
+        .steps-grid::before {
+            content: '';
+            position: absolute;
+            top: 48px;
+            left: 16.67%;
+            right: 16.67%;
+            height: 2px;
+            background: linear-gradient(90deg, var(--p), var(--a), var(--ok));
+            opacity: 0.3;
+            z-index: 0;
+        }
+
+        .step-card {
+            text-align: center;
+            position: relative;
+            z-index: 1;
+        }
+
+        .step-number {
+            width: 56px;
+            height: 56px;
+            border-radius: 50%;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 1.2rem;
+            font-weight: 800;
+            margin: 0 auto 20px;
+            position: relative;
+        }
+
+        .step-card:nth-child(1) .step-number {
+            background: linear-gradient(135deg, rgba(108, 92, 231, 0.2), rgba(108, 92, 231, 0.08));
+            color: var(--pl);
+            border: 2px solid rgba(108, 92, 231, 0.3);
+        }
+
+        .step-card:nth-child(2) .step-number {
+            background: linear-gradient(135deg, rgba(0, 206, 201, 0.2), rgba(0, 206, 201, 0.08));
+            color: var(--al);
+            border: 2px solid rgba(0, 206, 201, 0.3);
+        }
+
+        .step-card:nth-child(3) .step-number {
+            background: linear-gradient(135deg, rgba(0, 184, 148, 0.2), rgba(0, 184, 148, 0.08));
+            color: var(--ok);
+            border: 2px solid rgba(0, 184, 148, 0.3);
+        }
+
+        .step-emoji {
+            font-size: 1.8rem;
+            margin-bottom: 14px;
+            display: block;
+        }
+
+        .step-card h3 {
+            font-size: 1.1rem;
+            font-weight: 700;
+            margin-bottom: 8px;
+        }
+
+        .step-card p {
+            font-size: 0.88rem;
+            color: var(--t2);
+            line-height: 1.55;
+        }
+
+        .step-meta {
+            display: inline-block;
+            padding: 4px 12px;
+            background: rgba(108, 92, 231, 0.1);
+            border-radius: 16px;
+            font-size: 0.72rem;
+            color: var(--pl);
+            font-weight: 600;
+            margin-top: 10px;
+        }
+
+        /* FEATURES */
+        .features {
+            background: linear-gradient(180deg, var(--bg) 0%, rgba(26, 25, 40, 0.4) 50%, var(--bg) 100%);
+        }
+
+        .features-grid {
+            display: grid;
+            grid-template-columns: repeat(3, 1fr);
+            gap: 16px;
+        }
+
+        .feature-card {
+            background: var(--c1);
+            border: 1px solid rgba(255, 255, 255, 0.05);
+            border-radius: var(--r);
+            padding: 28px 22px;
+            transition: transform 0.3s, border-color 0.3s, box-shadow 0.3s;
+        }
+
+        .feature-card:hover {
+            transform: translateY(-3px);
+            border-color: rgba(108, 92, 231, 0.2);
+            box-shadow: 0 8px 32px rgba(0, 0, 0, 0.3);
+        }
+
+        .feature-icon {
+            font-size: 1.8rem;
+            margin-bottom: 14px;
+            display: block;
+        }
+
+        .feature-card h3 {
+            font-size: 0.98rem;
+            font-weight: 700;
+            margin-bottom: 8px;
+        }
+
+        .feature-card p {
+            font-size: 0.84rem;
+            color: var(--t2);
+            line-height: 1.55;
+        }
+
+        /* SCHOOLS SECTION */
+        .schools {
+            position: relative;
+        }
+
+        .schools-inner {
+            background: linear-gradient(135deg, rgba(108, 92, 231, 0.08), rgba(0, 206, 201, 0.06));
+            border: 1px solid rgba(108, 92, 231, 0.15);
+            border-radius: 24px;
+            padding: 56px 48px;
+            text-align: center;
+            position: relative;
+            overflow: hidden;
+        }
+
+        .schools-inner::before {
+            content: '';
+            position: absolute;
+            top: -100px;
+            right: -100px;
+            width: 300px;
+            height: 300px;
+            background: radial-gradient(circle, rgba(108, 92, 231, 0.08) 0%, transparent 70%);
+            pointer-events: none;
+        }
+
+        .coming-badge {
+            display: inline-flex;
+            align-items: center;
+            gap: 5px;
+            padding: 5px 14px;
+            background: rgba(0, 206, 201, 0.12);
+            border: 1px solid rgba(0, 206, 201, 0.2);
+            border-radius: 20px;
+            font-size: 0.74rem;
+            font-weight: 700;
+            color: var(--al);
+            margin-bottom: 18px;
+        }
+
+        .schools-inner h2 {
+            font-size: clamp(1.5rem, 3vw, 2rem);
+            font-weight: 800;
+            margin-bottom: 14px;
+        }
+
+        .schools-inner p {
+            font-size: 1rem;
+            color: var(--t2);
+            line-height: 1.65;
+            max-width: 580px;
+            margin: 0 auto;
+        }
+
+        .schools-features {
+            display: flex;
+            justify-content: center;
+            gap: 32px;
+            margin-top: 32px;
+            flex-wrap: wrap;
+        }
+
+        .schools-feat {
+            display: flex;
+            align-items: center;
+            gap: 8px;
+            font-size: 0.88rem;
+            color: var(--t2);
+        }
+
+        .schools-feat .ico {
+            font-size: 1.1rem;
+        }
+
+        /* FINAL CTA */
+        .final-cta {
+            text-align: center;
+            position: relative;
+            padding: 100px 0;
+        }
+
+        .final-cta::before {
+            content: '';
+            position: absolute;
+            top: 0;
+            left: 50%;
+            transform: translateX(-50%);
+            width: 800px;
+            height: 400px;
+            background: radial-gradient(ellipse, rgba(108, 92, 231, 0.1) 0%, transparent 70%);
+            pointer-events: none;
+        }
+
+        .final-cta .container {
+            position: relative;
+            z-index: 1;
+        }
+
+        .final-cta h2 {
+            font-size: clamp(1.6rem, 3.5vw, 2.4rem);
+            font-weight: 800;
+            margin-bottom: 16px;
+            letter-spacing: -0.01em;
+        }
+
+        .final-cta p {
+            font-size: 1.05rem;
+            color: var(--t2);
+            margin-bottom: 32px;
+            max-width: 480px;
+            margin-left: auto;
+            margin-right: auto;
+            line-height: 1.6;
+        }
+
+        .btn-large {
+            display: inline-flex;
+            align-items: center;
+            gap: 10px;
+            padding: 18px 40px;
+            background: linear-gradient(135deg, var(--p), var(--pd));
+            color: var(--t);
+            border: none;
+            border-radius: 14px;
+            font-size: 1.1rem;
+            font-weight: 700;
+            cursor: pointer;
+            text-decoration: none;
+            transition: transform 0.2s, box-shadow 0.3s;
+            box-shadow: 0 4px 24px rgba(108, 92, 231, 0.3);
+        }
+
+        .btn-large:hover {
+            transform: translateY(-3px);
+            box-shadow: 0 12px 40px rgba(108, 92, 231, 0.45);
+        }
+
+        .cta-trust {
+            margin-top: 18px;
+            font-size: 0.8rem;
+            color: var(--t2);
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            gap: 16px;
+        }
+
+        .cta-trust span {
+            display: flex;
+            align-items: center;
+            gap: 5px;
+        }
+
+        /* FOOTER */
+        footer {
+            border-top: 1px solid rgba(255, 255, 255, 0.05);
+            padding: 32px 0;
+        }
+
+        .footer-inner {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            flex-wrap: wrap;
+            gap: 16px;
+        }
+
+        .footer-left {
+            font-size: 0.84rem;
+            color: var(--t2);
+            display: flex;
+            align-items: center;
+            gap: 6px;
+        }
+
+        .footer-links {
+            display: flex;
+            gap: 24px;
+        }
+
+        .footer-links a {
+            font-size: 0.84rem;
+            color: var(--t2);
+            text-decoration: none;
+            transition: color 0.2s;
+        }
+
+        .footer-links a:hover {
+            color: var(--pl);
+        }
+
+        /* RESPONSIVE */
+        @media (max-width: 900px) {
+            .hero .container {
+                flex-direction: column;
+                text-align: center;
+            }
+
+            .hero-sub {
+                margin-left: auto;
+                margin-right: auto;
+            }
+
+            .hero-actions {
+                justify-content: center;
+            }
+
+            .hero-visual {
+                flex: none;
+            }
+
+            .problem-grid,
+            .steps-grid {
+                grid-template-columns: 1fr;
+                max-width: 420px;
+                margin: 0 auto;
+                gap: 16px;
+            }
+
+            .steps-grid::before {
+                display: none;
+            }
+
+            .features-grid {
+                grid-template-columns: 1fr 1fr;
+            }
+
+            .schools-inner {
+                padding: 40px 28px;
+            }
+        }
+
+        @media (max-width: 600px) {
+            section {
+                padding: 60px 0;
+            }
+
+            .hero {
+                padding: 120px 0 64px;
+            }
+
+            .features-grid {
+                grid-template-columns: 1fr;
+                max-width: 420px;
+                margin: 0 auto;
+            }
+
+            .phone-frame {
+                width: 240px;
+            }
+
+            .schools-features {
+                flex-direction: column;
+                align-items: center;
+                gap: 14px;
+            }
+
+            .footer-inner {
+                flex-direction: column;
+                text-align: center;
+            }
+
+            .cta-trust {
+                flex-direction: column;
+                gap: 8px;
+            }
+        }
+    </style>
+</head>
+<body>
+
+<!-- NAV -->
+<nav class="topnav" id="topnav">
+    <div class="container">
+        <a href="#" class="logo">
+            <span class="logo-icon">🧠</span> Moodly
+        </a>
+        <a href="index.html" class="nav-cta">Prova gratis</a>
+    </div>
+</nav>
+
+<!-- HERO -->
+<section class="hero">
+    <div class="container">
+        <div class="hero-text">
+            <div class="hero-badge reveal">
+                <span>🌱</span> För familjer som bryr sig
+            </div>
+            <h1 class="reveal reveal-delay-1">
+                Vet du hur ditt barn mår — <span class="accent">på riktigt?</span>
+            </h1>
+            <p class="hero-sub reveal reveal-delay-2">
+                Moodly hjälper familjer att förstå hur skolan, fritids och hemmet påverkar barnens välmående — varje dag.
+            </p>
+            <div class="hero-actions reveal reveal-delay-3">
+                <a href="index.html" class="btn-primary">Prova gratis &rarr;</a>
+                <a href="#hur" class="btn-secondary">Så fungerar det</a>
+            </div>
+        </div>
+        <div class="hero-visual reveal reveal-delay-2">
+            <div class="phone-glow"></div>
+            <div class="phone-frame">
+                <div class="phone-notch"></div>
+                <div class="phone-screen">
+                    <div class="phone-greeting">God morgon! 👋</div>
+                    <div class="phone-title">Hur mår du idag?</div>
+
+                    <div class="phone-place">
+                        <div class="phone-place-header">
+                            <div class="phone-place-icon" style="background:rgba(108,92,231,0.15)">🏫</div>
+                            <div>
+                                <div class="phone-place-name">Skolan</div>
+                                <div class="phone-place-type">Skola</div>
+                            </div>
+                        </div>
+                        <div class="phone-emojis">
+                            <div class="phone-emoji">😢</div>
+                            <div class="phone-emoji">😕</div>
+                            <div class="phone-emoji">😐</div>
+                            <div class="phone-emoji active">😊</div>
+                            <div class="phone-emoji">🤩</div>
+                        </div>
+                    </div>
+
+                    <div class="phone-place">
+                        <div class="phone-place-header">
+                            <div class="phone-place-icon" style="background:rgba(0,184,148,0.15)">⚽</div>
+                            <div>
+                                <div class="phone-place-name">Fotbollen</div>
+                                <div class="phone-place-type">Fritids</div>
+                            </div>
+                        </div>
+                        <div class="phone-emojis">
+                            <div class="phone-emoji">😢</div>
+                            <div class="phone-emoji">😕</div>
+                            <div class="phone-emoji">😐</div>
+                            <div class="phone-emoji">😊</div>
+                            <div class="phone-emoji active">🤩</div>
+                        </div>
+                    </div>
+
+                    <div class="phone-streak">
+                        <span>🔥</span>
+                        <span class="num">7</span>
+                        <span class="lbl">dagars streak!</span>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</section>
+
+<!-- PROBLEM -->
+<section class="problem">
+    <div class="container">
+        <div class="section-header reveal">
+            <div class="section-label">💡 Problemet</div>
+            <h2>Barn berättar sällan hur de verkligen mår</h2>
+            <p>De flesta föräldrarna får veta "det var bra" — men verkligheten är ofta en annan.</p>
+        </div>
+        <div class="problem-grid">
+            <div class="problem-card reveal reveal-delay-1">
+                <span class="problem-icon">📊</span>
+                <h3>1 av 4 barn upplever psykisk ohälsa</h3>
+                <p>Ångest, stress och nedstämdhet ökar bland unga i Sverige — och trenden pekar uppåt.</p>
+            </div>
+            <div class="problem-card reveal reveal-delay-2">
+                <span class="problem-icon">⏰</span>
+                <h3>Föräldrar upptäcker det ofta för sent</h3>
+                <p>Utan dagliga signaler är det svårt att fånga upp förändringar innan de blir allvarliga.</p>
+            </div>
+            <div class="problem-card reveal reveal-delay-3">
+                <span class="problem-icon">🏠</span>
+                <h3>Miljön spelar större roll än vi tror</h3>
+                <p>Hur barnet mår på skolan, fritids eller hemma kan skilja sig markant — och det är viktig information.</p>
+            </div>
+        </div>
+    </div>
+</section>
+
+<!-- HOW IT WORKS -->
+<section class="steps" id="hur">
+    <div class="container">
+        <div class="section-header reveal">
+            <div class="section-label">✨ Steg för steg</div>
+            <h2>Så fungerar Moodly</h2>
+            <p>Från daglig checkin till djup förståelse — på under en minut.</p>
+        </div>
+        <div class="steps-grid">
+            <div class="step-card reveal reveal-delay-1">
+                <div class="step-number">1</div>
+                <span class="step-emoji">📱</span>
+                <h3>Barnet checkar in</h3>
+                <p>30 sekunder per dag. Barnet väljer en emoji för varje plats — skola, fritids, hem.</p>
+                <div class="step-meta">⚡ 30 sek/dag</div>
+            </div>
+            <div class="step-card reveal reveal-delay-2">
+                <div class="step-number">2</div>
+                <span class="step-emoji">📈</span>
+                <h3>Mönster blir synliga</h3>
+                <p>AI analyserar trender, veckodagsmönster och benchmarks. Du ser vad data visar.</p>
+                <div class="step-meta">🤖 AI-drivet</div>
+            </div>
+            <div class="step-card reveal reveal-delay-3">
+                <div class="step-number">3</div>
+                <span class="step-emoji">👨‍👩‍👧‍👦</span>
+                <h3>Föräldern förstår</h3>
+                <p>Familjepanelen visar hur varje barn mår per miljö — tydligt och överskådligt.</p>
+                <div class="step-meta">👁️ Full överblick</div>
+            </div>
+        </div>
+    </div>
+</section>
+
+<!-- FEATURES -->
+<section class="features">
+    <div class="container">
+        <div class="section-header reveal">
+            <div class="section-label">🛠️ Funktioner</div>
+            <h2>Allt du behöver — inget du inte behöver</h2>
+            <p>Byggt för att vara enkelt för barn och kraftfullt för föräldrar.</p>
+        </div>
+        <div class="features-grid">
+            <div class="feature-card reveal reveal-delay-1">
+                <span class="feature-icon">📍</span>
+                <h3>Platsbaserat mående</h3>
+                <p>Koppla välmående till specifika miljöer — skola, fritids, hem. Se var barnet mår bäst och sämst.</p>
+            </div>
+            <div class="feature-card reveal reveal-delay-1">
+                <span class="feature-icon">👨‍👩‍👧</span>
+                <h3>Familjepanel</h3>
+                <p>Överblick över alla barns mående i en vy. Perfekt för familjer med flera barn.</p>
+            </div>
+            <div class="feature-card reveal reveal-delay-2">
+                <span class="feature-icon">🏫</span>
+                <h3>Jämför med andra</h3>
+                <p>Se hur din skola ligger till jämfört med andra i området. Anonymiserad och säker.</p>
+            </div>
+            <div class="feature-card reveal reveal-delay-2">
+                <span class="feature-icon">🏆</span>
+                <h3>Belöningar för barn</h3>
+                <p>Poäng, streaks och avatarer motiverar daglig checkin. Det ska vara kul att checka in!</p>
+            </div>
+            <div class="feature-card reveal reveal-delay-3">
+                <span class="feature-icon">🔒</span>
+                <h3>Integritet först</h3>
+                <p>All data stannar på enheten. GDPR-säkert. Inga tredjepartstjänster har tillgång till barnens data.</p>
+            </div>
+            <div class="feature-card reveal reveal-delay-3">
+                <span class="feature-icon">💬</span>
+                <h3>AI-samtal</h3>
+                <p>Barnet kan prata med en snäll AI-kompis när det behöver prata av sig eller reflektera.</p>
+            </div>
+        </div>
+    </div>
+</section>
+
+<!-- FOR SCHOOLS -->
+<section class="schools">
+    <div class="container">
+        <div class="schools-inner reveal">
+            <div class="coming-badge">🚀 Kommer snart</div>
+            <h2>För skolor och kommuner</h2>
+            <p>
+                I framtiden erbjuder Moodly anonymiserad, aggregerad data som hjälper
+                skolor och kommuner att förstå välmåendet i sina verksamheter — och
+                agera innan problem växer.
+            </p>
+            <div class="schools-features">
+                <div class="schools-feat">
+                    <span class="ico">📊</span> Aggregerade dashboards
+                </div>
+                <div class="schools-feat">
+                    <span class="ico">🔒</span> Helt anonymiserat
+                </div>
+                <div class="schools-feat">
+                    <span class="ico">🏛️</span> Kommun-överblick
+                </div>
+            </div>
+        </div>
+    </div>
+</section>
+
+<!-- FINAL CTA -->
+<section class="final-cta">
+    <div class="container">
+        <h2 class="reveal">Börja förstå hur miljöer påverkar ditt barn</h2>
+        <p class="reveal reveal-delay-1">
+            Det tar 30 sekunder att komma igång. Helt gratis. Ingen registrering krävs.
+        </p>
+        <div class="reveal reveal-delay-2">
+            <a href="index.html" class="btn-large">Öppna Moodly — helt gratis &rarr;</a>
+        </div>
+        <div class="cta-trust reveal reveal-delay-3">
+            <span>🔒 GDPR-säkert</span>
+            <span>📱 Fungerar på alla enheter</span>
+            <span>🇸🇪 Byggt i Sverige</span>
+        </div>
+    </div>
+</section>
+
+<!-- FOOTER -->
+<footer>
+    <div class="container">
+        <div class="footer-inner">
+            <div class="footer-left">
+                <span>🧠</span> Moodly 2026 — Gjord i Sverige med ❤️
+            </div>
+            <div class="footer-links">
+                <a href="index.html">Appen</a>
+                <a href="#hur">Så fungerar det</a>
+                <a href="mailto:hej@moodly.se">Kontakt</a>
+            </div>
+        </div>
+    </div>
+</footer>
+
+<script>
+    // NAV SCROLL EFFECT
+    const nav = document.getElementById('topnav');
+    window.addEventListener('scroll', () => {
+        nav.classList.toggle('scrolled', window.scrollY > 40);
+    }, { passive: true });
+
+    // REVEAL ON SCROLL
+    const observer = new IntersectionObserver((entries) => {
+        entries.forEach(entry => {
+            if (entry.isIntersecting) {
+                entry.target.classList.add('visible');
+                observer.unobserve(entry.target);
+            }
+        });
+    }, {
+        threshold: 0.15,
+        rootMargin: '0px 0px -40px 0px'
+    });
+
+    document.querySelectorAll('.reveal').forEach(el => observer.observe(el));
+</script>
+
+</body>
+</html>
