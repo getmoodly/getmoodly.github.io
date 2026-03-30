@@ -441,7 +441,7 @@ function getAllDataPoints(d){const f=(d.checkins||[]).map(c=>({...c,type:'full'}
 function sv(d){D=d;if(sok)try{localStorage.setItem(APK,JSON.stringify(d))}catch(e){}}
 
 // ===== SENTIMENT =====
-const EMO={glad:{w:['glad','lycklig','nöjd','fantastisk','underbar','toppen','skratta','rolig','kul','bra','härlig','glädje','positiv','tacksam','stolt','energisk','pigg','motiverad','hoppfull','avslappnad','älskar','kärlek','awesome','nice'],v:.85},lugn:{w:['lugn','avslappnad','fridful','harmonisk','balanserad','trygg','bekväm','stabil','okej','neutral','fine','helt ok'],v:.65},ledsen:{w:['ledsen','sorglig','nere','gråter','ensam','tom','hopplös','deprimerad','melankolisk','saknar','besviken','uppgiven','mörkt','tungt','svårt'],v:.25},stressad:{w:['stressad','pressad','överväldigad','kaos','panik','deadline','mycket','hinner inte','sliten','utbränd','utmattad','nervös'],v:.3},orolig:{w:['orolig','ångest','rädd','osäker','ängslig','oro','skrämmande','otrygg','spänd','grubblar'],v:.28},arg:{w:['arg','irriterad','frustrerad','sur','rasande','ilsken','förbannad','less','upprörd'],v:.2},trott:{w:['trött','utmattad','slut','dränerad','sömnig','orkeslös','seg'],v:.35}};
+const EMO={glad:{w:['glad','lycklig','nöjd','fantastisk','underbar','toppen','skratta','rolig','kul','bra','härlig','glädje','positiv','tacksam','stolt','energisk','pigg','motiverad','hoppfull','avslappnad','älskar','kärlek','awesome','nice','stark','kraftfull','lättad','superbra','jättebra','perfekt','duktig','grym','levande','mäktig','taggad','peppad','inspirerad','fokuserad','nöjda'],v:.85},lugn:{w:['lugn','avslappnad','fridful','harmonisk','balanserad','trygg','bekväm','stabil','okej','neutral','fine','helt ok','chill','stillsam','tillfreds'],v:.65},ledsen:{w:['ledsen','sorglig','nere','gråter','ensam','tom','hopplös','deprimerad','melankolisk','saknar','besviken','uppgiven','mörkt','tungt','svårt','deppig','trist','elände','knäckt','trasig','värdelös','maktlös'],v:.25},stressad:{w:['stressad','pressad','överväldigad','kaos','panik','deadline','mycket','hinner inte','sliten','utbränd','utmattad','nervös','hektisk','jäktad','pressande','överbelastad'],v:.3},orolig:{w:['orolig','ångest','rädd','osäker','ängslig','oro','skrämmande','otrygg','spänd','grubblar','bekymrad','skrämd','panikslagen'],v:.28},arg:{w:['arg','irriterad','frustrerad','sur','rasande','ilsken','förbannad','less','upprörd','lack','triggered','fly förbannad'],v:.2},trott:{w:['trött','utmattad','slut','dränerad','sömnig','orkeslös','seg','matt','slutkörd','körd'],v:.35}};
 const CATS={jobb:['jobb','jobbet','arbete','kontor','chef','möte','möten','kolleg','projekt','deadline','kund','presentation','lön','befordran','uppsagd','intervju','karriär','företag'],relationer:['familj','partner','sambo','kompis','vän','vänner','barn','mamma','pappa','relation','konflikt','konflikter','bråk','gräl','separation','dejt','kärlek','svartsjuk','otrogen','gifta','skild'],hälsa:['träna','gym','springa','yoga','sömn','sov','sjuk','ont','energi','mat','ångest','panik','stress','depression','terapi','psykolog','medicinering','smärta','huvudvärk','utbränd'],fritid:['hobby','spel','film','serie','bok','musik','natur','promenad','resa','semester','fest','konsert','sport','träning']};
 
 function analyze(txt){
@@ -582,6 +582,150 @@ const CLOSES={
     direct:['Bra pratat {name}. En dag i taget. Ses imorgon.','Du vet var jag finns {name}. Keep going.','Stark session. Kom ihåg vad du sa idag — det var viktigt.'],
     coach:['Bra session {name}! Du tar ansvar för ditt välmående — modigt. Ses imorgon!','Starkt jobbat {name}. Varje reflektion stärker din emotionella intelligens!','Du är starkare än du tror {name}. Bra att du investerar i dig själv. 🏆']
 };
+
+// -- Smart contextual response patterns (checked before generic mirror+followup) --
+const PATTERNS=[
+    // === FEELINGS: "Känner mig [X]" ===
+    {r:/känner mig\s+(stark|bra|glad|lycklig|nöjd|fantastisk|energisk|motiverad|pigg|fri|trygg|hoppfull|kraftfull|lättad|duktig|stolt|levande|grym|taggad|peppad|inspirerad|fokuserad)/i,
+     fn:m=>{const w=m[1].toLowerCase();return pick([
+        `Härligt att du känner dig ${w}! Vad tror du det beror på?`,
+        `Vilken fin känsla att vara ${w}. Har det hänt något speciellt idag?`,
+        `Så fint! Vad har bidragit till att du känner dig ${w}?`,
+        `Att känna sig ${w} är underbart. Vad har din dag sett ut hittills?`])}},
+    {r:/känner mig\s+(ledsen|nere|deppig|dålig|tom|ensam|stressad|orolig|arg|irriterad|trött|utmattad|svag|hopplös|överväldigad|ångestfull|rädd|otrygg|låg|värdelös|trasig|maktlös|knäckt)/i,
+     fn:m=>{const w=m[1].toLowerCase();return pick([
+        `Tack för att du berättar att du känner dig ${w}. Vad tror du ligger bakom den känslan?`,
+        `Jag hör dig. Att vara ${w} är tufft. Hur länge har du känt så?`,
+        `Det är helt okej att känna sig ${w}. Vill du berätta mer om vad som hänt?`,
+        `Jag förstår att det är jobbigt. Finns det något som brukar hjälpa dig när du känner dig ${w}?`])}},
+
+    // === "Mår bra/dåligt" ===
+    {r:/mår\s+(bra|fantastiskt|underbart|toppen|jättebra|superbra|kanon|utmärkt|fint)/i,
+     fn:m=>pick([
+        `Vad härligt att du mår ${m[1]}! Vad har gjort att du mår så bra?`,
+        `Så fint att höra! Vad har du gjort idag som bidragit till det?`,
+        `Det gör mig glad! Berätta gärna mer om din dag.`])},
+    {r:/mår\s*(dåligt|inte bra|skit|kasst|uruselt|inte så bra|ganska dåligt|inte alls bra)/i,
+     fn:()=>pick([
+        `Jag är ledsen att höra det. Vill du prata om vad som känns svårt?`,
+        `Tack för att du berättar. Vad tror du påverkar dig mest just nu?`,
+        `Det är okej att ha dåliga dagar. Jag är här — berätta när du är redo.`])},
+
+    // === "Har haft en bra/dålig dag" ===
+    {r:/(bra|fin|härlig|fantastisk|grym|perfekt|underbar)\w*\s*(dag|morgon|kväll|helg|vecka)/i,
+     fn:m=>pick([
+        `Vad kul att du haft en ${m[1]} ${m[2]}! Vad var det bästa med den?`,
+        `Härligt att höra! Vad har gjort ${m[2]}en så bra?`,
+        `Vilken fin känsla! Berätta, vad sticker ut mest från din ${m[2]}?`])},
+    {r:/(dålig|tuff|svår|jobbig|hemsk|kass|seg|lång)\w*\s*(dag|morgon|kväll|helg|vecka)/i,
+     fn:m=>pick([
+        `Ledsen att höra att det varit en ${m[1]} ${m[2]}. Vad hände?`,
+        `Tuffa dagar händer alla. Vill du berätta vad som gick snett?`,
+        `Jag hör dig. Vad var det som gjorde ${m[2]}en så ${m[1]}?`])},
+
+    // === "Hanterar/klarar X bra" ===
+    {r:/(hanterar|klarar|fixar|handskas med)\s+.{2,40}\s+(bra|okej|fine|ganska bra)/i,
+     fn:()=>pick([
+        `Skönt att du känner att du hanterar det bra! Vad är din strategi?`,
+        `Det är en styrka! Har det alltid varit så, eller har du lärt dig det med tiden?`,
+        `Bra att höra! Vad tror du gör att du klarar det så bra?`])},
+
+    // === Ångest/panik ===
+    {r:/(ångest|panik|panikkänsla|panikångest)/i,
+     fn:()=>pick([
+        `Ångest kan vara så överväldigande. Kommer det i perioder eller är det mer konstant?`,
+        `Tack för att du berättar om det. Vet du vad som brukar trigga det?`,
+        `Det krävs styrka att prata om ångest. Hur brukar du hantera det?`])},
+
+    // === Sömnproblem ===
+    {r:/(sover?\s*(dåligt|lite|inte)|sömnproblem|sömnlös|inte\s*sov|vaknar\s*(ofta|mitt))/i,
+     fn:()=>pick([
+        `Sömnen påverkar verkligen allt annat. Hur länge har det varit så?`,
+        `Sömnproblem är tufft. Är det svårt att somna, eller vaknar du mitt i natten?`,
+        `Dålig sömn gör allt annat tyngre. Finns det något som oroar dig på nätterna?`])},
+
+    // === Trött/utmattad ===
+    {r:/(jätte\s*)?trött|utmattad|slutkörd|orkeslös|dränerad|helt slut/i,
+     fn:()=>pick([
+        `Att vara trött är kroppens sätt att säga ifrån. Vad tror du det beror på?`,
+        `Jag hör dig. Är det fysisk trötthet eller mer mental utmattning?`,
+        `Det låter som att du behöver vara extra snäll mot dig själv just nu. Vad hade hjälpt?`])},
+
+    // === Ensam/isolerad ===
+    {r:/(ensam|isolerad|utanför|ensamhet)/i,
+     fn:()=>pick([
+        `Ensamhet kan vara tung. Saknar du någon specifik person, eller är det en allmän känsla?`,
+        `Att känna sig ensam är vanligare än man tror. Hur länge har du känt så?`,
+        `Jag hör dig. Finns det någon du kan nå ut till, eller vill du berätta mer?`])},
+
+    // === Konflikter/bråk ===
+    {r:/(bråka|gräla|konflikt|tjafs|bråk|gräl)\w*/i,
+     fn:()=>pick([
+        `Konflikter tar verkligen energi. Vill du berätta vad det handlade om?`,
+        `Det låter som en jobbig situation. Hur kände du dig efteråt?`,
+        `Bråk kan verkligen sitta kvar i kroppen. Har ni kunnat prata om det?`])},
+
+    // === Jobb + stress ===
+    {r:/(jobb|arbete|kontor)\w*.{0,25}(stressig|tuff|svår|jobbig|kaos|mycket|hemskt|slitsam)/i,
+     fn:()=>pick([
+        `Jobbet tar verkligen energi ibland. Vad är det som tynger dig mest just nu?`,
+        `Det låter som en tuff period. Hur påverkar det dig efter arbetstid?`,
+        `Jobbstress är vanligare än man tror. Vad hade behövt förändras för att det ska bli bättre?`])},
+    {r:/(stressig|tuff|svår|jobbig|kaos|hemskt|slitsam).{0,25}(jobb|arbete|kontor)\w*/i,
+     fn:()=>pick([
+        `Jobbet tar verkligen energi ibland. Vad är det som tynger dig mest just nu?`,
+        `Det låter som en tuff period. Hur påverkar det dig efter arbetstid?`,
+        `Jobbstress är vanligare än man tror. Vad hade behövt förändras för att det ska bli bättre?`])},
+
+    // === Tacksam ===
+    {r:/(tacksam|uppskatt|grateful)/i,
+     fn:()=>pick([
+        `Tacksamhet är en vacker känsla. Vad är du mest tacksam för just nu?`,
+        `Att uppskatta det man har gör verkligen skillnad. Berätta gärna mer!`,
+        `Vad fint! Vad fick dig att tänka på det idag?`])},
+
+    // === "Vet inte" / osäker ===
+    {r:/(vet inte|vet ej|osäker|ingen aning|svårt att säga|kan inte förklara|vet faktiskt inte)/i,
+     fn:()=>pick([
+        `Det är helt okej att inte veta. Ibland hjälper det att bara prata fritt. Vad tänker du på just nu?`,
+        `Inga krav — vi tar det i din takt. Hur har dagen varit hittills?`,
+        `Osäkerhet hör livet till. Vad var det senaste som fick dig att känna något starkt?`])},
+
+    // === Relationsord: "min mamma/partner/kompis..." ===
+    {r:/(min|mitt|mina)\s+(mamma|pappa|partner|sambo|flickvän|pojkvän|kompis|bror|syster|chef|familj)\w*/i,
+     fn:m=>{const p=m[2];return pick([
+        `Berätta gärna mer om vad som hänt med din ${p}.`,
+        `Hur påverkar det med din ${p} dig?`,
+        `Jag hör att du tänker på din ${p}. Vad känner du kring det?`])}},
+
+    // === Korta positiva svar ===
+    {r:/^(bra|okej|fine|helt ok|det går|ja|absolut|visst|exakt|precis|japp|jepp|mm|mhm|jo|aa)\s*[.!]?$/i,
+     fn:()=>pick([
+        `Bra att höra! Finns det något speciellt du vill prata om idag?`,
+        `Skönt! Vad har tagit mest plats i dina tankar den senaste tiden?`,
+        `Okej! Berätta gärna mer — vad har din dag sett ut?`])},
+
+    // === Korta negativa svar ===
+    {r:/^(nej|nä|nope|inte|sämre|dåligt|meh|blä|nix)\s*[.!]?$/i,
+     fn:()=>pick([
+        `Okej. Vill du berätta vad som känns svårt just nu?`,
+        `Jag hör dig. Ibland räcker ett ord. Vad ligger bakom känslan?`,
+        `Det är okej. Jag är här när du vill prata om det.`])},
+
+    // === Stress (general) ===
+    {r:/(stressad|stressar|stress)\w*/i,
+     fn:()=>pick([
+        `Stress kan verkligen tära. Vad är det som stressar dig mest just nu?`,
+        `Jag hör att du är stressad. Hur visar det sig i kroppen?`,
+        `Stress är kroppens larm. Vad hade behövt hända för att stressen ska minska?`])},
+
+    // === Lycka/glädje (general) ===
+    {r:/(glad|lycklig|nöjd|tacksam|stolt|jätteglad)\w*/i,
+     fn:m=>pick([
+        `Vad härligt! Vad är det som gör dig ${m[1]}?`,
+        `Vilken fin känsla! Berätta gärna mer om vad som hänt.`,
+        `Så fint att höra! Vad har bidragit till den känslan?`])},
+];
 
 let convState={active:false,round:0,maxRounds:12,transcript:[],fullText:'',stream:null,recognition:null,timer:null,elapsed:0,emotions:[],listening:false,askedKeys:new Set(),lastTopics:null,shortCount:0};
 
@@ -818,8 +962,16 @@ async function processUserResponse(text){
         return;
     }
 
-    // Compose contextual response
-    const response=composeResponse(text,sentiment,topics);
+    // Try smart pattern matching first — gives much more natural responses
+    let response=null;
+    for(const p of PATTERNS){
+        const match=text.match(p.r);
+        if(match){response=p.fn(match,sentiment);break}
+    }
+
+    // Fall back to generic mirror+followup if no pattern matched
+    if(!response)response=composeResponse(text,sentiment,topics);
+
     await aiMessage(response);
 }
 
