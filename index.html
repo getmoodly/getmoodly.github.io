@@ -2449,7 +2449,7 @@ function getChildDetailedData(storageKey){
 
 async function shareInvite(){
     const d=ld();
-    const url='https://guslinmarcus.github.io/kanslaflow/';
+    const url=window.location.origin+window.location.pathname.replace(/index\.html$/,'');
     const kommun=d.kommun?` Vi bygger en bild av hur barnen mår i ${d.kommun} — ju fler familjer, desto bättre insikter.`:'';
     const msg=`Jag använder Moodly för att följa hur mitt barn mår i skolan, på idrotten och hemma.${kommun} Prova du också — det är gratis!`;
     if(navigator.share){
@@ -2615,7 +2615,7 @@ async function toggleNotifications(enabled){
 // ===== SHARE CHILD INVITE =====
 async function shareChildInvite(){
     const d=ld();
-    let url='https://guslinmarcus.github.io/kanslaflow/index.html';
+    let url=window.location.origin+window.location.pathname;
     if(sbUser&&d.familyId){
         try{
             const{data}=await sb.from('families').select('invite_code').eq('id',d.familyId).single();
