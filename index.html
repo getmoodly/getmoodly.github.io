@@ -2194,21 +2194,18 @@ function renderFamily(){
             <button class="btn ba" onclick="createFamily().then(()=>renderFamily())">Skapa familj</button>
         </div>`;
     } else {
-        // Remote family dashboard container (filled async)
-        html+=`<div id="family-members-area"><div class="ac-loading">Laddar familj...</div></div>`;
-
-        // Legacy local children (offline mode fallback)
-        if(!sbUser&&d.familyProfiles&&d.familyProfiles.length>0){
-            let localHtml='';
+        // Local children (always shown)
+        if(d.familyProfiles&&d.familyProfiles.length>0){
+            html+=`<div class="ct" style="margin-bottom:8px">👧 Dina barn</div>`;
             d.familyProfiles.forEach((fp,i)=>{
                 const childData=getChildDetailedData(fp.storageKey);
                 const avatar=childData?.avatar||'😊';
-                localHtml+=`<div class="fam-child-card">
+                html+=`<div class="fam-child-card">
                     <div class="fam-child-header">
                         <div class="fam-child-avatar">${avatar}</div>
                         <div class="fam-child-info">
                             <div class="fam-child-name">${fp.name}</div>
-                            <div class="fam-child-meta"><span>${fp.ageGroup}</span>${childData?`<span>${childData.streak} dagars streak</span><span>🪙 ${childData.points}</span>`:''}</div>
+                            <div class="fam-child-meta"><span>${fp.ageGroup}</span>${childData?`<span>🔥 ${childData.streak}</span><span>🪙 ${childData.points}</span>`:''}</div>
                         </div>
                         <button class="btn bs" style="width:auto;padding:6px 12px;font-size:.72rem" onclick="switchToProfile('${fp.storageKey}','${fp.name}')">Visa</button>
                     </div>`;
@@ -2216,40 +2213,43 @@ function renderFamily(){
                     childData.places.forEach(cp=>{
                         const pt=PT[cp.type]||PT.other;
                         const col=cp.avg>=4?'var(--ok)':cp.avg>=3?'var(--w)':'var(--bad)';
-                        localHtml+=`<div class="fam-place-row"><span>${pt.icon}</span><span style="flex:1">${cp.name}</span><span class="fam-place-score" style="color:${col}">${cp.avg>0?cp.avg:'—'}</span></div>`;
-                        if(cp.lastComment)localHtml+=`<div class="fam-place-comment">"${cp.lastComment}"</div>`;
+                        html+=`<div class="fam-place-row"><span>${pt.icon}</span><span style="flex:1">${cp.name}</span><span class="fam-place-score" style="color:${col}">${cp.avg>0?cp.avg:'—'}</span></div>`;
+                        if(cp.lastComment)html+=`<div class="fam-place-comment">"${cp.lastComment}"</div>`;
                     });
-                }else{localHtml+=`<p style="font-size:.78rem;color:var(--t2);padding:8px 0">Ingen data ännu</p>`}
-                localHtml+=`<div style="display:flex;gap:8px;margin-top:10px;padding-top:8px;border-top:1px solid rgba(255,255,255,.04)">
-                    <button class="btn bs" style="padding:6px;font-size:.7rem" onclick="removeChild(${i});renderFamily()">Ta bort</button></div></div>`;
+                }else{html+=`<p style="font-size:.78rem;color:var(--t2);padding:8px 0">Ingen data ännu</p>`}
+                html+=`<div style="display:flex;gap:8px;margin-top:10px;padding-top:8px;border-top:1px solid rgba(255,255,255,.04)">
+                    <button class="btn bs" style="padding:6px;font-size:.7rem" onclick="switchToProfile('${fp.storageKey}','${fp.name}')">Hantera platser</button>
+                    <button class="btn bs" style="padding:6px;font-size:.7rem;background:rgba(225,112,85,.1);color:var(--bad)" onclick="if(confirm('Ta bort ${fp.name}?')){removeChild(${i});renderFamily()}">Ta bort</button></div></div>`;
             });
-            html=localHtml;
         }
 
-        // Add child form (legacy local mode)
-        if(!sbUser){
-            let placePicker='';
-            if(d.places.length){
-                placePicker+=`<div style="margin-top:8px"><div style="font-size:.78rem;font-weight:600;margin-bottom:6px">Vilka platser ska barnet ha?</div>`;
-                d.places.forEach(p=>{
-                    const pt=PT[p.type]||PT.other;
-                    const checked=p.type!=='work'?'checked':''; // Pre-check all except work
-                    placePicker+=`<label style="display:flex;align-items:center;gap:8px;padding:6px 0;font-size:.82rem;cursor:pointer;border-bottom:1px solid rgba(255,255,255,.04)">
-                        <input type="checkbox" class="child-place-cb" value="${p.id}" ${checked} style="width:18px;height:18px;accent-color:var(--p)">
-                        <span>${pt.icon}</span><span>${p.name}</span><span style="font-size:.68rem;color:var(--t2)">${pt.label}</span>
-                    </label>`;
-                });
-                placePicker+=`</div>`;
-            }
-            html+=`<div class="cd"><div class="ct">+ Lägg till barn</div>
-                <div class="sett-row"><span>Namn</span><input class="sett-input" id="new-child-name" placeholder=""></div>
-                <div class="sett-row"><span>Åldersgrupp</span><select id="new-child-age">
-                    <option value="6-9">6-9 år</option><option value="10-13">10-13 år</option><option value="14-17">14-17 år</option>
-                </select></div>
-                ${placePicker}
-                <button class="btn ba" onclick="addChild();renderFamily()" style="margin-top:8px">+ Lägg till barn</button>
-            </div>`;
+        // Remote family members (children on own device)
+        if(sbUser){
+            html+=`<div id="family-members-area" style="margin-top:8px"></div>`;
         }
+
+        // Add child form (always shown)
+        let placePicker='';
+        if(d.places.length){
+            placePicker+=`<div style="margin-top:8px"><div style="font-size:.78rem;font-weight:600;margin-bottom:6px">Vilka platser ska barnet ha?</div>`;
+            d.places.forEach(p=>{
+                const pt=PT[p.type]||PT.other;
+                const checked=p.type!=='work'?'checked':'';
+                placePicker+=`<label style="display:flex;align-items:center;gap:8px;padding:6px 0;font-size:.82rem;cursor:pointer;border-bottom:1px solid rgba(255,255,255,.04)">
+                    <input type="checkbox" class="child-place-cb" value="${p.id}" ${checked} style="width:18px;height:18px;accent-color:var(--p)">
+                    <span>${pt.icon}</span><span>${p.name}</span><span style="font-size:.68rem;color:var(--t2)">${pt.label}</span>
+                </label>`;
+            });
+            placePicker+=`</div>`;
+        }
+        html+=`<div class="cd"><div class="ct">+ Lägg till barn</div>
+            <div class="sett-row"><span>Namn</span><input class="sett-input" id="new-child-name" placeholder=""></div>
+            <div class="sett-row"><span>Åldersgrupp</span><select id="new-child-age">
+                <option value="6-9">6-9 år</option><option value="10-13">10-13 år</option><option value="14-17">14-17 år</option>
+            </select></div>
+            ${placePicker}
+            <button class="btn ba" onclick="addChild();renderFamily()" style="margin-top:8px">+ Lägg till barn</button>
+        </div>`;
 
         // Invite
         html+=`<div class="cd"><div class="ct">📤 Bjud in</div>
