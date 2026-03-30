@@ -382,6 +382,23 @@
 
     <div class="ob-step" id="ob4">
         <div style="font-size:2.5rem;margin-bottom:10px">👨‍👩‍👧‍👦</div>
+        <h1>Har du barn?</h1>
+        <p>Lägg till dina barn och välj vilka platser de ska checka in på. Du kan följa deras mående utan att se deras samtal.</p>
+        <div id="ob-children-list" style="width:100%;max-width:320px;margin-bottom:12px"></div>
+        <div style="width:100%;max-width:320px;margin-bottom:8px">
+            <input type="text" id="ob-child-name" placeholder="Barnets namn" maxlength="30" style="width:100%;padding:12px;background:rgba(255,255,255,.06);border:1px solid rgba(255,255,255,.12);border-radius:var(--rs);color:var(--t);font-size:.95rem;text-align:center;outline:none;margin-bottom:8px">
+            <select id="ob-child-age" style="width:100%;padding:10px;background:rgba(255,255,255,.06);border:1px solid rgba(255,255,255,.12);border-radius:var(--rs);color:var(--t);font-size:.88rem;outline:none;margin-bottom:10px;text-align:center">
+                <option value="6-9">6–9 år</option><option value="10-13">10–13 år</option><option value="14-17">14–17 år</option>
+            </select>
+            <div id="ob-child-places" style="text-align:left;margin-bottom:10px"></div>
+            <button class="btn ba" onclick="obAddChild()" style="width:100%">+ Lägg till barn</button>
+        </div>
+        <button class="btn bp" onclick="obNext(5)" style="max-width:280px;margin-top:12px">Nästa</button>
+        <button class="btn" onclick="obNext(5)" style="max-width:280px;background:none;color:var(--t2);font-size:.8rem;margin-top:4px">Hoppa över — inga barn</button>
+    </div>
+
+    <div class="ob-step" id="ob5">
+        <div style="font-size:2.5rem;margin-bottom:10px">📤</div>
         <h1>Bjud in dina nära</h1>
         <p>Moodly blir bättre tillsammans. Bjud in familj, vänner eller kollegor så ni kan följa välmåendet på era gemensamma platser.</p>
         <div id="ob-invite-list" style="width:100%;max-width:300px;margin-bottom:16px"></div>
@@ -390,11 +407,11 @@
             <div class="pt-grid" id="ob-rel-types" style="margin-bottom:8px"></div>
             <button class="btn ba" onclick="obInvite()" style="width:100%">📤 Skicka inbjudan</button>
         </div>
-        <button class="btn bp" onclick="obNext(5)" style="max-width:280px;margin-top:8px">Nästa</button>
-        <button class="btn" onclick="obNext(5)" style="max-width:280px;background:none;color:var(--t2);font-size:.8rem;margin-top:4px">Hoppa över</button>
+        <button class="btn bp" onclick="obNext(6)" style="max-width:280px;margin-top:8px">Nästa</button>
+        <button class="btn" onclick="obNext(6)" style="max-width:280px;background:none;color:var(--t2);font-size:.8rem;margin-top:4px">Hoppa över</button>
     </div>
 
-    <div class="ob-step" id="ob5">
+    <div class="ob-step" id="ob6">
         <div style="font-size:2.5rem;margin-bottom:10px">✨</div>
         <h1>Klart!</h1>
         <p>Du kan börja checka in ditt mående direkt. Ju mer du loggar, desto bättre insikter.</p>
@@ -1437,6 +1454,10 @@ function obNext(step){
         setupPlaceSearch('ob-place-name','ac-drop-ob','ob-place-addr');
     }
     if(step===4){
+        renderObChildPlacePicker();
+        renderObChildren();
+    }
+    if(step===5){
         selectedRelType='partner';
         renderRelTypeGrid('ob-rel-types');
         renderObInvites();
@@ -1465,6 +1486,58 @@ function obAddPlace(){
 }
 
 function obRemovePlace(i){obPlaces.splice(i,1);renderObPlaces()}
+
+// ===== ONBOARDING CHILDREN =====
+let obChildren=[]; // [{name, ageGroup, placeIds:[]}]
+
+function renderObChildPlacePicker(){
+    const el=document.getElementById('ob-child-places');
+    if(!el)return;
+    if(!obPlaces.length){el.innerHTML='<p style="font-size:.78rem;color:var(--t2)">Inga platser att tilldela</p>';return}
+    el.innerHTML='<div style="font-size:.78rem;font-weight:600;margin-bottom:6px">Välj platser för barnet:</div>'+
+        obPlaces.map(p=>{
+            const pt=PT[p.type]||PT.other;
+            const checked=p.type!=='work'?'checked':'';
+            return`<label style="display:flex;align-items:center;gap:8px;padding:5px 0;font-size:.82rem;cursor:pointer">
+                <input type="checkbox" class="ob-child-place-cb" value="${obPlaces.indexOf(p)}" ${checked} style="width:16px;height:16px;accent-color:var(--p)">
+                <span>${pt.icon}</span><span>${p.name}</span>
+            </label>`;
+        }).join('');
+}
+
+function renderObChildren(){
+    const el=document.getElementById('ob-children-list');
+    if(!el)return;
+    if(!obChildren.length){el.innerHTML='';return}
+    el.innerHTML=obChildren.map((c,i)=>{
+        const placeNames=c.placeIds.map(idx=>obPlaces[idx]?.name).filter(Boolean).join(', ');
+        return`<div style="display:flex;align-items:center;gap:8px;padding:10px 12px;background:var(--c2);border-radius:8px;margin-bottom:6px">
+            <span>👧</span>
+            <div style="flex:1;min-width:0">
+                <div style="font-size:.84rem;font-weight:600">${c.name} <span style="font-size:.68rem;color:var(--t2)">${c.ageGroup}</span></div>
+                <div style="font-size:.68rem;color:var(--t2);white-space:nowrap;overflow:hidden;text-overflow:ellipsis">${placeNames||'Inga platser'}</div>
+            </div>
+            <button style="background:none;border:none;color:var(--bad);font-size:1rem;cursor:pointer" onclick="obRemoveChild(${i})">×</button>
+        </div>`;
+    }).join('');
+}
+
+function obAddChild(){
+    const nameEl=document.getElementById('ob-child-name');
+    const name=nameEl.value.trim();
+    if(!name){toast('Ange barnets namn');return}
+    const ageGroup=document.getElementById('ob-child-age').value;
+    const checkboxes=document.querySelectorAll('.ob-child-place-cb');
+    const placeIds=[];
+    checkboxes.forEach(cb=>{if(cb.checked)placeIds.push(parseInt(cb.value))});
+    obChildren.push({name,ageGroup,placeIds});
+    nameEl.value='';
+    renderObChildren();
+    renderObChildPlacePicker();
+    toast(name+' tillagd!');
+}
+
+function obRemoveChild(i){obChildren.splice(i,1);renderObChildren()}
 
 // ===== ONBOARDING INVITE =====
 const REL_TYPES={partner:{icon:'💑',label:'Partner'},child:{icon:'👧',label:'Barn'},parent:{icon:'👨‍👦',label:'Förälder'},friend:{icon:'🧑‍🤝‍🧑',label:'Vän'},colleague:{icon:'💼',label:'Kollega'}};
@@ -1526,8 +1599,33 @@ function finishOnboarding(){
     d.firstVisit=false;
     d.userName=userName;
     d.onboarded=new Date().toISOString();
-    obPlaces.forEach(p=>d.places.push({id:'p_'+Date.now()+'_'+Math.random().toString(36).slice(2,6),name:p.name,type:p.type,osmId:p.osmId||'',address:p.address||'',lat:p.lat||null,lng:p.lng||null}));
+
+    // Save parent's places with generated IDs
+    const savedPlaces=[];
+    obPlaces.forEach(p=>{
+        const place={id:'p_'+Date.now()+'_'+Math.random().toString(36).slice(2,6),name:p.name,type:p.type,osmId:p.osmId||'',address:p.address||'',lat:p.lat||null,lng:p.lng||null};
+        d.places.push(place);
+        savedPlaces.push(place);
+        syncPlace(place);
+    });
+
+    // Create child profiles from onboarding
+    if(obChildren.length>0){
+        d.familyId=d.familyId||'fam_'+Date.now();
+        d.role='parent';
+        if(!d.familyProfiles)d.familyProfiles=[];
+        obChildren.forEach(child=>{
+            const id='child_'+Date.now()+'_'+Math.random().toString(36).slice(2,4);
+            const storageKey='moodly_child_'+id;
+            const childPlaces=child.placeIds.map(idx=>savedPlaces[idx]).filter(Boolean).map(p=>({...p}));
+            d.familyProfiles.push({id,name:child.name,ageGroup:child.ageGroup,storageKey});
+            const childData={places:childPlaces,placeCheckins:[],benchmarks:[],checkins:[],micro:[],xp:0,level:1,points:0,streak:0,firstVisit:false,baseline:null,userName:child.name,aiName:d.aiName||'Luna',personality:'warm',onboarded:new Date().toISOString(),alertsSeen:[],familyId:d.familyId,role:'child',familyProfiles:[],parentKey:PARENT_KEY,unlockedAvatars:['default'],selectedAvatar:'default',dailyRewardClaimed:null};
+            if(sok)localStorage.setItem(storageKey,JSON.stringify(childData));
+        });
+    }
+
     sv(d);
+    syncProfile(d);
     document.getElementById('ob').classList.add('h');
     document.getElementById('app').style.display='';
 
@@ -1543,6 +1641,8 @@ function finishOnboarding(){
 
     // Fetch benchmarks in background
     fetchBenchmarks().then(()=>renderHome()).catch(()=>renderHome());
+    // Reset onboarding state
+    obChildren=[];obPlaces=[];
 }
 
 // ===== NAV =====
