@@ -822,7 +822,268 @@
             color: var(--t2);
         }
 
-        /* SCHOOLS SECTION */
+        /* KOMMUN BENCHMARK SECTION */
+        .kommun-section {
+            background: linear-gradient(180deg, var(--bg) 0%, rgba(26, 25, 40, 0.5) 50%, var(--bg) 100%);
+        }
+
+        .kommun-mockup {
+            max-width: 520px;
+            margin: 0 auto;
+            background: var(--c1);
+            border-radius: 20px;
+            border: 1px solid rgba(255, 255, 255, 0.06);
+            padding: 28px 24px;
+            box-shadow: 0 24px 80px rgba(0, 0, 0, 0.4), 0 0 60px rgba(0, 184, 148, 0.06);
+        }
+
+        .kommun-mock-header {
+            display: flex;
+            align-items: center;
+            gap: 10px;
+            margin-bottom: 20px;
+        }
+
+        .kommun-mock-header h3 {
+            font-size: 1rem;
+            font-weight: 700;
+        }
+
+        .kommun-mock-header span {
+            font-size: 1.2rem;
+        }
+
+        .kommun-compare-row {
+            display: flex;
+            gap: 14px;
+            margin-bottom: 18px;
+        }
+
+        .kommun-compare-box {
+            flex: 1;
+            background: var(--bg);
+            border-radius: 14px;
+            padding: 18px 14px;
+            text-align: center;
+            border: 1px solid rgba(255,255,255,0.04);
+        }
+
+        .kommun-compare-box .val {
+            font-size: 2rem;
+            font-weight: 800;
+            margin-bottom: 2px;
+        }
+
+        .kommun-compare-box .lbl {
+            font-size: 0.72rem;
+            color: var(--t2);
+        }
+
+        .kommun-diff-bar {
+            text-align: center;
+            padding: 12px;
+            border-radius: 12px;
+            font-size: 0.92rem;
+            font-weight: 700;
+            margin-bottom: 18px;
+        }
+
+        .kommun-diff-bar.positive {
+            background: rgba(0, 184, 148, 0.1);
+            color: var(--ok);
+        }
+
+        .kommun-trend-row {
+            display: flex;
+            gap: 10px;
+            margin-bottom: 14px;
+        }
+
+        .kommun-trend-item {
+            flex: 1;
+            background: var(--bg);
+            border-radius: 10px;
+            padding: 12px 10px;
+            text-align: center;
+            border: 1px solid rgba(255,255,255,0.04);
+        }
+
+        .kommun-trend-item .period {
+            font-size: 0.65rem;
+            color: var(--t2);
+            margin-bottom: 4px;
+        }
+
+        .kommun-trend-item .score {
+            font-size: 1.1rem;
+            font-weight: 800;
+        }
+
+        .kommun-trend-item .delta {
+            font-size: 0.68rem;
+            font-weight: 600;
+            margin-top: 2px;
+        }
+
+        .kommun-users-note {
+            text-align: center;
+            font-size: 0.76rem;
+            color: var(--t2);
+            margin-top: 14px;
+            font-style: italic;
+        }
+
+        .kommun-explanation {
+            max-width: 640px;
+            margin: 40px auto 0;
+            text-align: center;
+        }
+
+        .kommun-explanation p {
+            font-size: 0.95rem;
+            color: var(--t2);
+            line-height: 1.65;
+            margin-bottom: 14px;
+        }
+
+        .kommun-explanation strong {
+            color: var(--t);
+        }
+
+        /* NETWORK EFFECT */
+        .network-section {
+            position: relative;
+        }
+
+        .network-inner {
+            background: linear-gradient(135deg, rgba(108, 92, 231, 0.08), rgba(0, 206, 201, 0.06));
+            border: 1px solid rgba(108, 92, 231, 0.15);
+            border-radius: 24px;
+            padding: 56px 48px;
+            text-align: center;
+            position: relative;
+            overflow: hidden;
+        }
+
+        .network-inner::before {
+            content: '';
+            position: absolute;
+            top: -100px;
+            right: -100px;
+            width: 300px;
+            height: 300px;
+            background: radial-gradient(circle, rgba(108, 92, 231, 0.08) 0%, transparent 70%);
+            pointer-events: none;
+        }
+
+        .network-inner h2 {
+            font-size: clamp(1.5rem, 3vw, 2rem);
+            font-weight: 800;
+            margin-bottom: 14px;
+        }
+
+        .network-inner > p {
+            font-size: 1rem;
+            color: var(--t2);
+            line-height: 1.65;
+            max-width: 580px;
+            margin: 0 auto;
+        }
+
+        .network-steps {
+            display: flex;
+            justify-content: center;
+            gap: 12px;
+            margin-top: 36px;
+            flex-wrap: wrap;
+            align-items: center;
+        }
+
+        .network-step {
+            background: rgba(255,255,255,0.06);
+            border-radius: 14px;
+            padding: 18px 22px;
+            text-align: center;
+            min-width: 150px;
+        }
+
+        .network-step .ns-icon {
+            font-size: 1.6rem;
+            margin-bottom: 6px;
+        }
+
+        .network-step .ns-text {
+            font-size: 0.82rem;
+            color: var(--t2);
+            line-height: 1.4;
+        }
+
+        .network-step .ns-text strong {
+            color: var(--t);
+            display: block;
+        }
+
+        .network-arrow {
+            font-size: 1.2rem;
+            color: var(--pl);
+        }
+
+        /* GAMIFICATION SECTION */
+        .gamification-section {
+            position: relative;
+        }
+
+        .gamification-grid {
+            display: grid;
+            grid-template-columns: repeat(3, 1fr);
+            gap: 20px;
+        }
+
+        .gamification-card {
+            background: var(--c1);
+            border: 1px solid rgba(255, 255, 255, 0.05);
+            border-radius: var(--r);
+            padding: 28px 22px;
+            text-align: center;
+            transition: transform 0.3s, border-color 0.3s;
+        }
+
+        .gamification-card:hover {
+            transform: translateY(-3px);
+            border-color: rgba(255, 215, 0, 0.2);
+        }
+
+        .gamification-icon {
+            font-size: 2rem;
+            margin-bottom: 14px;
+            display: block;
+        }
+
+        .gamification-card h3 {
+            font-size: 1rem;
+            font-weight: 700;
+            margin-bottom: 8px;
+        }
+
+        .gamification-card p {
+            font-size: 0.84rem;
+            color: var(--t2);
+            line-height: 1.55;
+        }
+
+        .gamification-tagline {
+            text-align: center;
+            margin-top: 36px;
+            font-size: 1.05rem;
+            color: var(--t2);
+            font-style: italic;
+        }
+
+        .gamification-tagline strong {
+            color: var(--t);
+        }
+
+        /* SCHOOLS/FUTURE SECTION */
         .schools {
             position: relative;
         }
@@ -1090,11 +1351,29 @@
 
             .problem-grid,
             .steps-grid,
-            .privacy-grid {
+            .privacy-grid,
+            .gamification-grid {
                 grid-template-columns: 1fr;
                 max-width: 420px;
                 margin: 0 auto;
                 gap: 16px;
+            }
+
+            .kommun-compare-row {
+                flex-direction: column;
+            }
+
+            .network-inner {
+                padding: 40px 28px;
+            }
+
+            .network-steps {
+                flex-direction: column;
+                align-items: center;
+            }
+
+            .network-arrow {
+                transform: rotate(90deg);
             }
 
             .steps-grid::before {
@@ -1105,7 +1384,8 @@
                 grid-template-columns: 1fr;
             }
 
-            .schools-inner {
+            .schools-inner,
+            .network-inner {
                 padding: 40px 28px;
             }
         }
@@ -1430,6 +1710,127 @@
     </div>
 </section>
 
+<!-- KOMMUN BENCHMARK -->
+<section class="kommun-section">
+    <div class="container">
+        <div class="section-header reveal">
+            <div class="section-label">🗺️ Kommun-benchmark</div>
+            <h2>Hur mår barnen i din kommun?</h2>
+            <p>Jämför ditt barns välmående med andra familjer i samma kommun. Anonymt och aggregerat.</p>
+        </div>
+
+        <div class="kommun-mockup reveal">
+            <div class="kommun-mock-header">
+                <span>📊</span>
+                <h3>Täby kommun</h3>
+            </div>
+
+            <div class="kommun-compare-row">
+                <div class="kommun-compare-box">
+                    <div class="val" style="color:var(--ok)">4.2</div>
+                    <div class="lbl">Din familj</div>
+                </div>
+                <div class="kommun-compare-box">
+                    <div class="val" style="color:var(--pl)">3.8</div>
+                    <div class="lbl">Täby kommun snitt</div>
+                </div>
+            </div>
+
+            <div class="kommun-diff-bar positive">
+                ↑ Din familj ligger +0.4 över kommunsnittet
+            </div>
+
+            <div class="kommun-trend-row">
+                <div class="kommun-trend-item">
+                    <div class="period">Denna vecka</div>
+                    <div class="score" style="color:var(--ok)">3.8</div>
+                    <div class="delta" style="color:var(--ok)">↑ +0.3</div>
+                </div>
+                <div class="kommun-trend-item">
+                    <div class="period">Förra veckan</div>
+                    <div class="score">3.5</div>
+                    <div class="delta" style="color:var(--t2)">—</div>
+                </div>
+                <div class="kommun-trend-item">
+                    <div class="period">Familjer</div>
+                    <div class="score" style="color:var(--al)">47</div>
+                    <div class="delta" style="color:var(--ok)">↑ +8 ny</div>
+                </div>
+            </div>
+
+            <div class="kommun-users-note">Baserat på 47 familjer i Täby kommun · Uppdateras veckovis</div>
+        </div>
+
+        <div class="kommun-explanation reveal">
+            <p>
+                Välj din hemkommun vid registrering — Moodly jämför sedan ditt barns mående
+                med andra familjer i samma område. <strong>Helt anonymiserat.</strong>
+                Ingen ser enskilda barn. Minst 3 familjer krävs för att data visas.
+            </p>
+        </div>
+    </div>
+</section>
+
+<!-- GAMIFICATION -->
+<section class="gamification-section">
+    <div class="container">
+        <div class="section-header reveal">
+            <div class="section-label">🏆 Barnen älskar det</div>
+            <h2>Gamification som får barnen att stanna</h2>
+            <p>En check-in tar 30 sekunder. Men barnen vill göra det — varje dag.</p>
+        </div>
+        <div class="gamification-grid">
+            <div class="gamification-card reveal reveal-delay-1">
+                <span class="gamification-icon">🔥</span>
+                <h3>Streaks</h3>
+                <p>Checka in varje dag och bygg din streak. Barnen tävlar mot sig själva — inte mot andra.</p>
+            </div>
+            <div class="gamification-card reveal reveal-delay-2">
+                <span class="gamification-icon">⭐</span>
+                <h3>Poäng & nivåer</h3>
+                <p>Varje check-in ger poäng. Stiger i nivå från Nybörjare till Moodly-legendar.</p>
+            </div>
+            <div class="gamification-card reveal reveal-delay-3">
+                <span class="gamification-icon">🎭</span>
+                <h3>Avatarer</h3>
+                <p>Lås upp nya avatarer med intjänade poäng. Barnet väljer sin egen karaktär.</p>
+            </div>
+        </div>
+        <div class="gamification-tagline reveal">
+            <strong>Resultat:</strong> barn som gamifieras checkar in 3x oftare — och ger dig bättre data.
+        </div>
+    </div>
+</section>
+
+<!-- NETWORK EFFECT -->
+<section class="network-section">
+    <div class="container">
+        <div class="network-inner reveal">
+            <h2>Ju fler familjer, desto bättre insikter</h2>
+            <p>
+                Moodly blir mer värdefullt för varje familj som ansluter sig i din kommun.
+                Bjud in andra föräldrar — ni bygger en gemensam bild av hur barnen mår.
+            </p>
+            <div class="network-steps">
+                <div class="network-step">
+                    <div class="ns-icon">👨‍👩‍👧</div>
+                    <div class="ns-text"><strong>3 familjer</strong>Benchmark aktiveras</div>
+                </div>
+                <div class="network-arrow">→</div>
+                <div class="network-step">
+                    <div class="ns-icon">👥</div>
+                    <div class="ns-text"><strong>20+ familjer</strong>Tillförlitliga trender</div>
+                </div>
+                <div class="network-arrow">→</div>
+                <div class="network-step">
+                    <div class="ns-icon">🏛️</div>
+                    <div class="ns-text"><strong>100+ familjer</strong>Skolnivå-insikter</div>
+                </div>
+            </div>
+        </div>
+    </div>
+</section>
+
 <!-- FOR SCHOOLS -->
 <section class="schools">
     <div class="container">
@@ -1437,9 +1838,8 @@
             <div class="coming-badge">🚀 Kommer snart</div>
             <h2>För skolor och kommuner</h2>
             <p>
-                Anonymiserad data som visar hur barn mår på din skola jämfört med andra.
-                Moodly ger skolor och kommuner verktyg att förstå välmåendet i sina verksamheter
-                — och agera innan problem växer.
+                När tillräckligt många familjer använder Moodly i ett område kan vi erbjuda
+                skolor och kommuner anonymiserade insikter — utan att någon enskild familjs data exponeras.
             </p>
             <div class="schools-features">
                 <div class="schools-feat">

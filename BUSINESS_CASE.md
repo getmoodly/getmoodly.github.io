@@ -2,369 +2,433 @@
 
 ## Executive Summary
 
-**Moodly** är en mobil-first SaaS-plattform som mäter och förbättrar emotionellt välmående genom multimodal AI-analys (ansikte, röst, text, biometri). Till skillnad från befintliga mood trackers som förlitar sig på subjektiv självrapport, levererar Moodly **objektiv, passiv mätning** med **mätbara interventioner** och **bevisad effekt**.
+**Moodly** är en platsbaserad välmåendeplattform för familjer som mäter barns mående per plats — skola, idrott, hem, fritid. Föräldrar får insikter, trender och varningar. Kommuner får aggregerad, anonymiserad data om barns välmående i realtid.
 
-**Nytt: Familjesegment** — Moodly Family låter föräldrar följa sina barns emotionella mående i realtid, med inbyggd integritetsskydd som skyddar barnens privata samtal.
+**Det unika:** Moodly bygger det enda kontinuerliga, platsbaserade datalagret om barns välmående per kommun i Sverige. Denna data existerar inte idag — varken hos kommuner, skolor, BUP eller Folkhälsomyndigheten.
 
-**Marknad:** Den globala digitala mental hälsa-marknaden värderas till ~30 miljarder USD (2026) med CAGR 16-18%. Emotion AI-segmentet växer ännu snabbare (CAGR 20-30%+). Familjesegmentet adderar ytterligare ~5 miljarder USD (digital parenting + child mental health).
+**Modell:** Freemium B2C (föräldrar) + B2B (kommuner/skolor) + B2B2 (riksförbund). Nätverkseffekt per kommun driver tillväxt — varje ny familj gör datan mer värdefull för alla andra.
 
-**Modell:** Freemium B2C + B2C Family + B2B employee wellness hybrid.
+**Marknad:** Digital barnhälsa + parenting tech värderas till ~35 miljarder USD globalt (2026). Kommunal elevhälsa i Sverige omsätter ~5 miljarder kr/år — Moodly erbjuder kontinuerlig data till en bråkdel av kostnaden.
 
-**Ask:** 3-5 MSEK seed-finansiering för 12 månaders runway till product-market fit.
+**Status:** MVP live (GitHub Pages + Supabase), kommun-benchmarking implementerat, 290 svenska kommuner förpopulerade.
 
 ---
 
 ## 1. Problemet
 
+### Siffror
+
 | Datapunkt | Källa |
 |-----------|-------|
-| 44% av svenskar rapporterar oro/ångest (2024, upp från 31% 2011) | Folkhälsomyndigheten |
-| ~40% av alla sjukskrivningar i Sverige är stressrelaterade | Försäkringskassan |
-| 16.5% av Europas befolkning har psykiska besvär | WHO Europe |
-| Ångest har ökat 44% i Europa sedan 2015 | Eurostat |
-| Företag förlorar ~15 000 kr/anställd/år på stressrelaterad frånvaro | Svenskt Näringsliv |
-| **Var 4:e barn (10-17 år) rapporterar psykisk ohälsa** | **Folkhälsomyndigheten** |
-| **73% av föräldrar oroar sig för sina barns digitala välmående** | **Internetstiftelsen** |
-| **BUP-köerna har ökat 40% sedan 2020** | **SKR** |
+| 1 av 4 barn (10-17 år) rapporterar psykisk ohälsa | Folkhälsomyndigheten |
+| 73% av föräldrar oroar sig för sina barns välmående | Internetstiftelsen |
+| BUP-köerna har ökat 40% sedan 2020 | SKR |
+| Föräldrar upptäcker i snitt 6-12 månader för sent att barnet mår dåligt | Socialstyrelsen |
+| Kommuner lägger miljarder på elevhälsa baserat på årliga enkäter | SKR |
+| 44% av svenskar rapporterar oro/ångest (upp från 31% 2011) | Folkhälsomyndigheten |
+| ~40% av alla sjukskrivningar är stressrelaterade | Försäkringskassan |
 
-### Problemet för familjer
+### Problemet för föräldrar
 
-Föräldrar saknar verktyg för att följa sina barns emotionella mående. Barn och ungdomar (10-17 år) uttrycker sällan hur de mår verbalt, och föräldrar upptäcker problem först när de eskalerat. Befintliga lösningar är antingen övervakningsappar (som bryter förtroendet) eller terapikontakt (som kräver att problemet redan är allvarligt).
+Föräldrar har ingen aning om hur deras barn faktiskt mår i de miljöer de spenderar mest tid i. Skolan säger "det går bra", tränaren säger "hen är duktig", men barnet kommer hem tyst och trött.
 
-**Gapet:** Det finns ingen app som ger föräldrar insyn i barns mående utan att kompromissa med barnens integritet.
+Det finns inget verktyg som ger föräldern en kontinuerlig bild av barnets mående kopplat till specifika platser. Föräldrar fångar signaler för sent — när barnet redan mår dåligt.
 
-**Befintliga lösningar brister:**
-- **Mood trackers** (Daylio, Moodfit): Enbart subjektiv självrapport, ingen objektiv mätning, inget familjestöd
-- **Meditationsappar** (Calm, Headspace): Content-driven, mäter inte effekt
-- **Terapiplattformar** (Mindler): Reaktiva, inte preventiva. Dyra per session
-- **Hårdvara** (Mendi, Flow): Kräver extra enhet, hög kostnad, smal funktionalitet
-- **Föräldraappar** (Bark, Qustodio): Övervakning, inte välmåendeverktyg. Bryter förtroende
+### Problemet för kommuner
 
-**Gapet:** Ingen aktör kombinerar passiv multimodal mätning + personaliserade interventioner + mätbar effekt + familjefunktion med integritetsskydd i en lättillgänglig mobilapp.
+Kommuner mäter barns välmående med årliga enkäter (ELSA, Psynk, SCB). Resultaten kommer 3-6 månader efter insamling — redan inaktuella. De saknar:
+- Realtidsdata per skola
+- Kontinuerlig mätning (ej enstaka nedslag)
+- Jämförelse mellan skolor och aktiviteter
+- Tidiga varningssignaler per stadsdel/enhet
+
+### Ingen äger denna data
+
+| Aktör | Vad de mäter | Vad de saknar |
+|-------|-------------|---------------|
+| Skolan | Betyg, frånvaro | Mående, trivsel, platsbaserat |
+| BUP | Diagnoser (reaktivt) | Preventiv, kontinuerlig data |
+| Kommunen | Årlig enkät | Realtid, platsbaserat, jämförbart |
+| Idrottsföreningar | Resultat, närvaro | Trivsel, mående |
+| Folkhälsomyndigheten | Nationell statistik | Lokal, kommun-nivå, realtid |
+
+**Gapet:** Ingen aktör samlar kontinuerlig, platsbaserad välmåendedata om barn. Moodly fyller detta gap.
+
+### Befintliga lösningar brister
+
+| Lösning | Typ | Svaghet |
+|---------|-----|---------|
+| Daylio, Moodfit | Mood tracker | Generell (ej platsbaserad), inget familjestöd, ingen kommun-data |
+| Calm, Headspace | Meditation | Content-driven, mäter inte effekt, ej för barn |
+| Mindler, Kry | Terapi | Reaktiv (kräver att problemet finns), dyr per session |
+| Bark, Qustodio | Föräldraövervakning | Övervakar (bryter förtroende), mäter inte mående |
+| ELSA-enkäter | Kommunverktyg | 1x/år, ej realtid, ej jämförbart |
+
+**Ingen kombinerar:** platsbaserad check-in + föräldra-dashboard + kommun-benchmarking + barnintegritet.
 
 ---
 
 ## 2. Lösningen
 
 ### Kärnprodukt
-En app (iOS/Android + webb) som:
-1. **Mäter** känslor via kamera (ansiktsuttryck), mikrofon (röstprosodi), text (NLP) och wearables (puls, HRV)
-2. **Analyserar** med AI-fusion som viktar modaliteter och ger ett "MoodScore" (0-100)
-3. **Agerar** med personanpassade mikro-interventioner (CBT, andning, musik, journaling)
-4. **Bevisar** effekt genom att mäta före/efter och visa ROI på välmående över tid
 
-### Moodly Family — Killer Feature
+Barnet checkar in sitt mående med en emoji (1-5) per plats — **10 sekunder per dag**. Föräldern ser allt i en dashboard. Kommunen ser anonymiserad aggregering.
 
-En unik familjefunktion som löser ett verkligt problem:
+### Hur det fungerar
 
-**Hur det fungerar:**
-1. Förälder skapar en "Familj" i inställningar
-2. Lägger till barn (namn + åldersgrupp: 6-9, 10-13, 14-17)
-3. Varje barn får sin egen profil med eget AI-namn och anpassad personlighet
-4. Barnet använder appen precis som en vuxen — chattar, gör check-ins, får interventioner
-5. Föräldern ser en **Familjedashboard** med:
-   - MoodScore-trend per barn (senaste 7 dagarna)
-   - Senaste känsla och tidpunkt
-   - Antal check-ins
-   - **Familje-alerts** ("Emma har rapporterat stress 3 dagar i rad")
+**Barnet:**
+1. Öppnar Moodly → ser sina platser (Skolan, Fotbollen, Hem)
+2. Trycker en emoji per plats (😢😕😐🙂😄)
+3. Valfri kommentar
+4. Klart — 10 sekunder
 
-**Privacy by design:**
-- Föräldern ser **ALDRIG** barnets samtal, text eller transcripts
-- Endast aggregerad data: score, känsla, trend, duration
-- Barnet behåller en trygg plats att uttrycka sig
-- GDPR-compliant: all data stannar lokalt på enheten
+**Föräldern:**
+1. Ser alla barns mående i en dashboard
+2. Per plats: dagens emoji + 30-dagars snitt + trend
+3. Varningar: "Emma har rapporterat lågt mående på skolan 3 dagar i rad"
+4. Kommun-benchmark: "Dina barns mående vs snittet i Vaxholm"
+5. Insikter: "Bästa platsen: Simhallen (4.3/5). Sämsta: Skolan (2.8/5)"
 
-**Varför detta är en killer feature:**
-- Löser ett djupt emotionellt problem för föräldrar
-- Ingen konkurrent erbjuder detta med integritetsskydd
-- Skapar viral tillväxt (förälder bjuder in barn, barn berättar för vänner)
-- Ökar retention (familjekontext gör appen "sticky")
-- Naturlig uppsäljning: gratis barn → premium family
+**Kommunen (B2B-dashboard):**
+1. Anonymiserad data per skola, stadsdel, aktivitetstyp
+2. Trender: "Välmåendet på Ytterbyskolan har sjunkit 15% senaste månaden"
+3. Jämförelse: "Så ligger era skolor till mot kommunsnittet"
+4. Tidiga varningar: "Ökning av lågt mående bland 10-13-åringar i västra stadsdelen"
+
+### Privacy by design
+
+- Föräldern ser **ALDRIG** barnets samtalstexter — bara trender och siffror
+- Kommunen ser **ALDRIG** individuella barn — bara aggregerad data
+- Minst 3 användare per plats/kommun innan benchmark visas
+- All data offline-first (localStorage), opt-in till moln
+- GDPR-compliant: barnet/föräldern äger sin data, kan exportera och radera
+
+### Gamification (Barnretention)
+
+Barn måste vilja använda appen. Streak + poäng + avatarer:
+- **Streak:** 🔥 7 dagars streak → bonuspoäng
+- **Poäng:** Varje check-in ger poäng, bonus för alla platser
+- **Avatarer:** Köp och lås upp med poäng (🦊🐱🐶🦄🐉⭐🚀)
+- **Daglig belöning:** Random bonuspoäng varje dag
+- **Familje-streak:** "Hela familjen har checkat in 5 dagar i rad!"
+
+### Kommun-benchmarking — Nyckel-feature
+
+Varje förälder anger sin hemkommun vid registrering (förpopulerad lista med alla 290 svenska kommuner). Data aggregeras per kommun:
+
+- **< 3 familjer:** "Du är bland de första i Vaxholm! Bjud in fler."
+- **3+ familjer:** Genomsnittligt mående visas, jämförelse med din familj
+- **50+ familjer:** Statistiskt signifikant — plats-nivå benchmark möjlig
+- **500+ familjer:** Unik datakälla som ingen kan replikera
+
+**Nätverkseffekt:** Föräldern ser mer värde ju fler som använder appen i samma kommun. Detta driver organisk spridning.
 
 ### Differentiering
 
-| Funktion | Moodly | Daylio | Calm | Remente | Mindler | Bark |
-|----------|--------|--------|------|---------|---------|------|
-| Multimodal AI-mätning | X | | | | | |
-| Passiv data (kamera/röst) | X | | | | | |
-| Objektiv poängsättning | X | | | | | |
-| Mätbar interventionseffekt | X | | | | | |
-| **Familjefunktion med privacy** | **X** | | | | | |
-| **Familje-alerts** | **X** | | | | | |
-| B2B wellness-dashboard | X | | | X | | |
-| GDPR on-device processing | X | | | | | X |
-| Pris < 99 kr/mån | X | X | X | X | | X |
-
-### MVP (byggd, se prototyp)
-- 30-sekunders daglig check-in (ansikte + röst + text)
-- AI-fusion med MoodScore
-- Personaliserade interventioner med guidad andningsövning
-- Dashboard med trender, historik, statistik
-- AI-insikter (mönster, korrelationer, rekommendationer)
-- Passiv mätning via snabbtanke-input
-- Mönster-alerts vid avvikelser
-- **Familjesegment: skapa familj, lägg till barn, familjedashboard, familje-alerts**
-- **Flerspråksstöd: Svenska + Engelska**
-- **Inställningssida: profil, språk, familj, datahantering**
-- Lokal datalagring (GDPR-proof)
-- Dataexport (användaren äger sin data)
+| Funktion | Moodly | Daylio | Calm | Mindler | Bark |
+|----------|--------|--------|------|---------|------|
+| Platsbaserad check-in per barn | **X** | | | | |
+| Föräldra-dashboard med privacy | **X** | | | | |
+| Kommun-benchmarking | **X** | | | | |
+| Familje-alerts (3+ dagar lågt) | **X** | | | | |
+| Gamification för barn | **X** | X | | | |
+| B2B kommun-data | **X** | | | | |
+| Offline-first + GDPR | **X** | | | | X |
+| Pris < 99 kr/mån | **X** | X | X | | X |
 
 ---
 
-## 3. Marknad
+## 3. Det unika dataobjektet
+
+**Moodly är inte en app — det är ett datalager.**
+
+Appen är distributionsmekanismen. Det verkliga värdet är den aggregerade, platsbaserade välmåendedatan per kommun som ingen annan aktör äger.
+
+| Data vi bygger | Vem vill ha den | Varför den inte finns |
+|---|---|---|
+| Mående per skola, kontinuerligt | Kommuner, rektorer, elevhälsa | Enkäter görs 1x/år, ej realtid |
+| Mående per idrottsförening | RF, specialförbund, föräldrar | Ingen mäter trivsel i idrott |
+| Mående per kommun, jämförbart | SKR, media, politiker | Ingen aggregerar platsbaserat |
+| Tidiga varningssignaler per barn | Föräldrar, BUP | Upptäcks 6-12 mån för sent |
+| Nationell karta: barns välmående | Folkhälsomyndigheten, forskare | Existerar inte i realtid |
+
+**Moat:**
+1. **Datanätverkseffekt.** Varje ny familj i en kommun gör datan mer värdefull. Går inte att kopiera — tar tid att bygga.
+2. **Platsbaserad granularitet.** Andra mäter "hur mår du?" generellt. Moodly mäter "hur mår du PÅ SKOLAN vs PÅ IDROTTEN vs HEMMA."
+3. **Dubbelsidig modell.** Föräldrar skapar datan gratis (de får värde). Kommuner betalar för aggregatet.
+4. **Låg friktion.** 10 sekunder per dag. Emoji-check-in. Barn gillar det.
+5. **First-mover.** Ingen svensk/nordisk aktör gör platsbaserad barnvälmående.
+
+---
+
+## 4. Marknad
 
 ### TAM / SAM / SOM
 
 | | Globalt | Europa | Sverige |
 |---|---------|--------|---------|
-| **TAM** (Total Addressable Market) | 35-55 mdr USD (digital mental hälsa + digital parenting 2026-2030) | ~10-15 mdr USD | ~1 000 MSEK |
-| **SAM** (Serviceable) | 10-18 mdr USD (mental health apps + emotion AI + family wellness) | ~3-5 mdr USD | ~160 MSEK |
-| **SOM** (Obtainable, år 3) | — | — | 15-35 MSEK |
+| **TAM** (Digital barnhälsa + parenting tech) | ~35 mdr USD | ~10 mdr USD | ~1 200 MSEK |
+| **SAM** (Platsbaserad barnvälmående + kommun-data) | ~5 mdr USD | ~1.5 mdr USD | ~200 MSEK |
+| **SOM** (Obtainable, år 3) | — | — | 15-40 MSEK |
 
-### Familjesegmentet — Marknadsstorlek
+### Sverige — Nyckeldata
 
 | Datapunkt | Värde |
 |-----------|-------|
-| Antal familjer med barn 6-17 i Sverige | ~800 000 |
-| Digital parenting-marknad (globalt) | ~5 mdr USD (CAGR 12%) |
+| Antal familjer med barn 6-17 år | ~800 000 |
+| Antal kommuner | 290 |
+| Kommunal elevhälsa (total budget) | ~5 mdr kr/år |
 | Betalningsvilja: föräldrar för barns hälsa | 2-3x högre än för egen hälsa |
-| Genomsnittlig familjestorlek (relevant barn) | 1.7 barn |
-| Potentiell SAM (Sverige, familj) | ~40 MSEK |
+| Antal skolor (grund + gym) | ~6 000 |
+| Antal idrottsföreningar med barn/ungdom | ~14 000 |
 
 ### Tillväxtdrivare
-- Post-pandemi normalisering av mental hälsa-verktyg
-- EU AI Act skapar förtroende för reglerade AI-lösningar (fördel för europeiska bolag)
-- Corporate wellness-budgetar ökar (685 MSEK i Sverige 2024, växer ~3.5% årligen)
-- Wearable-penetration ökar (Apple Watch, Oura) — fler datakällor
-- Gen Z/Millennials förväntar sig digital-first hälsolösningar
-- **Ökande psykisk ohälsa bland barn/ungdomar driver efterfrågan på preventiva verktyg**
-- **Föräldrar söker aktivt digitala lösningar — men vill inte övervaka**
+
+- Ökande psykisk ohälsa bland barn driver efterfrågan på preventiva verktyg
+- Föräldrar söker digitala lösningar — men vill inte övervaka
+- Kommuner behöver realtidsdata — årliga enkäter räcker inte
+- Post-pandemi normalisering av digitala hälsoverktyg
+- GDPR ger europeiska bolag edge (privacy by design)
+- Skolinspektionen ställer ökade krav på elevhälsa → kommuner behöver data
 
 ---
 
-## 4. Konkurrenslandskap (Sverige)
+## 5. Konkurrenslandskap
 
-| Bolag | Modell | Styrka | Svaghet vs Moodly |
+| Aktör | Modell | Styrka | Svaghet vs Moodly |
 |-------|--------|--------|-------------------|
-| **Remente** | B2C+B2B wellness-app | Stark B2B, vetenskapsbaserad | Enbart självrapport, ingen multimodal AI, inget familjestöd |
-| **Mendi** | Neurofeedback hårdvara | Biometrisk hjärnmätning | Kräver headband (~3000 kr), fokus kognition ej emotioner |
-| **Mindler** | Terapiplattform | Etablerad, 100kr/samtal | Reaktiv terapi, ingen prevention/tracking |
-| **Sakura** | B2B psykolog-matching | B2B GDPR-säker | Ingen egen tech/mätning, förmedling |
-| **Flow** | tDCS-headset + app | Kliniskt validerad mot depression | Nischprodukt, hårdvara, hög kostnad |
-| **Bark** | Föräldraövervakning | Bred plattform, USA-marknad | Övervakning (ej välmående), integritetsproblem, ej nordiskt |
+| **Daylio** | B2C mood tracker | Populär, enkel | Generell (ej platsbaserad), inget familjestöd, ingen kommun-data |
+| **Remente** | B2C+B2B wellness | Stark B2B, vetenskaplig | Ej barn-fokuserad, ingen platsbaserad data |
+| **Bark** | Föräldraövervakning | Bred plattform, USA | Övervakning (ej välmående), bryter förtroende |
+| **Elevhälsoenkäter** | Kommun-verktyg | Etablerat, kommuner vana | 1x/år, ej realtid, ej jämförbart, dyrt |
+| **Mindler** | Terapiplattform | Etablerad | Reaktiv terapi, ingen prevention |
 
-**Slutsats:** Ingen svensk aktör gör passiv multimodal emotion-AI med familjesegment i en mobil SaaS. Dubbelt gap — både i emotion-AI och i privacy-first familjemående.
+**Slutsats:** Ingen aktör kombinerar platsbaserad barncheck-in + föräldra-dashboard + kommun-benchmarking. Moodly äger ett obefolkat segment.
 
 ---
 
-## 5. Affärsmodell
+## 6. Affärsmodell
 
-### Intäktsströmmar
+### Kundsegment
 
-**B2C Individ (40% av intäkt år 1-2, 25% år 3+)**
+**Fas 1: B2C — Föräldrar (användarbas)**
+
 | Tier | Pris | Innehåll |
 |------|------|----------|
-| Free | 0 kr | 1 check-in/dag, grundspårning, begränsad historik (7 dagar) |
-| Premium | 69 kr/mån | Obegränsat, AI-insikter, alla interventioner, full historik, export |
-| Premium Årlig | 549 kr/år (33% rabatt) | Samma som Premium |
+| **Gratis** | 0 kr | 1 barn, grundläggande check-in, 7 dagars historik |
+| **Premium** | 49 kr/mån | Obegränsat antal barn, kommun-benchmark, AI-insikter, avancerade varningar, full historik |
+| **Familj** | 79 kr/mån | Allt i Premium + delad dashboard för båda föräldrar, familje-streak |
 
-**B2C Family (20% av intäkt år 1-2, 25% år 3+)**
-| Tier | Pris | Innehåll |
-|------|------|----------|
-| Family Free | 0 kr | 1 barn, grundläggande trend, 7 dagars historik |
-| Family Premium | 99 kr/mån | Upp till 5 barn, full historik, familje-alerts, detaljerad dashboard |
-| Family Årlig | 799 kr/år (33% rabatt) | Samma som Family Premium |
+**Varför föräldrar betalar:** Kommun-benchmarken. "Hur ligger mitt barns skola till jämfört med andra i kommunen?" — data som inte finns någon annanstans.
 
-**B2B (40% av intäkt år 1-2, 50% år 3+)**
+**Fas 2: B2B — Kommuner och skolor**
+
 | Paket | Pris | Innehåll |
 |-------|------|----------|
-| Team (10-50 anställda) | 200 kr/anställd/år | Premium för alla + anonymiserad team-dashboard |
-| Enterprise (50+) | 350 kr/anställd/år | + HR-integration, rapporter, custom branding, dedicated support |
-| **Enterprise Family** | **+100 kr/anställd/år** | **Family Premium som förmån för anställdas familjer** |
-| Pilot | 0 kr (3 mån) | Fri testperiod för att bevisa ROI |
+| **Per skola** | 2 000-5 000 kr/mån | Dashboard per skola, trender, varningar |
+| **Kommunlicens** | 15 000-40 000 kr/mån | Alla skolor + fritid, jämförelse, årsrapport |
+| **Pilot** | 0 kr (3 mån) | Fri testperiod — kommunen ser data de redan har |
 
-**Framtida intäktsströmmar (år 2+)**
+**Varför kommuner betalar:** De lägger redan miljoner på enkäter och elevhälsoteam som agerar reaktivt. Moodly ger proaktiv, kontinuerlig data till en bråkdel av kostnaden. Pitchen: "Vi har redan data om era skolor. Vill ni se den?"
+
+**Fas 3: B2B2 — Riksförbund och myndigheter**
+
+| Kund | Värde | Pris |
+|------|-------|------|
+| Riksidrottsförbundet (RF) | Trivseldata per idrottsförening | 100 000-300 000 kr/år |
+| Sveriges Kommuner och Regioner (SKR) | Nationell jämförelse | 200 000-500 000 kr/år |
+| Folkhälsomyndigheten/forskare | Anonymiserad forskningsdata | Licensavtal |
+
+### Framtida intäktsströmmar (år 2+)
+
+- AI-kompis (Luna) med minne — premium-funktion
+- Skolpaket: Moodly for Schools (lärare ser klassnivå, ej individ)
 - Anonymiserade data-insikter till forskare (opt-in, etikprövat)
-- Premium-coaching (mänskliga coaches via app)
 - Försäkringspartnerskap (rabatterade premier för aktiva användare)
-- API-licens till tredjepartsutvecklare
-- **Skolpaket** — Moodly for Schools (kommun-avtal, BUP-avlastning)
+- Nationell årsrapport: "Så mår barnen i Sveriges kommuner" (PR + sponsring)
 
 ### Nyckeltal (targets)
 
-| Metric | Mål |
+| Metrik | Mål |
 |--------|-----|
-| B2C Conversion (Free → Premium) | 5-8% |
-| **Family Conversion (Free → Family Premium)** | **8-12%** |
-| Monthly Churn (Premium) | < 6% |
-| **Monthly Churn (Family Premium)** | **< 4%** |
-| B2B Annual Churn | < 15% |
-| CAC (B2C) | < 150 kr |
-| **CAC (Family)** | **< 80 kr (viral)** |
-| LTV (B2C Premium) | > 600 kr |
-| **LTV (Family Premium)** | **> 1 200 kr** |
-| LTV:CAC ratio | > 4:1 |
+| B2C konvertering (Free → Premium) | 5-8% |
+| Family konvertering (Free → Familj) | 8-12% |
+| Månatlig churn (Premium) | < 5% |
+| Månatlig churn (Familj) | < 3% |
+| B2B årlig churn | < 15% |
+| CAC (B2C) | < 80 kr (organisk via kommun-nätverkseffekt) |
+| LTV (B2C Premium) | > 800 kr |
+| LTV (Family) | > 1 500 kr |
+| LTV:CAC ratio | > 5:1 |
 | DAU/MAU ratio | > 40% |
 
 ---
 
-## 6. Finansiella projektioner
+## 7. Finansiella projektioner
 
 ### År 1 (Månad 1-12)
 
 | Post | Belopp (SEK) |
 |------|-------------|
 | **Intäkter** | |
-| B2C Premium (2 000 betalande x 69 kr x 8 mån snitt) | 1 104 000 |
-| B2C Family Premium (500 familjer x 99 kr x 6 mån snitt) | 297 000 |
-| B2B Piloter (5 företag x 30 anställda x gratis/pilot → konvertering Q4) | 200 000 |
-| **Totala intäkter** | **~1 600 000** |
+| B2C Premium (1 500 betalande x 49 kr x 8 mån snitt) | 588 000 |
+| B2C Familj (400 familjer x 79 kr x 6 mån snitt) | 189 600 |
+| B2B Piloter (2 kommuner x 20 000 kr x 4 mån) | 160 000 |
+| **Totala intäkter** | **~940 000** |
 | | |
 | **Kostnader** | |
-| Utveckling (2 FTE + frilans) | 1 800 000 |
-| Infrastruktur (hosting, AI APIs) | 200 000 |
-| Marketing & kundanskaffning | 600 000 |
-| Juridik/GDPR/compliance | 150 000 |
-| Övrigt (kontor, verktyg) | 150 000 |
-| **Totala kostnader** | **~2 900 000** |
+| Supabase Pro + domän | 24 000 |
+| Marketing (föräldranätverk, kommun-kontakt) | 200 000 |
+| Utveckling (frilans, AI-chat) | 400 000 |
+| Juridik/GDPR | 50 000 |
+| Övrigt | 50 000 |
+| **Totala kostnader** | **~724 000** |
 | | |
-| **Nettoresultat** | **-1 300 000** |
+| **Nettoresultat** | **+216 000** |
+
+*Notera: Mycket låg kostnadsbas tack vare statisk HTML + Supabase. Ingen infrastruktur att skala.*
 
 ### År 2
 
 | Post | Belopp (SEK) |
 |------|-------------|
-| B2C (15 000 betalande x 69 kr x 10 mån) | 10 350 000 |
-| B2C Family (5 000 familjer x 99 kr x 10 mån) | 4 950 000 |
-| B2B (20 företag x 80 anställda x 250 kr) | 4 000 000 |
-| B2B Enterprise Family (10 företag x 50 anställda x 100 kr) | 500 000 |
-| **Totala intäkter** | **~19 800 000** |
-| Totala kostnader | ~12 000 000 |
-| **Nettoresultat** | **~7 800 000** |
+| B2C Premium (8 000 betalande x 49 kr x 10 mån) | 3 920 000 |
+| B2C Familj (3 000 familjer x 79 kr x 10 mån) | 2 370 000 |
+| B2B Kommuner (8 kommuner x 25 000 kr x 10 mån) | 2 000 000 |
+| B2B2 Riksförbund (1 avtal) | 200 000 |
+| **Totala intäkter** | **~8 490 000** |
+| Totala kostnader (team, marketing, infra) | ~4 500 000 |
+| **Nettoresultat** | **~3 990 000** |
+| **Marginal** | **~47%** |
 
 ### År 3
 
 | Post | Belopp (SEK) |
 |------|-------------|
-| B2C (50 000 betalande) | 34 500 000 |
-| B2C Family (20 000 familjer) | 19 800 000 |
-| B2B (80 företag x 150 anställda) | 42 000 000 |
-| B2B Enterprise Family | 4 000 000 |
-| Övrigt (API, data, coaching, skolpaket) | 8 000 000 |
-| **Totala intäkter** | **~108 300 000** |
-| Totala kostnader | ~55 000 000 |
-| **Nettoresultat** | **~53 300 000** |
+| B2C Premium (25 000 betalande) | 12 250 000 |
+| B2C Familj (12 000 familjer) | 9 480 000 |
+| B2B Kommuner (30 kommuner x 30 000 kr x 12 mån) | 10 800 000 |
+| B2B2 Riksförbund + SKR (3 avtal) | 900 000 |
+| Övrigt (skolpaket, forskning, API) | 2 000 000 |
+| **Totala intäkter** | **~35 430 000** |
+| Totala kostnader | ~18 000 000 |
+| **Nettoresultat** | **~17 430 000** |
 | **Marginal** | **~49%** |
+
+### Driftkostnad idag
+
+| Post | Månad |
+|---|---|
+| Supabase (Pro) | ~200 kr |
+| Domän + hosting (GitHub Pages) | 0 kr |
+| AI API (Luna-chat, framtid) | 500-2 000 kr |
+| **Total** | **~700-2 200 kr/mån** |
+
+**Marginal vid skalning: 80-90%.** Inga servrar, ingen komplex infrastruktur. Supabase hanterar databas, auth och RLS.
 
 ### Finansieringsbehov
 
 | Fas | Belopp | Syfte |
 |-----|--------|-------|
-| Pre-seed (nu) | 500 000 - 1 000 000 | MVP-validering, 100 testanvändare, initial B2B-kontakt |
-| Seed (månad 6) | 3 000 000 - 5 000 000 | Full app-utveckling, first hires, go-to-market |
-| Serie A (månad 18-24) | 15 000 000 - 25 000 000 | Nordisk expansion, B2B-skalning, team |
+| Bootstrapped (nu) | 0 kr | MVP live, validera med första kommunen |
+| Pre-seed (månad 3-4) | 300 000-800 000 | Marketing i 3 kommuner, UX-polish, Luna AI |
+| Seed (månad 8-12) | 2 000 000-5 000 000 | Team (3-4 pers), 20+ kommuner, B2B-sälj |
+| Serie A (månad 18-24) | 10 000 000-20 000 000 | Nordisk expansion, skolpaket, nationell data |
 
 **Möjliga finansiärer:**
-- **Almi** — innovationslån, tidig fas
-- **Vinnova** — innovationsbidrag (healthtech, AI)
+- **Almi** — innovationslån (100-500k)
+- **Vinnova** — innovationsbidrag (healthtech, AI, socialt värde)
 - **EIC Accelerator** — EU-bidrag upp till 2.5M EUR
-- **Angels** — Nordic Health Tech Angels, SUP46 nätverk
-- **VC** — Creandum, EQT Ventures, Inventure (nordiskt healthtech-fokus)
+- **Angels** — Nordic Health Tech Angels, SUP46
+- **VC** — Creandum, EQT Ventures, Inventure (nordiskt healthtech)
 
 ---
 
-## 7. Go-to-Market
+## 8. Go-to-Market
 
-### Fas 1: Validering (Månad 1-3)
-- Lansera prototyp (klar!) — samla 100 testanvändare
-- Enkätvalidering: "Skulle du betala 69 kr/mån för detta?"
-- **Familjevalidering: 20 föräldrar testar Family-funktionen**
-- 10 djupintervjuer med HR-chefer på medelstora svenska bolag
-- Iterate baserat på feedback
+### Steg 1: En kommun i taget (Månad 1-6)
 
-### Fas 2: Svensk lansering (Månad 4-8)
-- App Store + Google Play
-- Content marketing: LinkedIn-artiklar om emotionell intelligens på jobbet
-- **Föräldrabloggar/poddar: "Så följer du ditt barns mående utan att övervaka"**
-- Partnerskap: Folksam, Skandia (friskvårdsbidrag-kompatibel)
-- 5 B2B-piloter (gratis 3 månader mot case studies)
-- PR: "Svensk AI som mäter känslor — nu även för familjer" — Breakit, Di Digital, SVT Nyheter
-- **PR-vinkel familj:** "Appen som varnar föräldrar innan det är för sent" — Aftonbladet, Expressen, Vi Föräldrar
+**Strategi:** Fokusera på EN kommun. Nå kritisk massa (50+ familjer) innan nästa.
 
-### Fas 3: Tillväxt (Månad 9-18)
-- Performance marketing (Facebook/Instagram, LinkedIn för B2B)
-- Viral loops: "Dela din veckotrend" (anonymiserad)
-- **Family viral loop: förälder bjuder in partner, barn berättar för vänner**
-- HR-mässor: Personal & Chef, HR-dagarna
-- **Föräldramässor: Baby & Barn, Bokmässan (barnpanel)**
-- Friskvårdsbidrag-listning (ökar B2C-konvertering massivt)
-- Influencer-samarbeten: hälsoprofiler, poddar, **föräldraprofiler på Instagram**
-- **Skolpilot: 3 kommuner testar Moodly for Schools**
+**Taktik:**
+1. Välj en medelstor kommun (15 000-40 000 inv.) — t.ex. Vaxholm, Lerum, Staffanstorp
+2. Kontakta 3-5 föräldrar via Facebook-grupper ("Vaxholms föräldrar")
+3. Nätverkseffekten driver: "Se hur barnen i Vaxholm mår" lockar fler
+4. Organisk spridning: varje förälder bjuder in 2-3 andra (inbjudningskod i appen)
+5. Vid 50+ familjer → kontakta kommunens skolförvaltning
 
-### Fas 4: Nordisk expansion (Månad 18-30)
+**CAC: ~0 kr.** Appen löser ett verkligt problem. Kommun-benchmarken skapar "fear of missing out" — föräldrar vill se hur deras barns skola ligger till.
+
+### Steg 2: Kommun-pitch med data (Månad 6-12)
+
+**Strategi:** Visa kommunen data de inte visste att de hade.
+
+**Pitch:** "Vi har 200 föräldrar i Vaxholm som dagligen mäter sina barns mående. Ytterbyskolan ligger på 3.8/5, Resarö skola på 4.2/5. Vill ni se hela bilden och agera på den?"
+
+**Conversion trigger:** Kommunen betalar för att komma åt data som redan finns — inte för att skapa den.
+
+**Parallellt:** Starta i 3-5 nya kommuner med samma playbook.
+
+### Steg 3: PR + Nationell utrullning (Månad 12-18)
+
+- **PR-hook:** "Så mår barnen i Sveriges kommuner — första realtidsmätningen"
+- Kanaler: Vi Föräldrar, Aftonbladet, SVT, Breakit, Di Digital
+- Föräldra-influencers på Instagram/TikTok
+- Partnerskap med RF: "Så mår barnen i svensk idrott"
+- 10-20 kommuner parallellt
+
+### Steg 4: Nordisk expansion (Månad 18-30)
+
 - Lokalisera till norska, danska, finska, engelska
 - GDPR-compliance redan på plats — snabb expansion
-- Lokala B2B-partners i varje marknad
-- **Family-segmentet som differentiator i varje ny marknad**
+- Samma playbook: en kommune/kommun i taget
+- Familjesegmentet som differentiator i varje marknad
 
 ---
 
-## 8. Teknik & Roadmap
+## 9. Teknik
 
-### Teknisk arkitektur
+### Nuvarande arkitektur (live)
 
 ```
-[Mobilapp: React Native / Flutter]
-        |
-[API Gateway: FastAPI / Node.js]
-        |
-   +---------+---------+
-   |         |         |
-[Face AI] [Voice AI] [Text NLP]
-   |         |         |
-   +---------+---------+
-        |
-  [Fusion Engine]
-        |
-  [Intervention Engine]
-        |
-  [PostgreSQL / Supabase]
-        |
-  [Family Privacy Layer]  ← filtrerar bort transcript/text
-        |
-  [Family Dashboard API]
+[Single-file HTML/CSS/JS]
+         |
+    [Supabase]
+    ├── PostgreSQL (data)
+    ├── Auth (e-post + magic link)
+    ├── RLS (row-level security)
+    └── RPC (kommun-aggregering)
+         |
+    [Nominatim/OSM]
+    └── Platssökning (skolor, idrottsanläggningar)
 ```
 
-### AI-modeller
-- **Ansikte:** TensorFlow.js (on-device) eller Google Cloud Vision API
-- **Röst:** Librosa + custom modell, eller Hume AI API
-- **Text:** Fine-tuned swedish BERT (KB-BERT) eller multilingual transformers
-- **Fusion:** Weighted ensemble med adaptiva vikter baserat på signalkvalitet
-- **Barnspecifik:** Anpassade modeller för barn 6-9, 10-13, 14-17 (annorlunda uttrycksmönster)
+- **Frontend:** Statisk HTML-fil, GitHub Pages (0 kr hosting)
+- **Backend:** Supabase (PostgreSQL + Auth + RLS + RPC)
+- **Offline-first:** localStorage primärt, Supabase syncar i bakgrunden
+- **Platssökning:** Nominatim/OpenStreetMap API (gratis, ingen API-nyckel)
+
+### Datamodell
+
+- **profiles** — förälder/barn, kommun, gamification-state
+- **places** — skola/idrott/hem per barn, OSM-koppling
+- **place_checkins** — daglig emoji-score per plats (1-5)
+- **families** — familjegrupp med inbjudningskod
+- **family_members** — förälder/barn-roller med RLS
+- **osm_benchmarks** — materialized view, anonymiserad plats-aggregering
+- **get_kommun_stats()** — RPC för kommun-nivå benchmarking
+- **get_kommun_user_count()** — RPC för nätverkseffekt-UX
 
 ### Roadmap
 
 | Kvartal | Leverans |
 |---------|----------|
-| Q2 2026 | MVP validerad, 100 testanvändare, **familje-feature live**, seed-round stängd |
-| Q3 2026 | Native app (iOS + Android), wearable-integration (Apple Watch), **skolpilot** |
-| Q4 2026 | B2B-dashboard, HR-integration, 5 pilotkunder, **Enterprise Family-paket** |
-| Q1 2027 | Premium-coaching, community-funktioner, **tonårsanpassning** |
-| Q2 2027 | Nordisk expansion, 50 000 användare, **20 000 familjer** |
-| Q4 2027 | Serie A, API-plattform för tredjepartsutvecklare |
-
----
-
-## 9. Team (behov)
-
-| Roll | Prioritet | Beskrivning |
-|------|-----------|-------------|
-| **Grundare/VD** | Dag 1 | Vision, strategi, fundraising |
-| **CTO / Lead Developer** | Dag 1 | Full-stack + AI/ML erfarenhet |
-| **UX/UI Designer** | Månad 2 | Mobil-first design, användarresearch |
-| **AI/ML Engineer** | Månad 3 | Emotion AI-modeller, on-device ML |
-| **Growth / Marketing** | Månad 4 | B2C + B2B go-to-market |
-| **B2B Sales** | Månad 6 | Enterprise wellness-försäljning |
+| **Q2 2026** | MVP live, kommun-benchmarking, första kommun (50 familjer) |
+| **Q3 2026** | Luna AI-kompis med minne, mood-avatar, veckoberättelse, PWA/native |
+| **Q4 2026** | B2B kommun-dashboard, skolnivå-benchmark, 5 kommuner |
+| **Q1 2027** | Kartvy (grön→röd per plats), push-notiser, familje-streak-belöningar |
+| **Q2 2027** | Nordisk expansion, 20 kommuner, PR-rapport "Så mår barnen" |
+| **Q4 2027** | Skolpaket (lärare ser klassnivå), RF-partnerskap, Serie A |
 
 ---
 
@@ -372,27 +436,35 @@ En unik familjefunktion som löser ett verkligt problem:
 
 | Risk | Sannolikhet | Impact | Mitigation |
 |------|------------|--------|------------|
-| **Privacy/GDPR-incident** | Medel | Hög | On-device AI first, minimal molndata, DPO från dag 1, ISO 27001 roadmap |
-| **AI-noggrannhet ifrågasätts** | Hög | Medel | Transparens ("detta är en indikation, inte diagnos"), validera mot kliniska skalor, publicera accuracy-metrics |
-| **Låg retention/adoption** | Medel | Hög | Gamification, streaks, push-notiser, daglig micro-habit (30 sek), bevisad ROI |
-| **Regulatoriskt (EU AI Act, MDR)** | Medel | Medel | Positionera som wellness (ej medicinteknisk produkt), juridisk rådgivning tidigt |
-| **Konkurrent kopierar** | Medel | Medel | First-mover i Norden, patent på fusion-algoritm, starka B2B-relationer |
-| **Svårt att rekrytera AI-talang** | Hög | Medel | Remote-first, universitetskontakter (KTH, Chalmers), equity-paket |
-| **Barnsäkerhet / negativ press** | Medel | Hög | Privacy by design (förälder ser ALDRIG text), barnpsykolog i rådgivande roll, tydlig kommunikation: "detta är inte terapi" |
-| **Föräldrars missbruk av data** | Låg | Hög | Teknisk begränsning: omöjligt att se samtal/text. Åldersanpassade gränser. |
+| **Barn slutar använda appen** | Hög | Hög | Gamification, Luna AI-kompis, familje-streak, korta check-ins (10 sek), push-notiser |
+| **Svårt att nå kritisk massa per kommun** | Medel | Hög | Fokusera en kommun i taget, föräldranätverk som kanal, inbjudningskod, benchmark-CTA |
+| **Kommuner vill inte betala** | Medel | Medel | Visa data de redan har (gratis pilot), jämför med enkätkostnad, visa ROI |
+| **GDPR-oro från föräldrar** | Medel | Medel | Offline-first, opt-in moln, transparent integritetspolicy, "du ser aldrig samtal" |
+| **Barnsäkerhet / negativ press** | Medel | Hög | Privacy by design (förälder ser ALDRIG text), barnpsykolog i rådgivande roll |
+| **Konkurrenter kopierar** | Låg | Medel | Nätverkseffekt = moat. Data tar tid att bygga. First-mover i Sverige |
+| **Data-kvalitet (barn slarvar)** | Medel | Medel | Gamification belönar konsekvens, streaks, social motivation via familj |
+| **Regulatoriskt (EU AI Act)** | Låg | Medel | Wellness-positionering (ej medicinteknisk), juridisk rådgivning |
 
 ---
 
-## 11. Sammanfattning — Varför nu, varför detta
+## 11. Sammanfattning — Varför detta, varför nu
 
-1. **Massivt problem:** Psykisk ohälsa kostar Sverige ~70 miljarder kr/år. Befintliga lösningar räcker inte.
-2. **Perfekt timing:** Emotion AI mognar, wearables är mainstream, GDPR ger europeiska bolag edge.
-3. **Klart gap:** Ingen svensk/nordisk aktör gör mobil multimodal emotion-mätning.
-4. **Familjesegment:** Unikt värdeerbjudande — ingen konkurrent ger föräldrar insyn utan att kompromissa med barnens integritet.
-5. **Skalbar modell:** SaaS med 70-80% bruttomarginal. B2B + Family ger stabilitet, B2C ger tillväxt.
-6. **Mätbar impact:** Kan visa ROI i kronor (minskad sjukfrånvaro, förbättrat familjemående) — säljer sig självt.
-7. **Viral potential:** Family-funktionen skapar naturliga viralloops (förälder → barn → vänner).
+1. **Massivt problem.** 1 av 4 barn mår dåligt. Föräldrar vet inte. Kommuner agerar för sent.
+
+2. **Unik data.** Ingen äger platsbaserad, kontinuerlig välmåendedata om barn per kommun. Moodly bygger detta datalager.
+
+3. **Nätverkseffekt.** Varje familj i en kommun gör datan mer värdefull för alla andra. Detta är en moat som inte kan kopieras — den byggs över tid.
+
+4. **Tre betalande segment.** Föräldrar (B2C), kommuner (B2B), riksförbund (B2B2). Föräldrar skapar datan, kommuner betalar för insikterna.
+
+5. **Extremt låg kostnad.** Statisk HTML + Supabase = ~700 kr/mån driftkostnad. 80-90% marginal vid skalning.
+
+6. **Live idag.** MVP fungerar, kommun-benchmarking implementerat, 290 kommuner förpopulerade. Redo att validera.
+
+7. **Timing.** Barnhälsa är politiskt prioriterat. Kommuner söker verktyg. Föräldrar vill ha svar. Ingen annan bygger detta.
+
+**Vision:** "Hur mår barnen i din kommun?" — Moodly är svaret.
 
 ---
 
-*Dokument uppdaterat 2026-03-30 | Moodly MVP Prototyp med familjesegment tillgänglig i `index.html`*
+*Uppdaterad 2026-03-31 | MVP live: https://guslinmarcus.github.io/kanslaflow/*

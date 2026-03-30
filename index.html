@@ -6,7 +6,10 @@
     <title>Moodly</title>
     <link rel="icon" href="data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'><text y='.9em' font-size='90'>🧠</text></svg>">
     <meta name="apple-mobile-web-app-capable" content="yes">
+    <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
     <meta name="theme-color" content="#6C5CE7">
+    <link rel="manifest" href="manifest.json">
+    <meta name="apple-mobile-web-app-title" content="Moodly">
     <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2/dist/umd/supabase.min.js"></script>
     <style>
         :root{--p:#6C5CE7;--pl:#A29BFE;--pd:#5A4BD1;--a:#00CEC9;--al:#81ECEC;--bg:#0F0E17;--c1:#1A1928;--c2:#232240;--t:#FFFFFE;--t2:#A7A9BE;--ok:#00B894;--w:#FDCB6E;--bad:#E17055;--g:#FFD700;--r:16px;--rs:10px}
@@ -310,6 +313,37 @@
         .sync-dot.green{background:var(--ok)}
         .sync-dot.orange{background:var(--w)}
         .sync-dot.red{background:var(--bad)}
+
+        /* CHILD AUTH MODE */
+        .auth-child-badge{display:inline-flex;align-items:center;gap:6px;padding:6px 14px;background:rgba(0,206,201,.12);border:1px solid rgba(0,206,201,.2);border-radius:24px;font-size:.78rem;font-weight:600;color:var(--al);margin-bottom:16px}
+
+        /* CELEBRATION OVERLAY */
+        .celebration{position:fixed;inset:0;z-index:400;pointer-events:none;display:none}
+        .celebration.on{display:block}
+        .celebration .confetti{position:absolute;width:10px;height:10px;border-radius:2px;animation:confetti-fall 1.5s ease-out forwards}
+        @keyframes confetti-fall{0%{transform:translateY(0) rotate(0);opacity:1}100%{transform:translateY(100vh) rotate(720deg);opacity:0}}
+        .celebration .celeb-text{position:absolute;top:40%;left:50%;transform:translate(-50%,-50%);font-size:1.8rem;font-weight:800;text-align:center;animation:celeb-pop .6s cubic-bezier(.2,1,.3,1);pointer-events:none}
+        @keyframes celeb-pop{0%{opacity:0;transform:translate(-50%,-50%) scale(.3)}60%{opacity:1;transform:translate(-50%,-50%) scale(1.15)}100%{opacity:1;transform:translate(-50%,-50%) scale(1)}}
+
+        /* PWA INSTALL BANNER */
+        .install-banner{position:fixed;bottom:66px;left:12px;right:12px;background:linear-gradient(135deg,var(--p),var(--pd));color:#fff;border-radius:var(--r);padding:14px 16px;display:none;align-items:center;gap:12px;z-index:90;box-shadow:0 8px 32px rgba(108,92,231,.4);animation:fu .3s ease}
+        .install-banner.on{display:flex}
+        .install-banner .ib-text{flex:1;font-size:.82rem;font-weight:600}
+        .install-banner .ib-text small{display:block;font-weight:400;opacity:.8;font-size:.72rem;margin-top:2px}
+        .install-banner button{padding:8px 16px;border-radius:var(--rs);border:none;font-weight:700;font-size:.8rem;cursor:pointer}
+        .install-banner .ib-install{background:#fff;color:var(--pd)}
+        .install-banner .ib-close{background:rgba(255,255,255,.2);color:#fff}
+
+        /* NOTIFICATION TOGGLE */
+        .notif-toggle{display:flex;align-items:center;justify-content:space-between;padding:10px 0}
+        .notif-toggle .nt-label{font-size:.82rem}
+        .notif-toggle .nt-label small{display:block;color:var(--t2);font-size:.7rem;margin-top:2px}
+        .toggle-switch{position:relative;width:44px;height:24px;cursor:pointer}
+        .toggle-switch input{opacity:0;width:0;height:0}
+        .toggle-slider{position:absolute;inset:0;background:rgba(255,255,255,.15);border-radius:12px;transition:.2s}
+        .toggle-slider::before{content:'';position:absolute;height:18px;width:18px;left:3px;bottom:3px;background:#fff;border-radius:50%;transition:.2s}
+        .toggle-switch input:checked+.toggle-slider{background:var(--ok)}
+        .toggle-switch input:checked+.toggle-slider::before{transform:translateX(20px)}
     </style>
 </head>
 <body>
@@ -328,9 +362,10 @@
 <!-- AUTH SCREEN -->
 <div class="auth-screen" id="auth-screen">
     <div class="auth-box">
-        <div style="font-size:3.2rem;margin-bottom:14px">🧒</div>
-        <h1>Moodly</h1>
-        <p>Förstå hur ditt barn mår — i skolan, på idrotten och hemma. Skapa konto för att synka och följa med.</p>
+        <div id="auth-badge" style="display:none"></div>
+        <div style="font-size:3.2rem;margin-bottom:14px" id="auth-emoji">🧒</div>
+        <h1 id="auth-title">Moodly</h1>
+        <p id="auth-desc">Förstå hur ditt barn mår — i skolan, på idrotten och hemma. Skapa konto för att synka och följa med.</p>
         <div class="auth-tabs">
             <button class="auth-tab on" onclick="switchAuthTab('login')">Logga in</button>
             <button class="auth-tab" onclick="switchAuthTab('signup')">Skapa konto</button>
@@ -341,8 +376,18 @@
         <button class="btn bp" id="auth-submit" onclick="authSubmit()">Logga in</button>
         <div class="auth-divider">eller</div>
         <button class="btn bs" onclick="authMagicLink()" style="margin-bottom:8px">Skicka magisk länk via e-post</button>
-        <button class="btn" onclick="authSkip()" style="background:none;color:var(--t2);font-size:.8rem;margin-top:8px">Fortsätt utan konto</button>
+        <button class="btn" onclick="authSkip()" style="background:none;color:var(--t2);font-size:.8rem;margin-top:8px" id="auth-skip-btn">Fortsätt utan konto</button>
     </div>
+</div>
+
+<!-- CELEBRATION OVERLAY -->
+<div class="celebration" id="celebration"></div>
+
+<!-- PWA INSTALL BANNER -->
+<div class="install-banner" id="install-banner">
+    <div class="ib-text">Installera Moodly<small>Lägg till på hemskärmen för snabb åtkomst</small></div>
+    <button class="ib-install" onclick="installPWA()">Installera</button>
+    <button class="ib-close" onclick="dismissInstall()">✕</button>
 </div>
 
 <!-- ADD PLACE MODAL -->
@@ -422,6 +467,32 @@
         <h1>Allt klart!</h1>
         <p id="ob5-summary">Dina barn kan börja checka in. Du ser allt i din dashboard.</p>
         <button class="btn ba" onclick="finishOnboarding()">Starta Moodly</button>
+    </div>
+
+    <!-- CHILD ONBOARDING (when joining via invite link) -->
+    <div class="ob-step" id="ob-child-1">
+        <div style="font-size:3.2rem;margin-bottom:14px">🎉</div>
+        <h1>Välkommen till Moodly!</h1>
+        <p>Din förälder har bjudit in dig. Checka in hur du mår varje dag — det tar bara 30 sekunder!</p>
+        <div style="text-align:left;max-width:280px;margin-bottom:24px">
+            <div style="display:flex;align-items:center;gap:10px;padding:5px 0;font-size:.83rem;color:var(--t2)"><span>😊</span> Välj en emoji för varje plats</div>
+            <div style="display:flex;align-items:center;gap:10px;padding:5px 0;font-size:.83rem;color:var(--t2)"><span>🔥</span> Bygg streaks och samla poäng</div>
+            <div style="display:flex;align-items:center;gap:10px;padding:5px 0;font-size:.83rem;color:var(--t2)"><span>🎭</span> Lås upp coola avatarer</div>
+            <div style="display:flex;align-items:center;gap:10px;padding:5px 0;font-size:.83rem;color:var(--t2)"><span>🔒</span> Bara du kan se vad du skriver</div>
+        </div>
+        <button class="btn bp" onclick="obNext('child-2')" style="max-width:280px">Kom igång!</button>
+    </div>
+
+    <div class="ob-step" id="ob-child-2">
+        <div style="font-size:2.5rem;margin-bottom:10px">👤</div>
+        <h1>Vem är du?</h1>
+        <p>Berätta lite om dig så vi kan göra appen till din.</p>
+        <input type="text" id="child-ob-name" placeholder="Ditt namn..." maxlength="30">
+        <select id="child-ob-age" style="width:100%;padding:12px;background:rgba(255,255,255,.06);border:1px solid rgba(255,255,255,.12);border-radius:var(--rs);color:var(--t);font-size:.95rem;outline:none;margin-bottom:16px;text-align:center">
+            <option value="6-9">6–9 år</option><option value="10-13">10–13 år</option><option value="14-17">14–17 år</option>
+        </select>
+        <button class="btn bp" onclick="finishChildOnboarding()">Starta Moodly!</button>
+        <p id="child-ob-status" style="font-size:.75rem;color:var(--t2);margin-top:12px"></p>
     </div>
 </div>
 
@@ -978,7 +1049,9 @@ function checkInPlace(placeId,score){
     // Check if all places done today
     const todayAll=d.placeCheckins.filter(c=>new Date(c.ts).toDateString()===today);
     const uniqueToday=new Set(todayAll.map(c=>c.placeId));
-    if(d.places.length>1&&uniqueToday.size>=d.places.length)pts+=10;
+    const allDoneNow=d.places.length>0&&uniqueToday.size>=d.places.length;
+    const wasAllDone=d.places.length>1&&(uniqueToday.size-1)>=d.places.length;
+    if(d.places.length>1&&allDoneNow)pts+=10;
     // Streak bonus
     const streak=calcPlaceStreak(d);
     if(streak===3)pts+=25;
@@ -990,7 +1063,8 @@ function checkInPlace(placeId,score){
     syncCheckin(placeId,score,comment,new Date().toISOString());
     if(pts>0)syncProfile(d);
     renderHome();
-    if(pts>5)toast(`+${pts} poäng!`);
+    if(allDoneNow&&!wasAllDone){showCelebration('Alla platser klara! 🎉 +'+pts+' poäng')}
+    else if(pts>5){toast(`+${pts} poäng!`)}
 }
 
 function getTodayCheckins(d){
@@ -1137,14 +1211,23 @@ function renderHome(){
     const hr=new Date().getHours();
     const greet=hr<10?'God morgon':hr<17?'Hej':hr<21?'God kväll':'God natt';
     const avatar=AVATARS[d.selectedAvatar||'default']?.emoji||'😊';
-    document.getElementById('home-greeting').innerHTML=`${avatar} ${greet}, ${d.userName||'du'}!`;
+    const isChild=d.role==='child';
+    if(isChild){
+        document.getElementById('home-greeting').innerHTML=`<span style="font-size:1.6rem">${avatar}</span> ${greet}, ${d.userName||'du'}!`;
+    }else{
+        document.getElementById('home-greeting').innerHTML=`${avatar} ${greet}, ${d.userName||'du'}!`;
+    }
 
     const todayChecks=getTodayCheckins(d);
     const totalPlaces=d.places.length;
     const checkedCount=new Set(todayChecks.map(c=>c.placeId)).size;
     const allDone=totalPlaces>0&&checkedCount>=totalPlaces;
 
-    document.getElementById('home-sub').textContent=totalPlaces===0?'Lägg till dina platser för att börja':allDone?`Alla ${totalPlaces} platser checkade idag!`:`${checkedCount}/${totalPlaces} platser checkade idag`;
+    if(isChild&&allDone){
+        document.getElementById('home-sub').textContent='🎉 Alla platser klara — bra jobbat!';
+    }else{
+        document.getElementById('home-sub').textContent=totalPlaces===0?'Lägg till dina platser för att börja':allDone?`Alla ${totalPlaces} platser checkade idag!`:`${checkedCount}/${totalPlaces} platser checkade idag`;
+    }
 
     // Streak + points
     const streak=calcPlaceStreak(d);
@@ -1319,6 +1402,8 @@ function renderParentView(){
         html+=`</div>`;
     });
     placesEl.innerHTML=html;
+    // Also load remote family members (children on their own devices)
+    if(sbUser&&d.familyId)loadRemoteChildrenToDashboard(placesEl);
 
     let allStats=[];
     d.familyProfiles.forEach(fp=>{
@@ -1342,6 +1427,63 @@ function renderParentView(){
     }else{insEl.innerHTML=''}
     // Kommun insights
     renderKommunInsights(d,benchEl);
+}
+
+// ===== REMOTE CHILDREN IN DASHBOARD =====
+async function loadRemoteChildrenToDashboard(container){
+    if(!sb||!sbUser)return;
+    try{
+        const d=ld();
+        const{data:members}=await sb.from('family_members')
+            .select('user_id,role,display_name,age_group')
+            .eq('family_id',d.familyId);
+        if(!members||!members.length)return;
+        const localChildNames=new Set((d.familyProfiles||[]).map(fp=>fp.name.toLowerCase()));
+        let html='';
+        for(const m of members){
+            if(m.user_id===sbUser.id)continue;
+            if(m.role==='parent')continue;
+            // Skip if this child already exists locally (by name match)
+            if(localChildNames.has((m.display_name||'').toLowerCase()))continue;
+            const{data:prof}=await sb.from('profiles').select('user_name,selected_avatar,points,streak').eq('id',m.user_id).single();
+            const since=new Date(Date.now()-30*864e5).toISOString().slice(0,10);
+            const today=new Date().toISOString().slice(0,10);
+            const{data:checkins}=await sb.from('place_checkins').select('place_id,score,comment,checked_at').eq('user_id',m.user_id).gte('checked_at',since);
+            const{data:memberPlaces}=await sb.from('places').select('id,name,type').eq('user_id',m.user_id);
+            const avatar=AVATARS[prof?.selected_avatar||'default']?.emoji||'😊';
+            const name=m.display_name||prof?.user_name||'Barn';
+            const todayChecks=(checkins||[]).filter(c=>c.checked_at===today);
+            const checkedCount=new Set(todayChecks.map(c=>c.place_id)).size;
+            const totalPlaces=(memberPlaces||[]).length;
+            const allDone=totalPlaces>0&&checkedCount>=totalPlaces;
+            html+=`<div class="fam-child-card">
+                <div class="fam-child-header">
+                    <div class="fam-child-avatar">${avatar}</div>
+                    <div class="fam-child-info">
+                        <div class="fam-child-name">${name} <span style="font-size:.6rem;color:var(--al);background:rgba(0,206,201,.12);padding:2px 6px;border-radius:8px;margin-left:4px">egen enhet</span></div>
+                        <div class="fam-child-meta"><span>${m.age_group||''}</span>${prof?`<span>🔥 ${prof.streak||0}</span>`:''}<span>${allDone?'✅ Klar idag':checkedCount+'/'+totalPlaces+' checkat'}</span></div>
+                    </div>
+                </div>`;
+            if(memberPlaces&&checkins){
+                memberPlaces.forEach(mp=>{
+                    const pc=checkins.filter(c=>c.place_id===mp.id);
+                    if(!pc.length){html+=`<div class="fam-place-row"><span>${(PT[mp.type]||PT.other).icon}</span><span style="flex:1">${mp.name}</span><span style="color:var(--t2)">—</span></div>`;return}
+                    const avg=Math.round(pc.reduce((a,c)=>a+c.score,0)/pc.length*10)/10;
+                    const col=avg>=4?'var(--ok)':avg>=3?'var(--w)':'var(--bad)';
+                    const todayScore=todayChecks.find(c=>c.place_id===mp.id);
+                    const mood=todayScore?MOODS[todayScore.score-1]:null;
+                    html+=`<div class="fam-place-row"><span>${(PT[mp.type]||PT.other).icon}</span><span style="flex:1">${mp.name}</span><span style="font-size:1.1rem">${mood?mood.emoji:'⬜'}</span><span class="fam-place-score" style="color:${col}">${avg}</span></div>`;
+                    // Low mood alert
+                    const recent=pc.slice(-3);
+                    if(recent.length>=3&&recent.every(c=>c.score<=2)){
+                        html+=`<div style="font-size:.72rem;padding:6px 8px;border-radius:6px;margin-top:4px;background:rgba(225,112,85,.1);color:var(--bad)">📉 Lågt mående 3+ dagar</div>`;
+                    }
+                });
+            }
+            html+=`</div>`;
+        }
+        if(html)container.insertAdjacentHTML('beforeend',html);
+    }catch(e){}
 }
 
 // ===== KOMMUN INSIGHTS =====
@@ -1744,7 +1886,8 @@ function obValidateAndNext(step){
 
 function obNext(step){
     document.querySelectorAll('.ob-step').forEach(s=>s.classList.remove('on'));
-    document.getElementById('ob'+step).classList.add('on');
+    const stepId=typeof step==='string'&&step.startsWith('child-')?'ob-'+step:'ob'+step;
+    document.getElementById(stepId).classList.add('on');
     if(step===3){renderObChildren()}
     if(step===4){
         obActiveChild=0;selectedPlaceType='school';selectedPlace=null;
@@ -2155,6 +2298,23 @@ function renderFamily(){
     }
     html+=`<button class="btn ba" onclick="openAddPlace()" style="margin-top:10px">+ Lägg till plats</button></div>`;
 
+    // Notifications
+    const notifEnabled=localStorage.getItem('moodly_notif')==='on';
+    html+=`<div class="cd"><div class="ct">🔔 Påminnelser</div>
+        <div class="notif-toggle">
+            <div class="nt-label">Daglig påminnelse<small>Kl 17:00 — "Dags att checka in!"</small></div>
+            <label class="toggle-switch"><input type="checkbox" id="notif-toggle" ${notifEnabled?'checked':''} onchange="toggleNotifications(this.checked)"><span class="toggle-slider"></span></label>
+        </div>
+    </div>`;
+
+    // Share with child
+    if(d.role==='parent'&&d.familyProfiles&&d.familyProfiles.length>0){
+        html+=`<div class="cd"><div class="ct">📱 Barnets egen enhet</div>
+            <p style="font-size:.78rem;color:var(--t2);margin-bottom:10px;line-height:1.5">Ge ditt barn en egen inloggning så de kan checka in på sin egen telefon. Du ser fortfarande allt i din dashboard.</p>
+            <button class="btn ba" onclick="shareChildInvite()">Dela inbjudningslänk till barn</button>
+        </div>`;
+    }
+
     // Data
     html+=`<div class="cd"><div class="ct">💾 Data</div>
         <button class="btn bs" onclick="exportData()" style="margin-bottom:8px">Exportera data</button>
@@ -2289,20 +2449,195 @@ function getChildDetailedData(storageKey){
 
 async function shareInvite(){
     const d=ld();
-    let url='https://guslinmarcus.github.io/kanslaflow/';
-    // Add invite code to URL if available
+    const url='https://guslinmarcus.github.io/kanslaflow/';
+    const kommun=d.kommun?` Vi bygger en bild av hur barnen mår i ${d.kommun} — ju fler familjer, desto bättre insikter.`:'';
+    const msg=`Jag använder Moodly för att följa hur mitt barn mår i skolan, på idrotten och hemma.${kommun} Prova du också — det är gratis!`;
+    if(navigator.share){
+        navigator.share({title:'Prova Moodly',text:msg,url}).catch(()=>{});
+    }else{
+        navigator.clipboard.writeText(msg+' '+url).then(()=>toast('Länk kopierad!')).catch(()=>toast('Kunde inte kopiera'));
+    }
+}
+
+// ===== CHILD INVITE AUTH =====
+let isChildJoin=false;
+let pendingJoinCode='';
+
+function detectChildJoin(){
+    const params=new URLSearchParams(window.location.search);
+    const code=params.get('join');
+    if(code){
+        isChildJoin=true;
+        pendingJoinCode=code;
+        localStorage.setItem('moodly_join_code',code);
+        // Update auth screen for child
+        const badge=document.getElementById('auth-badge');
+        if(badge){badge.style.display='inline-flex';badge.className='auth-child-badge';badge.innerHTML='🎉 Du har blivit inbjuden!';}
+        const titleEl=document.getElementById('auth-title');
+        if(titleEl)titleEl.textContent='Gå med i Moodly!';
+        const descEl=document.getElementById('auth-desc');
+        if(descEl)descEl.textContent='Din förälder har bjudit in dig. Skapa ett konto för att börja checka in hur du mår.';
+        const emojiEl=document.getElementById('auth-emoji');
+        if(emojiEl)emojiEl.textContent='🎉';
+        // Default to signup
+        switchAuthTab('signup');
+        // Hide skip button — child needs an account
+        const skipBtn=document.getElementById('auth-skip-btn');
+        if(skipBtn)skipBtn.style.display='none';
+    }
+}
+
+// ===== CHILD ONBOARDING =====
+function startChildOnboarding(){
+    document.querySelectorAll('.ob-step').forEach(s=>s.classList.remove('on'));
+    document.getElementById('ob-child-1').classList.add('on');
+    document.getElementById('ob').classList.remove('h');
+}
+
+async function finishChildOnboarding(){
+    const name=(document.getElementById('child-ob-name')?.value||'').trim();
+    const ageGroup=document.getElementById('child-ob-age')?.value||'10-13';
+    const statusEl=document.getElementById('child-ob-status');
+    if(statusEl)statusEl.textContent='Ansluter till familjen...';
+
+    const d=ld();
+    d.firstVisit=false;
+    d.userName=name||'Barn';
+    d.onboarded=new Date().toISOString();
+    d.role='child';
+    d.places=[];
+    sv(d);
+    syncProfile(d);
+
+    // Join family + pull parent's places
+    if(sbUser){
+        await processJoinCode();
+        try{
+            const code=pendingJoinCode||localStorage.getItem('moodly_join_code');
+            if(code){
+                const{data:fam}=await sb.from('families').select('id').eq('invite_code',code).single();
+                if(fam){
+                    // Update child's role in family
+                    await sb.from('family_members').update({display_name:name,age_group:ageGroup,role:'child'}).eq('family_id',fam.id).eq('user_id',sbUser.id);
+                    // Find parent in this family
+                    const{data:parentMember}=await sb.from('family_members').select('user_id').eq('family_id',fam.id).eq('role','parent').single();
+                    if(parentMember){
+                        // Copy parent's places to child
+                        if(statusEl)statusEl.textContent='Hämtar dina platser...';
+                        const{data:parentPlaces}=await sb.from('places').select('name,type,osm_id,address,lat,lng').eq('user_id',parentMember.user_id);
+                        if(parentPlaces&&parentPlaces.length){
+                            const childPlaces=parentPlaces.map(pp=>({
+                                id:'p_'+Date.now()+'_'+Math.random().toString(36).slice(2,6),
+                                name:pp.name,type:pp.type,osmId:pp.osm_id||'',address:pp.address||'',
+                                lat:pp.lat||null,lng:pp.lng||null
+                            }));
+                            d.places=childPlaces;
+                            sv(d);
+                            childPlaces.forEach(p=>syncPlace(p));
+                        }
+                    }
+                }
+            }
+        }catch(e){}
+    }
+
+    document.getElementById('ob').classList.add('h');
+    document.getElementById('app').style.display='';
+    go('home');
+    showCelebration('Välkommen till Moodly! 🎉');
+}
+
+// ===== CELEBRATION =====
+function showCelebration(text){
+    const el=document.getElementById('celebration');
+    if(!el)return;
+    const colors=['#6C5CE7','#00CEC9','#FFD700','#00B894','#E17055','#A29BFE','#81ECEC','#FDCB6E'];
+    let html=`<div class="celeb-text">${text}</div>`;
+    for(let i=0;i<40;i++){
+        const left=Math.random()*100;
+        const delay=Math.random()*0.5;
+        const size=6+Math.random()*8;
+        const color=colors[Math.floor(Math.random()*colors.length)];
+        html+=`<div class="confetti" style="left:${left}%;top:-10px;width:${size}px;height:${size}px;background:${color};animation-delay:${delay}s"></div>`;
+    }
+    el.innerHTML=html;
+    el.classList.add('on');
+    setTimeout(()=>{el.classList.remove('on');el.innerHTML=''},2500);
+}
+
+// ===== PWA INSTALL =====
+let deferredPrompt=null;
+
+window.addEventListener('beforeinstallprompt',e=>{
+    e.preventDefault();
+    deferredPrompt=e;
+    // Show install banner after short delay
+    setTimeout(()=>{
+        if(!localStorage.getItem('moodly_install_dismissed')){
+            document.getElementById('install-banner')?.classList.add('on');
+        }
+    },3000);
+});
+
+function installPWA(){
+    if(!deferredPrompt)return;
+    deferredPrompt.prompt();
+    deferredPrompt.userChoice.then(r=>{
+        if(r.outcome==='accepted')toast('Moodly installerad!');
+        deferredPrompt=null;
+        document.getElementById('install-banner')?.classList.remove('on');
+    });
+}
+
+function dismissInstall(){
+    document.getElementById('install-banner')?.classList.remove('on');
+    localStorage.setItem('moodly_install_dismissed','1');
+}
+
+// ===== NOTIFICATIONS =====
+async function toggleNotifications(enabled){
+    if(enabled){
+        if(!('Notification' in window)){toast('Din enhet stöder inte notiser');document.getElementById('notif-toggle').checked=false;return}
+        const perm=await Notification.requestPermission();
+        if(perm!=='granted'){toast('Du nekade notiser — slå på i telefonens inställningar');document.getElementById('notif-toggle').checked=false;return}
+        localStorage.setItem('moodly_notif','on');
+        // Tell service worker to schedule
+        if(navigator.serviceWorker?.controller){
+            navigator.serviceWorker.controller.postMessage({type:'SCHEDULE_REMINDER',hour:17,minute:0});
+        }
+        toast('Påminnelser aktiverade — kl 17:00 varje dag');
+    }else{
+        localStorage.setItem('moodly_notif','off');
+        toast('Påminnelser avstängda');
+    }
+}
+
+// ===== SHARE CHILD INVITE =====
+async function shareChildInvite(){
+    const d=ld();
+    let url='https://guslinmarcus.github.io/kanslaflow/index.html';
     if(sbUser&&d.familyId){
         try{
             const{data}=await sb.from('families').select('invite_code').eq('id',d.familyId).single();
             if(data)url+='?join='+data.invite_code;
         }catch(e){}
     }
-    const msg=`${d.userName||'Jag'} vill att du testar Moodly — en app där du kan följa ditt barns mående i skolan, på idrotten och hemma.`;
+    const msg='Hej! Ladda ner Moodly och checka in hur du mår varje dag. Det tar 30 sekunder! 😊';
     if(navigator.share){
-        navigator.share({title:'Prova Moodly',text:msg,url}).catch(()=>{});
+        navigator.share({title:'Gå med i Moodly',text:msg,url}).catch(()=>{});
     }else{
         navigator.clipboard.writeText(msg+' '+url).then(()=>toast('Länk kopierad!')).catch(()=>toast('Kunde inte kopiera'));
     }
+}
+
+// Register service worker
+if('serviceWorker' in navigator){
+    navigator.serviceWorker.register('sw.js').then(reg=>{
+        // If notifications are enabled, schedule reminder
+        if(localStorage.getItem('moodly_notif')==='on'&&reg.active){
+            reg.active.postMessage({type:'SCHEDULE_REMINDER',hour:17,minute:0});
+        }
+    }).catch(()=>{});
 }
 
 // ===== SENTIMENT (for chat) =====
@@ -2544,6 +2879,7 @@ document.getElementById('conv-text').addEventListener('focus',()=>{setTimeout(()
 
 // ===== INIT =====
 buildKommunDatalist();
+detectChildJoin();
 try{speechSynthesis.getVoices();speechSynthesis.onvoiceschanged=()=>speechSynthesis.getVoices()}catch(e){}
 
 function initApp(){
@@ -2559,6 +2895,10 @@ function initApp(){
         document.getElementById('app').style.display='';
         renderHome();
         // Process pending join code after login
+        processJoinCode();
+    }else if(isChildJoin){
+        // Child joining via invite link — show child onboarding
+        startChildOnboarding();
         processJoinCode();
     }
 }
