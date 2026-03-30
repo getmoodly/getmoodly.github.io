@@ -77,20 +77,41 @@
         @keyframes listen-pulse{0%,100%{transform:scale(1);opacity:1}50%{transform:scale(1.08);opacity:.9}}
         @keyframes speak-pulse{0%,100%{transform:scale(1)}50%{transform:scale(1.06)}}
 
-        /* CONVERSATION VIEW */
+        /* CONVERSATION VIEW — Chat Interface */
         .conv-view{display:none;position:fixed;inset:0;background:var(--bg);z-index:200;flex-direction:column}
         .conv-view.on{display:flex}
-        .conv-top{padding:12px 16px;display:flex;align-items:center;justify-content:space-between}
-        .conv-top .name{font-weight:700;font-size:.95rem}
-        .conv-top .timer{font-size:.8rem;color:var(--t2);font-variant-numeric:tabular-nums}
-        .conv-center{flex:1;display:flex;flex-direction:column;align-items:center;justify-content:center;padding:20px;position:relative}
-        .conv-camera{position:absolute;top:12px;right:12px;width:80px;height:60px;border-radius:8px;overflow:hidden;border:2px solid rgba(255,255,255,.15)}
+        .conv-top{padding:10px 16px;display:flex;align-items:center;justify-content:space-between;border-bottom:1px solid rgba(255,255,255,.06)}
+        .conv-top .name{font-weight:700;font-size:.92rem;display:flex;align-items:center;gap:8px}
+        .conv-top .name .dot{width:8px;height:8px;border-radius:50%;background:var(--ok);animation:blink 1.5s infinite}
+        .conv-top .timer{font-size:.78rem;color:var(--t2);font-variant-numeric:tabular-nums}
+        @keyframes blink{0%,100%{opacity:1}50%{opacity:.4}}
+        .conv-camera{position:absolute;top:56px;right:12px;width:72px;height:54px;border-radius:8px;overflow:hidden;border:2px solid rgba(255,255,255,.12);z-index:2}
         .conv-camera video{width:100%;height:100%;object-fit:cover;transform:scaleX(-1)}
-        .conv-status{font-size:.82rem;color:var(--t2);margin-top:12px;min-height:20px}
-        .conv-transcript{position:absolute;bottom:0;left:0;right:0;background:linear-gradient(transparent,rgba(0,0,0,.6));padding:40px 16px 12px;font-size:.82rem;color:rgba(255,255,255,.85);min-height:50px;max-height:120px;overflow-y:auto}
-        .conv-bottom{padding:16px;display:flex;justify-content:center;padding-bottom:calc(16px + env(safe-area-inset-bottom))}
-        .end-btn{padding:12px 32px;border:none;border-radius:30px;background:var(--bad);color:#fff;font-size:.9rem;font-weight:700;cursor:pointer}
+        .chat-area{flex:1;overflow-y:auto;padding:16px;padding-top:60px;display:flex;flex-direction:column;gap:10px;position:relative}
+        .chat-msg{max-width:82%;padding:12px 16px;border-radius:18px;font-size:.88rem;line-height:1.5;animation:fu .3s ease}
+        .chat-msg.ai{align-self:flex-start;background:var(--c2);color:var(--t);border-bottom-left-radius:4px}
+        .chat-msg.user{align-self:flex-end;background:var(--p);color:#fff;border-bottom-right-radius:4px}
+        .chat-msg.typing{color:var(--t2);font-style:italic}
+        .typing-dots{display:inline-flex;gap:3px;padding:4px 0}
+        .typing-dots span{width:6px;height:6px;border-radius:50%;background:var(--t2);animation:tdot 1.2s infinite}
+        .typing-dots span:nth-child(2){animation-delay:.2s}
+        .typing-dots span:nth-child(3){animation-delay:.4s}
+        @keyframes tdot{0%,60%,100%{opacity:.3;transform:translateY(0)}30%{opacity:1;transform:translateY(-4px)}}
+        .conv-bottom{padding:12px 16px;border-top:1px solid rgba(255,255,255,.06);padding-bottom:calc(12px + env(safe-area-inset-bottom))}
+        .conv-input-row{display:flex;gap:8px;align-items:center}
+        .conv-text-input{flex:1;padding:10px 14px;background:rgba(255,255,255,.06);border:1px solid rgba(255,255,255,.1);border-radius:24px;color:var(--t);font-size:.88rem;outline:none}
+        .conv-text-input::placeholder{color:var(--t2)}
+        .mic-btn{width:42px;height:42px;border-radius:50%;border:none;display:flex;align-items:center;justify-content:center;cursor:pointer;flex-shrink:0;transition:all .15s}
+        .mic-btn.idle{background:var(--p)}
+        .mic-btn.rec{background:var(--bad);animation:rec-pulse 1.5s infinite}
+        .mic-btn svg{width:20px;height:20px;fill:#fff}
+        @keyframes rec-pulse{0%,100%{box-shadow:0 0 0 0 rgba(225,112,85,.3)}50%{box-shadow:0 0 0 10px rgba(225,112,85,0)}}
+        .send-btn{width:42px;height:42px;border-radius:50%;border:none;background:var(--a);display:flex;align-items:center;justify-content:center;cursor:pointer;flex-shrink:0}
+        .send-btn svg{width:20px;height:20px;fill:var(--bg)}
+        .conv-actions{display:flex;gap:8px;margin-top:8px;justify-content:center}
+        .end-btn{padding:8px 24px;border:none;border-radius:20px;background:rgba(225,112,85,.15);color:var(--bad);font-size:.8rem;font-weight:600;cursor:pointer}
         .end-btn:active{transform:scale(.95)}
+        .listening-indicator{font-size:.72rem;color:var(--t2);text-align:center;margin-bottom:6px;min-height:16px}
 
         /* HOME */
         .home-top{text-align:center;padding:20px 0 8px}
@@ -213,28 +234,24 @@
     </div>
 </div>
 
-<!-- CONVERSATION VIEW -->
+<!-- CONVERSATION VIEW — Chat Interface -->
 <div class="conv-view" id="conv-view">
     <div class="conv-top">
-        <span class="name" id="conv-name"></span>
+        <span class="name" id="conv-name"><span class="dot"></span></span>
         <span class="timer" id="conv-timer">0:00</span>
     </div>
-    <div class="conv-center">
-        <div class="conv-camera" id="conv-camera"><video id="conv-vid" autoplay playsinline muted></video></div>
-        <div class="avatar-wrap">
-            <div class="avatar-orb idle" id="conv-avatar">
-                <div class="glow" id="avatar-glow"></div>
-                <div class="core" id="avatar-core">
-                    <div class="eyes"><div class="eye"></div><div class="eye"></div></div>
-                    <div class="mouth"></div>
-                </div>
-            </div>
-        </div>
-        <div class="conv-status" id="conv-status"></div>
-        <div class="conv-transcript" id="conv-transcript"></div>
-    </div>
+    <div class="conv-camera" id="conv-camera"><video id="conv-vid" autoplay playsinline muted></video></div>
+    <div class="chat-area" id="chat-area"></div>
     <div class="conv-bottom">
-        <button class="end-btn" id="end-conv-btn">Avsluta samtal</button>
+        <div class="listening-indicator" id="listen-ind"></div>
+        <div class="conv-input-row">
+            <input type="text" class="conv-text-input" id="conv-text" placeholder="Skriv här..." enterkeyhint="send">
+            <button class="mic-btn idle" id="mic-btn"><svg viewBox="0 0 24 24"><path d="M12 14c1.66 0 3-1.34 3-3V5c0-1.66-1.34-3-3-3S9 3.34 9 5v6c0 1.66 1.34 3 3 3zm-1-9c0-.55.45-1 1-1s1 .45 1 1v6c0 .55-.45 1-1 1s-1-.45-1-1V5z"/><path d="M17 11c0 2.76-2.24 5-5 5s-5-2.24-5-5H5c0 3.53 2.61 6.43 6 6.92V21h2v-3.08c3.39-.49 6-3.39 6-6.92h-2z"/></svg></button>
+            <button class="send-btn" id="send-btn"><svg viewBox="0 0 24 24"><path d="M2.01 21L23 12 2.01 3 2 10l15 2-15 2z"/></svg></button>
+        </div>
+        <div class="conv-actions">
+            <button class="end-btn" id="end-conv-btn">Avsluta samtal</button>
+        </div>
     </div>
 </div>
 
@@ -384,46 +401,81 @@ const PERS={
     }
 };
 
-let convState={active:false,round:0,maxRounds:5,transcript:[],fullText:'',stream:null,recognition:null,timer:null,elapsed:0,emotions:[],speaking:false};
+let convState={active:false,round:0,maxRounds:5,transcript:[],fullText:'',stream:null,recognition:null,timer:null,elapsed:0,emotions:[],listening:false};
 
 function getAILines(cat){const d=ld();return PERS[d.personality||'warm'][cat]||PERS.warm[cat]}
 function pick(arr){return arr[Math.floor(Math.random()*arr.length)]}
-function tpl(s){const d=ld();return s.replace('{name}',d.aiName||'du')}
+function tpl(s){const d=ld();return s.replace(/\{name\}/g,d.aiName||'du')}
 
-function setAvatar(state,mood){
-    ['conv-avatar','home-orb'].forEach(id=>{
-        const el=document.getElementById(id);if(!el)return;
-        el.className='avatar-orb '+state;
-        if(mood==='happy')el.classList.add('happy');
-        if(mood==='concerned')el.classList.add('concerned');
-        if(mood==='thinking')el.classList.add('thinking');
-    });
-    const colors={happy:'radial-gradient(circle,#81ECEC,#00CEC9)',concerned:'radial-gradient(circle,#A29BFE,#6C5CE7)',sad:'radial-gradient(circle,#DFE6E9,#636E72)',neutral:'radial-gradient(circle,#A29BFE,#6C5CE7)',energetic:'radial-gradient(circle,#FFEAA7,#FDCB6E)'};
-    const c=colors[mood]||colors.neutral;
-    ['avatar-glow','home-glow'].forEach(id=>{const el=document.getElementById(id);if(el)el.style.background=c});
-    ['avatar-core','home-orb .core'].forEach(sel=>{
-        const el=document.getElementById('avatar-core')||document.querySelector('.avatar-orb .core');
-        if(el)el.style.background=c;
-    });
+function setHomeAvatar(mood){
+    const orb=document.getElementById('home-orb');if(!orb)return;
+    orb.className='avatar-orb idle'+(mood==='happy'?' happy':'');
+    const colors={happy:'radial-gradient(circle,#81ECEC,#00CEC9)',neutral:'radial-gradient(circle,#A29BFE,#6C5CE7)'};
+    const g=document.getElementById('home-glow');if(g)g.style.background=colors[mood]||colors.neutral;
 }
 
+// ===== CHAT UI HELPERS =====
+function addChat(role,text){
+    const area=document.getElementById('chat-area');
+    // Remove typing indicator if exists
+    const typing=area.querySelector('.typing');if(typing)typing.remove();
+    const div=document.createElement('div');
+    div.className='chat-msg '+(role==='ai'?'ai':'user');
+    div.textContent=text;
+    area.appendChild(div);
+    area.scrollTop=area.scrollHeight;
+    convState.transcript.push({role,text});
+    if(role==='user')convState.fullText+=text+' ';
+}
+
+function showTyping(){
+    const area=document.getElementById('chat-area');
+    const existing=area.querySelector('.typing');if(existing)return;
+    const div=document.createElement('div');
+    div.className='chat-msg ai typing';
+    div.innerHTML='<div class="typing-dots"><span></span><span></span><span></span></div>';
+    area.appendChild(div);
+    area.scrollTop=area.scrollHeight;
+}
+
+function removeTyping(){
+    const area=document.getElementById('chat-area');
+    const t=area.querySelector('.typing');if(t)t.remove();
+}
+
+// ===== TTS (best-effort, never blocks) =====
+function trySpeak(text){
+    try{
+        speechSynthesis.cancel();
+        const u=new SpeechSynthesisUtterance(text);
+        u.lang='sv-SE';u.rate=.95;u.pitch=1.05;
+        const voices=speechSynthesis.getVoices();
+        const sv=voices.find(v=>v.lang.startsWith('sv'));
+        if(sv)u.voice=sv;
+        speechSynthesis.speak(u);
+    }catch(e){}
+}
+
+// ===== MAIN CONVERSATION FLOW =====
 async function startConversation(){
     const d=ld();
-    convState={active:true,round:0,maxRounds:5,transcript:[],fullText:'',stream:null,recognition:null,timer:null,elapsed:0,emotions:[],speaking:false};
+    convState={active:true,round:0,maxRounds:5,transcript:[],fullText:'',stream:null,recognition:null,timer:null,elapsed:0,emotions:[],listening:false};
 
     document.getElementById('conv-view').classList.add('on');
-    document.getElementById('conv-name').textContent=d.aiName||'Luna';
-    document.getElementById('conv-transcript').textContent='';
-    document.getElementById('conv-status').textContent='Ansluter...';
+    document.getElementById('conv-name').innerHTML='<span class="dot"></span> '+(d.aiName||'Luna');
+    document.getElementById('chat-area').innerHTML='';
     document.getElementById('conv-timer').textContent='0:00';
+    document.getElementById('conv-text').value='';
+    document.getElementById('listen-ind').textContent='';
+    document.getElementById('mic-btn').className='mic-btn idle';
 
-    // Start camera
+    // Start camera (best-effort)
     try{
         convState.stream=await navigator.mediaDevices.getUserMedia({video:{facingMode:'user'},audio:true});
         document.getElementById('conv-vid').srcObject=convState.stream;
+        document.getElementById('conv-camera').style.display='';
     }catch(e){
-        try{convState.stream=await navigator.mediaDevices.getUserMedia({audio:true})}catch(e2){}
-        document.getElementById('conv-camera').style.display='none';
+        try{convState.stream=await navigator.mediaDevices.getUserMedia({audio:true});document.getElementById('conv-camera').style.display='none'}catch(e2){document.getElementById('conv-camera').style.display='none'}
     }
 
     // Timer
@@ -433,99 +485,36 @@ async function startConversation(){
         document.getElementById('conv-timer').textContent=`${m}:${s.toString().padStart(2,'0')}`;
     },1000);
 
-    // Start with greeting
-    setAvatar('speaking','happy');
-    const greeting=tpl(pick(getAILines('greet')));
-
-    // Check if AI remembers something
-    let memory='';
+    // Build greeting with memory
+    let greeting=tpl(pick(getAILines('greet')));
     if(d.checkins.length>0){
         const last=d.checkins[d.checkins.length-1];
         const daysSince=Math.floor((Date.now()-new Date(last.ts).getTime())/864e5);
-        if(daysSince<=2&&last.emotion==='stressad')memory=` Förra gången pratade vi om att du var stressad — hur är det nu?`;
-        else if(daysSince<=2&&last.cats?.includes('jobb'))memory=` Sist nämnde du jobbet — hur har det gått?`;
+        if(daysSince<=2&&last.emotion==='stressad')greeting+=' Förra gången pratade vi om att du var stressad — hur är det nu?';
+        else if(daysSince<=2&&last.cats?.includes('jobb'))greeting+=' Sist nämnde du jobbet — hur har det gått?';
     }
 
-    await aiSpeak(greeting+memory);
-    listenToUser();
+    // AI sends first message
+    await aiMessage(greeting);
 }
 
-function aiSpeak(text){
-    return new Promise(resolve=>{
-        convState.speaking=true;
-        setAvatar('speaking');
-        document.getElementById('conv-status').textContent=`${ld().aiName} pratar...`;
-        convState.transcript.push({role:'ai',text});
-        updateConvTranscript();
-
-        const u=new SpeechSynthesisUtterance(text);
-        u.lang='sv-SE';
-        u.rate=.95;u.pitch=1.05;
-        // Try to find Swedish voice
-        const voices=speechSynthesis.getVoices();
-        const sv=voices.find(v=>v.lang.startsWith('sv'));
-        if(sv)u.voice=sv;
-        u.onend=()=>{convState.speaking=false;resolve()};
-        u.onerror=()=>{convState.speaking=false;resolve()};
-        speechSynthesis.speak(u);
-        // Fallback if TTS doesn't work
-        setTimeout(()=>{if(convState.speaking){convState.speaking=false;resolve()}},Math.max(3000,text.length*60));
-    });
+async function aiMessage(text){
+    showTyping();
+    // Simulate thinking time
+    await new Promise(r=>setTimeout(r,800+Math.random()*600));
+    removeTyping();
+    addChat('ai',text);
+    trySpeak(text);
+    // Enable user input
+    document.getElementById('conv-text').focus();
 }
 
-function listenToUser(){
-    if(!convState.active)return;
-    setAvatar('listening');
-    document.getElementById('conv-status').textContent='Lyssnar på dig...';
-
-    const SR=window.SpeechRecognition||window.webkitSpeechRecognition;
-    if(!SR){
-        document.getElementById('conv-status').textContent='(Röstigen. stöds ej — avslutar)';
-        setTimeout(()=>endConversation(),2000);return;
-    }
-
-    const rec=new SR();
-    convState.recognition=rec;
-    rec.lang='sv-SE';rec.continuous=true;rec.interimResults=true;
-    let finalText='',silenceTimer=null,hasSpoken=false;
-
-    rec.onresult=(e)=>{
-        let interim='';
-        for(let i=e.resultIndex;i<e.results.length;i++){
-            if(e.results[i].isFinal)finalText+=e.results[i][0].transcript+' ';
-            else interim=e.results[i][0].transcript;
-        }
-        hasSpoken=true;
-        document.getElementById('conv-transcript').textContent=finalText+interim;
-        // Reset silence timer
-        clearTimeout(silenceTimer);
-        silenceTimer=setTimeout(()=>{
-            if(finalText.trim().length>5){rec.stop()}
-        },3000);
-    };
-
-    rec.onend=()=>{
-        if(!convState.active)return;
-        if(finalText.trim()){
-            convState.transcript.push({role:'user',text:finalText.trim()});
-            convState.fullText+=finalText+' ';
-            updateConvTranscript();
-            processUserResponse(finalText.trim());
-        }else if(!hasSpoken&&convState.round<2){
-            // Retry listening if user hasn't spoken yet
-            try{rec.start()}catch(e){}
-        }else{
-            processUserResponse('');
-        }
-    };
-    rec.onerror=(e)=>{
-        if(e.error==='no-speech'){try{rec.start()}catch(ex){}}
-        else if(convState.active&&convState.round<convState.maxRounds){processUserResponse(finalText||'')}
-    };
-    try{rec.start()}catch(e){}
-
-    // Safety: auto-advance after 30s
-    setTimeout(()=>{if(convState.active&&convState.recognition===rec)try{rec.stop()}catch(e){}},30000);
+function userSend(text){
+    if(!text.trim()||!convState.active)return;
+    addChat('user',text.trim());
+    document.getElementById('conv-text').value='';
+    stopListening();
+    processUserResponse(text.trim());
 }
 
 async function processUserResponse(text){
@@ -534,22 +523,15 @@ async function processUserResponse(text){
     const sentiment=analyze(text);
     convState.emotions.push(sentiment.emotion);
 
-    setAvatar('thinking','thinking');
-    document.getElementById('conv-status').textContent=`${ld().aiName} tänker...`;
-    await new Promise(r=>setTimeout(r,800+Math.random()*700));
-
     if(convState.round>=convState.maxRounds){
-        // Closing
         const close=tpl(pick(getAILines('close')));
-        setAvatar('speaking','happy');
-        await aiSpeak(close);
-        endConversation();
+        await aiMessage(close);
+        setTimeout(()=>endConversation(),2000);
         return;
     }
 
     let lines;
     if(convState.round<=2){
-        // Follow-up based on sentiment
         if(sentiment.score>=65)lines=getAILines('pos');
         else if(sentiment.score<=40)lines=getAILines('neg');
         else lines=getAILines('neut');
@@ -557,27 +539,74 @@ async function processUserResponse(text){
         lines=getAILines('deep');
     }
 
-    const mood=sentiment.score>=65?'happy':sentiment.score<=40?'concerned':'neutral';
-    setAvatar('speaking',mood);
-    await aiSpeak(tpl(pick(lines)));
-    listenToUser();
+    await aiMessage(tpl(pick(lines)));
 }
 
-function updateConvTranscript(){
-    const el=document.getElementById('conv-transcript');
-    const last3=convState.transcript.slice(-3);
-    el.innerHTML=last3.map(t=>`<div style="margin-bottom:4px;${t.role==='ai'?'color:var(--al)':''}"><strong>${t.role==='ai'?(ld().aiName):'Du'}:</strong> ${t.text}</div>`).join('');
-    el.scrollTop=el.scrollHeight;
+// ===== SPEECH-TO-TEXT (microphone button) =====
+function toggleListening(){
+    if(convState.listening)stopListening();
+    else startListening();
+}
+
+function startListening(){
+    const SR=window.SpeechRecognition||window.webkitSpeechRecognition;
+    if(!SR){document.getElementById('listen-ind').textContent='Röststöd saknas — skriv istället';return}
+
+    convState.listening=true;
+    document.getElementById('mic-btn').className='mic-btn rec';
+    document.getElementById('listen-ind').textContent='Lyssnar...';
+
+    const rec=new SR();
+    convState.recognition=rec;
+    rec.lang='sv-SE';rec.continuous=true;rec.interimResults=true;
+    let finalText='',silenceTimer=null;
+
+    rec.onresult=(e)=>{
+        let interim='';
+        for(let i=e.resultIndex;i<e.results.length;i++){
+            if(e.results[i].isFinal)finalText+=e.results[i][0].transcript+' ';
+            else interim=e.results[i][0].transcript;
+        }
+        document.getElementById('conv-text').value=finalText+interim;
+        document.getElementById('listen-ind').textContent='Lyssnar... (tryck mikrofon för att skicka)';
+        clearTimeout(silenceTimer);
+        silenceTimer=setTimeout(()=>{
+            if(finalText.trim().length>5){stopListening();userSend(finalText.trim())}
+        },3500);
+    };
+
+    rec.onend=()=>{
+        if(convState.listening){
+            // Auto-send if we have text
+            if(finalText.trim()){stopListening();userSend(finalText.trim())}
+            else{try{rec.start()}catch(e){stopListening()}}
+        }
+    };
+    rec.onerror=(e)=>{
+        if(e.error==='no-speech'){try{rec.start()}catch(ex){stopListening()}}
+        else{stopListening();document.getElementById('listen-ind').textContent='Kunde inte lyssna — skriv istället'}
+    };
+    try{rec.start()}catch(e){stopListening();document.getElementById('listen-ind').textContent='Kunde inte starta mikrofon'}
+
+    // Safety timeout
+    setTimeout(()=>{if(convState.listening){if(finalText.trim()){stopListening();userSend(finalText.trim())}else stopListening()}},25000);
+}
+
+function stopListening(){
+    convState.listening=false;
+    document.getElementById('mic-btn').className='mic-btn idle';
+    document.getElementById('listen-ind').textContent='';
+    if(convState.recognition)try{convState.recognition.stop()}catch(e){}
+    convState.recognition=null;
 }
 
 function endConversation(){
     convState.active=false;
-    if(convState.recognition)try{convState.recognition.stop()}catch(e){}
-    if(convState.stream)convState.stream.getTracks().forEach(t=>t.stop());
+    stopListening();
+    if(convState.stream){convState.stream.getTracks().forEach(t=>t.stop());convState.stream=null}
     clearInterval(convState.timer);
-    speechSynthesis.cancel();
+    try{speechSynthesis.cancel()}catch(e){}
     document.getElementById('conv-view').classList.remove('on');
-    document.getElementById('conv-camera').style.display='';
 
     const d=ld();
     const fullText=convState.fullText.trim();
@@ -873,9 +902,12 @@ function doShare(){
 function exportData(){const d=ld();const b=new Blob([JSON.stringify(d,null,2)],{type:'application/json'});const a=document.createElement('a');a.href=URL.createObjectURL(b);a.download='kanslaflow-'+new Date().toISOString().slice(0,10)+'.json';a.click();toast('Exporterad!')}
 function toast(m){const t=document.getElementById('toast');t.textContent=m;t.classList.add('show');setTimeout(()=>t.classList.remove('show'),3000)}
 
-// ===== START CONVERSATION BUTTON =====
+// ===== CONVERSATION BUTTONS =====
 document.getElementById('start-conv-btn').addEventListener('click',startConversation);
 document.getElementById('end-conv-btn').addEventListener('click',endConversation);
+document.getElementById('mic-btn').addEventListener('click',toggleListening);
+document.getElementById('send-btn').addEventListener('click',()=>{const v=document.getElementById('conv-text').value;if(v.trim())userSend(v)});
+document.getElementById('conv-text').addEventListener('keydown',e=>{if(e.key==='Enter'){e.preventDefault();const v=e.target.value;if(v.trim())userSend(v)}});
 
 // ===== INIT =====
 // Load voices early
