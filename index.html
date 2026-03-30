@@ -380,9 +380,9 @@
         <h1>Om dig</h1>
         <p>Du som förälder administrerar appen. Dina barn checkar in — du följer med.</p>
         <input type="text" id="user-name-input" placeholder="Ditt namn..." maxlength="30">
-        <input type="text" id="user-kommun-input" placeholder="Hemkommun (t.ex. Täby, Göteborg)" maxlength="50">
-        <p style="font-size:.7rem;color:var(--t2);margin-top:-10px;margin-bottom:16px">Kommun används för att jämföra välmående med andra familjer i ditt område</p>
-        <button class="btn bp" onclick="obNext(3)">Nästa</button>
+        <input type="text" id="user-kommun-input" list="kommun-list" placeholder="Hemkommun (t.ex. Täby, Göteborg)" maxlength="50" autocomplete="off">
+        <div id="ob-kommun-hint" style="font-size:.7rem;color:var(--t2);margin-top:-10px;margin-bottom:16px">Välj kommun för att jämföra välmående med andra familjer i ditt område</div>
+        <button class="btn bp" onclick="obValidateAndNext(3)">Nästa</button>
     </div>
 
     <div class="ob-step" id="ob3">
@@ -525,6 +525,29 @@ const SUPABASE_ANON='eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZS
 const sb=window.supabase?window.supabase.createClient(SUPABASE_URL,SUPABASE_ANON):null;
 let sbUser=null; // Current Supabase user (null if offline/skipped)
 let authMode='login'; // 'login' or 'signup'
+
+// ===== SWEDISH MUNICIPALITIES (290) =====
+const KOMMUNER=['Ale','Alingsås','Alvesta','Aneby','Arboga','Arjeplog','Arvidsjaur','Arvika','Askersund','Avesta','Bengtsfors','Berg','Bjurholm','Bjuv','Boden','Bollebygd','Bollnäs','Borgholm','Borlänge','Borås','Botkyrka','Boxholm','Bromölla','Bräcke','Burlöv','Båstad','Dals-Ed','Danderyd','Degerfors','Dorotea','Eda','Ekerö','Eksjö','Emmaboda','Enköping','Eskilstuna','Eslöv','Essunga','Fagersta','Falkenberg','Falköping','Falun','Filipstad','Finspång','Flen','Forshaga','Färgelanda','Gagnef','Gislaved','Gnesta','Gnosjö','Gotland','Grums','Grästorp','Gullspång','Gällivare','Gävle','Göteborg','Götene','Habo','Hagfors','Hallsberg','Hallstahammar','Halmstad','Hammarö','Haninge','Haparanda','Heby','Hedemora','Helsingborg','Herrljunga','Hjo','Hofors','Huddinge','Hudiksvall','Hultsfred','Hylte','Håbo','Hällefors','Härjedalen','Härnösand','Härryda','Hässleholm','Höganäs','Högsby','Hörby','Höör','Jokkmokk','Järfälla','Jönköping','Kalix','Kalmar','Karlsborg','Karlshamn','Karlskoga','Karlskrona','Karlstad','Katrineholm','Kil','Kinda','Kiruna','Klippan','Knivsta','Kramfors','Kristianstad','Kristinehamn','Krokom','Kumla','Kungsbacka','Kungsör','Kungälv','Kävlinge','Köping','Laholm','Landskrona','Laxå','Lekeberg','Leksand','Lerum','Lessebo','Lidingö','Lidköping','Lilla Edet','Lindesberg','Linköping','Ljungby','Ljusdal','Ljusnarsberg','Lomma','Ludvika','Luleå','Lund','Lycksele','Lysekil','Malmö','Malung-Sälen','Malå','Mariestad','Mark','Markaryd','Mellerud','Mjölby','Mora','Motala','Mullsjö','Munkedal','Munkfors','Mölndal','Mönsterås','Mörbylånga','Nacka','Nora','Norberg','Nordanstig','Nordmaling','Norrköping','Norrtälje','Norsjö','Nybro','Nykvarn','Nyköping','Nynäshamn','Nässjö','Ockelbo','Olofström','Orsa','Orust','Osby','Oskarshamn','Ovanåker','Oxelösund','Pajala','Partille','Perstorp','Piteå','Ragunda','Robertsfors','Ronneby','Rättvik','Sala','Salem','Sandviken','Sigtuna','Simrishamn','Sjöbo','Skara','Skellefteå','Skinnskatteberg','Skurup','Skövde','Smedjebacken','Sollefteå','Sollentuna','Solna','Sorsele','Sotenäs','Staffanstorp','Stenungsund','Stockholm','Storfors','Storuman','Strängnäs','Strömstad','Strömsund','Sundbyberg','Sundsvall','Sunne','Surahammar','Svalöv','Svedala','Svenljunga','Säffle','Säter','Sävsjö','Söderhamn','Söderköping','Södertälje','Sölvesborg','Tanum','Tibro','Tidaholm','Tierp','Timrå','Tingsryd','Tjörn','Tomelilla','Torsby','Torsås','Tranemo','Tranås','Trelleborg','Trollhättan','Trosa','Tyresö','Täby','Töreboda','Uddevalla','Ulricehamn','Umeå','Upplands Väsby','Upplands-Bro','Uppsala','Uppvidinge','Vadstena','Vaggeryd','Valdemarsvik','Vallentuna','Vansbro','Vara','Varberg','Vaxholm','Vellinge','Vetlanda','Vilhelmina','Vimmerby','Vindeln','Vingåker','Vårgårda','Vänersborg','Vännäs','Värmdö','Värnamo','Västervik','Västerås','Växjö','Ydre','Ystad','Åmål','Ånge','Åre','Årjäng','Åstorp','Åtvidaberg','Älmhult','Älvdalen','Älvkarleby','Älvsbyn','Ängelholm','Öckerö','Ödeshög','Örebro','Örkelljunga','Örnsköldsvik','Östersund','Österåker','Östhammar','Östra Göinge','Överkalix','Övertorneå'];
+
+// Build datalist element once
+function buildKommunDatalist(){
+    if(document.getElementById('kommun-list'))return;
+    const dl=document.createElement('datalist');
+    dl.id='kommun-list';
+    KOMMUNER.forEach(k=>{const o=document.createElement('option');o.value=k;dl.appendChild(o)});
+    document.body.appendChild(dl);
+}
+
+function isValidKommun(val){
+    if(!val)return false;
+    return KOMMUNER.some(k=>k.toLowerCase()===val.trim().toLowerCase());
+}
+
+function normalizeKommun(val){
+    if(!val)return '';
+    const match=KOMMUNER.find(k=>k.toLowerCase()===val.trim().toLowerCase());
+    return match||val.trim();
+}
 
 // ===== AUTH =====
 function switchAuthTab(mode){
@@ -1704,6 +1727,21 @@ function saveNewPlace(){
 let obChildren=[];
 let obActiveChild=0;
 
+function obValidateAndNext(step){
+    const kommunInput=document.getElementById('user-kommun-input');
+    const hint=document.getElementById('ob-kommun-hint');
+    const val=kommunInput?kommunInput.value.trim():'';
+    if(val&&!isValidKommun(val)){
+        hint.style.color='var(--bad)';
+        hint.textContent='Välj en kommun från listan — t.ex. "'+KOMMUNER.find(k=>k.toLowerCase().startsWith(val.toLowerCase().slice(0,2)))||'Stockholm'+'"';
+        kommunInput.focus();
+        return;
+    }
+    if(kommunInput&&val)kommunInput.value=normalizeKommun(val);
+    if(hint){hint.style.color='var(--t2)';hint.textContent='Välj kommun för att jämföra välmående med andra familjer i ditt område'}
+    obNext(step);
+}
+
 function obNext(step){
     document.querySelectorAll('.ob-step').forEach(s=>s.classList.remove('on'));
     document.getElementById('ob'+step).classList.add('on');
@@ -1809,7 +1847,7 @@ function obNextChild(){
 
 function finishOnboarding(){
     const userName=document.getElementById('user-name-input').value.trim();
-    const kommun=(document.getElementById('user-kommun-input')?.value||'').trim();
+    const kommun=normalizeKommun((document.getElementById('user-kommun-input')?.value||'').trim());
     const d=ld();
     d.firstVisit=false;
     d.userName=userName;
@@ -1869,7 +1907,8 @@ function renderChat(){
 function saveProfile(){
     const d=ld();
     d.userName=document.getElementById('sett-username').value.trim();
-    d.kommun=(document.getElementById('sett-kommun')?.value||'').trim();
+    const rawKommun=(document.getElementById('sett-kommun')?.value||'').trim();
+    d.kommun=normalizeKommun(rawKommun);
     d.aiName=document.getElementById('sett-ainame').value.trim()||'Luna';
     d.personality=document.getElementById('sett-pers').value;
     // Propagate kommun to children
@@ -2096,7 +2135,7 @@ function renderFamily(){
     // Profile settings
     html+=`<div class="cd"><div class="ct">👤 Profil</div>
         <div class="sett-row"><span>Ditt namn</span><input class="sett-input" id="sett-username" value="${d.userName||''}"></div>
-        <div class="sett-row"><span>Hemkommun</span><input class="sett-input" id="sett-kommun" value="${d.kommun||''}" placeholder="T.ex. Täby"></div>
+        <div class="sett-row"><span>Hemkommun</span><input class="sett-input" id="sett-kommun" list="kommun-list" value="${d.kommun||''}" placeholder="T.ex. Täby" autocomplete="off"></div>
         <div class="sett-row"><span>AI-namn</span><input class="sett-input" id="sett-ainame" value="${d.aiName||'Luna'}"></div>
         <div class="sett-row"><span>Personlighet</span><select id="sett-pers">
             <option value="warm"${d.personality==='warm'?' selected':''}>Varm</option>
@@ -2504,9 +2543,11 @@ document.getElementById('conv-text').addEventListener('keydown',e=>{if(e.key==='
 document.getElementById('conv-text').addEventListener('focus',()=>{setTimeout(()=>{const a=document.getElementById('chat-area');if(a)a.scrollTop=a.scrollHeight},350)});
 
 // ===== INIT =====
+buildKommunDatalist();
 try{speechSynthesis.getVoices();speechSynthesis.onvoiceschanged=()=>speechSynthesis.getVoices()}catch(e){}
 
 function initApp(){
+    buildKommunDatalist();
     const d0=ld();
     // Handle ?join=CODE for family invites
     const urlParams=new URLSearchParams(window.location.search);
