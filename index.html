@@ -41,7 +41,7 @@
         .sb .l{font-size:.68rem;color:var(--t2);margin-top:2px}
 
         /* ONBOARDING */
-        .ob{position:fixed;inset:0;background:var(--bg);z-index:300;display:flex;flex-direction:column;align-items:center;justify-content:center;padding:28px 24px;text-align:center}
+        .ob{position:fixed;inset:0;background:var(--bg);z-index:300;display:flex;flex-direction:column;align-items:center;justify-content:center;padding:28px 24px;text-align:center;overflow-y:auto}
         .ob.h{display:none}
         .ob-step{display:none;flex-direction:column;align-items:center;width:100%;max-width:340px;animation:fu .3s ease}
         .ob-step.on{display:flex}
@@ -933,10 +933,10 @@ function obNext(step){
 
 function renderObPlaces(){
     const el=document.getElementById('ob-places-list');
-    if(!obPlaces.length){el.innerHTML='';return}
-    el.innerHTML=obPlaces.map((p,i)=>`<div style="display:flex;align-items:center;gap:8px;padding:8px 12px;background:var(--c2);border-radius:8px;margin-bottom:6px;font-size:.84rem">
+    if(!obPlaces.length){el.innerHTML=''}
+    else{el.innerHTML=obPlaces.map((p,i)=>`<div style="display:flex;align-items:center;gap:8px;padding:8px 12px;background:var(--c2);border-radius:8px;margin-bottom:6px;font-size:.84rem">
         <span>${PT[p.type]?.icon||'📍'}</span><span style="flex:1">${p.name}</span>
-        <button style="background:none;border:none;color:var(--bad);font-size:1rem;cursor:pointer" onclick="obRemovePlace(${i})">×</button></div>`).join('');
+        <button style="background:none;border:none;color:var(--bad);font-size:1rem;cursor:pointer" onclick="obRemovePlace(${i})">×</button></div>`).join('')}
     document.getElementById('ob3-next').disabled=obPlaces.length===0;
 }
 
