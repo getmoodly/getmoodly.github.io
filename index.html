@@ -7,6 +7,7 @@
     <link rel="icon" href="data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'><text y='.9em' font-size='90'>🧠</text></svg>">
     <meta name="apple-mobile-web-app-capable" content="yes">
     <meta name="theme-color" content="#6C5CE7">
+    <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2/dist/umd/supabase.min.js"></script>
     <style>
         :root{--p:#6C5CE7;--pl:#A29BFE;--pd:#5A4BD1;--a:#00CEC9;--al:#81ECEC;--bg:#0F0E17;--c1:#1A1928;--c2:#232240;--t:#FFFFFE;--t2:#A7A9BE;--ok:#00B894;--w:#FDCB6E;--bad:#E17055;--g:#FFD700;--r:16px;--rs:10px}
         *{margin:0;padding:0;box-sizing:border-box;-webkit-tap-highlight-color:transparent}
@@ -272,6 +273,25 @@
         .ac-loading{padding:12px;text-align:center;font-size:.78rem;color:var(--t2)}
         .place-address{font-size:.68rem;color:var(--t2);margin-top:2px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
         .ac-wrap{position:relative}
+
+        /* AUTH */
+        .auth-screen{position:fixed;inset:0;background:var(--bg);z-index:350;display:flex;flex-direction:column;align-items:center;justify-content:center;padding:28px 24px;text-align:center}
+        .auth-screen.h{display:none}
+        .auth-box{width:100%;max-width:340px}
+        .auth-box h1{font-size:1.7rem;font-weight:800;margin-bottom:6px}
+        .auth-box p{color:var(--t2);font-size:.85rem;line-height:1.5;margin-bottom:20px}
+        .auth-box input{width:100%;padding:14px;background:rgba(255,255,255,.06);border:1px solid rgba(255,255,255,.12);border-radius:var(--rs);color:var(--t);font-size:.95rem;outline:none;margin-bottom:10px}
+        .auth-box input::placeholder{color:var(--t2)}
+        .auth-tabs{display:flex;gap:0;margin-bottom:18px;border-radius:var(--rs);overflow:hidden;border:1px solid rgba(255,255,255,.1)}
+        .auth-tab{flex:1;padding:10px;font-size:.82rem;font-weight:700;cursor:pointer;background:rgba(255,255,255,.03);color:var(--t2);border:none;transition:all .15s}
+        .auth-tab.on{background:var(--p);color:#fff}
+        .auth-err{font-size:.78rem;color:var(--bad);margin-bottom:10px;min-height:20px}
+        .auth-divider{display:flex;align-items:center;gap:12px;margin:16px 0;color:var(--t2);font-size:.78rem}
+        .auth-divider::before,.auth-divider::after{content:'';flex:1;height:1px;background:rgba(255,255,255,.08)}
+        .sync-dot{width:8px;height:8px;border-radius:50%;display:inline-block;margin-right:4px}
+        .sync-dot.green{background:var(--ok)}
+        .sync-dot.orange{background:var(--w)}
+        .sync-dot.red{background:var(--bad)}
     </style>
 </head>
 <body>
@@ -285,6 +305,26 @@
 <!-- FAMILY DASHBOARD OVERLAY -->
 <div class="fam-overlay" id="fam-overlay">
     <div id="fam-overlay-content"></div>
+</div>
+
+<!-- AUTH SCREEN -->
+<div class="auth-screen" id="auth-screen">
+    <div class="auth-box">
+        <div style="font-size:3.2rem;margin-bottom:14px">🧠</div>
+        <h1>Moodly</h1>
+        <p>Skapa konto för att synka data, dela med familjen och jämföra med andra.</p>
+        <div class="auth-tabs">
+            <button class="auth-tab on" onclick="switchAuthTab('login')">Logga in</button>
+            <button class="auth-tab" onclick="switchAuthTab('signup')">Skapa konto</button>
+        </div>
+        <div class="auth-err" id="auth-err"></div>
+        <input type="email" id="auth-email" placeholder="E-post">
+        <input type="password" id="auth-pass" placeholder="Lösenord (minst 6 tecken)">
+        <button class="btn bp" id="auth-submit" onclick="authSubmit()">Logga in</button>
+        <div class="auth-divider">eller</div>
+        <button class="btn bs" onclick="authMagicLink()" style="margin-bottom:8px">Skicka magisk länk via e-post</button>
+        <button class="btn" onclick="authSkip()" style="background:none;color:var(--t2);font-size:.8rem;margin-top:8px">Fortsätt utan konto</button>
+    </div>
 </div>
 
 <!-- ADD PLACE MODAL -->
@@ -454,8 +494,289 @@
 
 <script>
 // ===================================================================
-// Moodly v5 — Place-Based Wellbeing Tracker
+// Moodly v5 — Place-Based Wellbeing Tracker + Supabase Backend
 // ===================================================================
+
+const SUPABASE_URL='https://xuvvpmmfkedrhgofguqk.supabase.co';
+const SUPABASE_ANON='eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6Inh1dnZwbW1ma2Vkcmhnb2ZndXFrIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NzQ4OTg2MDcsImV4cCI6MjA5MDQ3NDYwN30.WfntUYTxmDxQWSZq85Q9Sdy-sKIGx9uFXex03QvA8iM';
+const sb=window.supabase?window.supabase.createClient(SUPABASE_URL,SUPABASE_ANON):null;
+let sbUser=null; // Current Supabase user (null if offline/skipped)
+let authMode='login'; // 'login' or 'signup'
+
+// ===== AUTH =====
+function switchAuthTab(mode){
+    authMode=mode;
+    document.querySelectorAll('.auth-tab').forEach((t,i)=>t.classList.toggle('on',i===(mode==='login'?0:1)));
+    document.getElementById('auth-submit').textContent=mode==='login'?'Logga in':'Skapa konto';
+    document.getElementById('auth-err').textContent='';
+}
+
+async function authSubmit(){
+    const email=document.getElementById('auth-email').value.trim();
+    const pass=document.getElementById('auth-pass').value;
+    const errEl=document.getElementById('auth-err');
+    errEl.textContent='';
+    if(!email||!pass){errEl.textContent='Fyll i e-post och lösenord';return}
+    if(pass.length<6){errEl.textContent='Lösenord måste vara minst 6 tecken';return}
+    document.getElementById('auth-submit').disabled=true;
+    try{
+        let res;
+        if(authMode==='signup'){
+            res=await sb.auth.signUp({email,password:pass});
+            if(res.error)throw res.error;
+            if(res.data?.user?.identities?.length===0){
+                errEl.textContent='E-posten är redan registrerad. Logga in istället.';
+                document.getElementById('auth-submit').disabled=false;
+                return;
+            }
+            // Check if email confirmation is required
+            if(res.data?.user&&!res.data.session){
+                errEl.style.color='var(--ok)';
+                errEl.textContent='Kolla din e-post för att bekräfta kontot!';
+                document.getElementById('auth-submit').disabled=false;
+                return;
+            }
+        }else{
+            res=await sb.auth.signInWithPassword({email,password:pass});
+            if(res.error)throw res.error;
+        }
+        // Success — session is set, onAuthStateChange handles the rest
+    }catch(e){
+        errEl.textContent=e.message==='Invalid login credentials'?'Fel e-post eller lösenord':e.message||'Något gick fel';
+        document.getElementById('auth-submit').disabled=false;
+    }
+}
+
+async function authMagicLink(){
+    const email=document.getElementById('auth-email').value.trim();
+    const errEl=document.getElementById('auth-err');
+    if(!email){errEl.textContent='Fyll i din e-post';return}
+    try{
+        const{error}=await sb.auth.signInWithOtp({email});
+        if(error)throw error;
+        errEl.style.color='var(--ok)';
+        errEl.textContent='Kolla din e-post — klicka på länken för att logga in!';
+    }catch(e){
+        errEl.textContent=e.message||'Kunde inte skicka länk';
+    }
+}
+
+function authSkip(){
+    document.getElementById('auth-screen').classList.add('h');
+    initApp();
+}
+
+async function onAuthReady(session){
+    sbUser=session?.user||null;
+    document.getElementById('auth-screen').classList.add('h');
+    document.getElementById('auth-submit').disabled=false;
+    if(sbUser){
+        await ensureProfile();
+        await migrateLocalToRemote();
+    }
+    initApp();
+    if(sbUser)pullRemoteData();
+}
+
+async function ensureProfile(){
+    if(!sb||!sbUser)return;
+    const{data}=await sb.from('profiles').select('id').eq('id',sbUser.id).single();
+    if(!data){
+        await sb.from('profiles').insert({id:sbUser.id});
+    }
+}
+
+// ===== SYNC LAYER =====
+function getPending(){
+    try{return JSON.parse(localStorage.getItem('moodly_pending')||'[]')}catch(e){return[]}
+}
+function savePending(q){
+    try{localStorage.setItem('moodly_pending',JSON.stringify(q))}catch(e){}
+}
+function enqueue(table,op,data){
+    if(!sbUser)return;
+    const q=getPending();
+    q.push({table,op,data,ts:new Date().toISOString()});
+    savePending(q);
+    scheduleFlush();
+}
+
+let flushTimer=null;
+function scheduleFlush(){
+    if(flushTimer)return;
+    flushTimer=setTimeout(()=>{flushTimer=null;flushPendingChanges()},1000);
+}
+
+async function flushPendingChanges(){
+    if(!sb||!sbUser||!navigator.onLine)return;
+    const q=getPending();
+    if(!q.length)return;
+    const failed=[];
+    for(const item of q){
+        try{
+            let res;
+            if(item.op==='upsert'){
+                res=await sb.from(item.table).upsert(item.data,{onConflict:item.conflict||'id'});
+            }else if(item.op==='insert'){
+                res=await sb.from(item.table).insert(item.data);
+            }else if(item.op==='delete'){
+                res=await sb.from(item.table).delete().eq('id',item.data.id);
+            }
+            if(res?.error){
+                // Skip duplicate key errors (already synced)
+                if(res.error.code!=='23505')failed.push(item);
+            }
+        }catch(e){failed.push(item)}
+    }
+    savePending(failed);
+}
+
+async function migrateLocalToRemote(){
+    if(!sb||!sbUser)return;
+    const migrated=localStorage.getItem('moodly_migrated_'+sbUser.id);
+    if(migrated)return;
+    const d=ld();
+    if(!d.places.length&&!d.placeCheckins.length)return;
+
+    // Sync profile
+    await sb.from('profiles').update({
+        user_name:d.userName||'',
+        ai_name:d.aiName||'Luna',
+        personality:d.personality||'warm',
+        xp:d.xp||0,points:d.points||0,streak:d.streak||0,
+        selected_avatar:d.selectedAvatar||'default',
+        unlocked_avatars:d.unlockedAvatars||['default'],
+        onboarded:d.onboarded||null
+    }).eq('id',sbUser.id);
+
+    // Sync places
+    for(const p of d.places){
+        await sb.from('places').upsert({
+            id:p.id,user_id:sbUser.id,name:p.name,type:p.type,
+            osm_id:p.osmId||null,address:p.address||null,
+            lat:p.lat||null,lng:p.lng||null
+        },{onConflict:'id'});
+    }
+
+    // Sync checkins
+    for(const c of d.placeCheckins){
+        const checkedAt=new Date(c.ts).toISOString().slice(0,10);
+        await sb.from('place_checkins').upsert({
+            user_id:sbUser.id,place_id:c.placeId,score:c.score,
+            comment:c.comment||null,checked_at:checkedAt,ts:c.ts
+        },{onConflict:'user_id,place_id,checked_at'});
+    }
+
+    // Sync chat sessions (without transcript)
+    for(const c of d.checkins||[]){
+        await sb.from('chat_sessions').insert({
+            user_id:sbUser.id,score:c.score,emotion:c.emotion||'neutral',ts:c.ts
+        });
+    }
+
+    localStorage.setItem('moodly_migrated_'+sbUser.id,'1');
+}
+
+async function pullRemoteData(){
+    if(!sb||!sbUser||!navigator.onLine)return;
+    try{
+        // Pull profile
+        const{data:prof}=await sb.from('profiles').select('*').eq('id',sbUser.id).single();
+        if(prof){
+            const d=ld();
+            d.userName=prof.user_name||d.userName;
+            d.aiName=prof.ai_name||d.aiName;
+            d.personality=prof.personality||d.personality;
+            d.points=Math.max(d.points||0,prof.points||0);
+            d.xp=Math.max(d.xp||0,prof.xp||0);
+            d.streak=Math.max(d.streak||0,prof.streak||0);
+            d.selectedAvatar=prof.selected_avatar||d.selectedAvatar;
+            // Merge unlocked avatars
+            const merged=new Set([...(d.unlockedAvatars||[]),...(prof.unlocked_avatars||[])]);
+            d.unlockedAvatars=[...merged];
+            sv(d);
+        }
+
+        // Pull places
+        const{data:remotePlaces}=await sb.from('places').select('*').eq('user_id',sbUser.id);
+        if(remotePlaces){
+            const d=ld();
+            const localIds=new Set(d.places.map(p=>p.id));
+            remotePlaces.forEach(rp=>{
+                if(!localIds.has(rp.id)){
+                    d.places.push({id:rp.id,name:rp.name,type:rp.type,osmId:rp.osm_id||'',address:rp.address||'',lat:rp.lat,lng:rp.lng});
+                }
+            });
+            sv(d);
+        }
+
+        // Pull checkins (last 90 days)
+        const since=new Date(Date.now()-90*864e5).toISOString().slice(0,10);
+        const{data:remoteCheckins}=await sb.from('place_checkins').select('*').eq('user_id',sbUser.id).gte('checked_at',since);
+        if(remoteCheckins){
+            const d=ld();
+            remoteCheckins.forEach(rc=>{
+                const existing=d.placeCheckins.findIndex(c=>c.placeId===rc.place_id&&new Date(c.ts).toDateString()===new Date(rc.ts).toDateString());
+                if(existing>=0){
+                    // Remote wins if newer
+                    if(new Date(rc.ts)>new Date(d.placeCheckins[existing].ts)){
+                        d.placeCheckins[existing]={ts:rc.ts,placeId:rc.place_id,score:rc.score,comment:rc.comment||''};
+                    }
+                }else{
+                    d.placeCheckins.push({ts:rc.ts,placeId:rc.place_id,score:rc.score,comment:rc.comment||''});
+                }
+            });
+            sv(d);
+        }
+
+        // Pull family membership
+        const{data:membership}=await sb.from('family_members').select('family_id,role,families(id,name,invite_code)').eq('user_id',sbUser.id).limit(1).single();
+        if(membership){
+            const d=ld();
+            d.familyId=membership.family_id;
+            d.role=membership.role==='parent'?'parent':membership.role==='child'?'child':'self';
+            sv(d);
+        }
+
+        renderHome();
+    }catch(e){}
+}
+
+// Sync a single checkin to Supabase
+function syncCheckin(placeId,score,comment,ts){
+    if(!sbUser)return;
+    const checkedAt=new Date(ts).toISOString().slice(0,10);
+    enqueue('place_checkins','upsert',{
+        user_id:sbUser.id,place_id:placeId,score,
+        comment:comment||null,checked_at:checkedAt,ts
+    });
+}
+
+// Sync a place to Supabase
+function syncPlace(place){
+    if(!sbUser)return;
+    enqueue('places','upsert',{
+        id:place.id,user_id:sbUser.id,name:place.name,type:place.type,
+        osm_id:place.osmId||null,address:place.address||null,
+        lat:place.lat||null,lng:place.lng||null
+    });
+}
+
+// Sync profile to Supabase
+function syncProfile(d){
+    if(!sbUser)return;
+    enqueue('profiles','upsert',{
+        id:sbUser.id,user_name:d.userName||'',ai_name:d.aiName||'Luna',
+        personality:d.personality||'warm',xp:d.xp||0,points:d.points||0,
+        streak:d.streak||0,selected_avatar:d.selectedAvatar||'default',
+        unlocked_avatars:d.unlockedAvatars||['default'],
+        daily_reward_claimed:d.dailyRewardClaimed||null,
+        updated_at:new Date().toISOString()
+    });
+}
+
+// Listen for online/offline
+window.addEventListener('online',()=>flushPendingChanges());
 
 const PARENT_KEY='moodly';
 let APK=PARENT_KEY;
@@ -617,6 +938,8 @@ function checkInPlace(placeId,score){
     d.points=(d.points||0)+pts;
     if(d.placeCheckins.length>5000)d.placeCheckins=d.placeCheckins.slice(-5000);
     sv(d);
+    syncCheckin(placeId,score,comment,new Date().toISOString());
+    if(pts>0)syncProfile(d);
     renderHome();
     if(pts>5)toast(`+${pts} poäng!`);
 }
@@ -672,7 +995,31 @@ async function fetchBenchmarks(){
         // Wait between requests to avoid rate limiting (skip first)
         if(i>0)await new Promise(ok=>setTimeout(ok,2000));
 
-        // Try 10km, then 20km if too few results
+        // Try Supabase real benchmarks first
+        let realBench=null;
+        if(sb&&sbUser&&place.osmId){
+            try{
+                const{data}=await sb.rpc('get_area_benchmarks',{
+                    p_lat:place.lat,p_lng:place.lng,p_type:place.type,
+                    p_radius_km:15,p_exclude_osm_id:place.osmId
+                });
+                if(data&&data.length>=3)realBench=data;
+            }catch(e){}
+        }
+
+        if(realBench){
+            // Use real aggregated data from Supabase
+            d.benchmarks.push({
+                forPlaceId:place.id,forPlaceName:place.name,type:place.type,
+                municipality:getMunicipality(place),fetched:new Date().toISOString(),
+                real:true,
+                places:realBench.slice(0,8).map(m=>({osmId:m.osm_id,name:m.name,score:parseFloat(m.avg_score),userCount:m.user_count}))
+            });
+            changed=true;sv(d);renderHome();
+            continue;
+        }
+
+        // Fallback: Overpass API for discovery + placeholder scores
         let best=[];
         for(const km of [10,20]){
             const off=km*0.009;
@@ -683,42 +1030,30 @@ async function fetchBenchmarks(){
                 const res=await fetch('https://overpass-api.de/api/interpreter',{method:'POST',body:'data='+encodeURIComponent(query)});
                 if(!res.ok)continue;
                 const txt=await res.text();
-                if(txt[0]!=='{')continue; // HTML error page
+                if(txt[0]!=='{')continue;
                 const data=JSON.parse(txt);
                 let results=(data.elements||[]).filter(el=>el.tags?.name).map(el=>({
-                    osmId:el.type+'_'+el.id,
-                    name:el.tags.name
+                    osmId:el.type+'_'+el.id,name:el.tags.name
                 })).filter(n=>n.osmId!==place.osmId);
-
-                // Dedupe by name
                 const seen=new Set();
                 results=results.filter(n=>{if(seen.has(n.name))return false;seen.add(n.name);return true});
                 best=results;
                 if(best.length>=5)break;
-                // If expanding, wait before retry
                 await new Promise(ok=>setTimeout(ok,2000));
             }catch(e){}
         }
 
         if(best.length){
             d.benchmarks.push({
-                forPlaceId:place.id,
-                forPlaceName:place.name,
-                type:place.type,
-                municipality:getMunicipality(place),
-                fetched:new Date().toISOString(),
-                places:best.slice(0,8).map(m=>({
-                    osmId:m.osmId,
-                    name:m.name,
-                    score:Math.round((2.7+Math.random()*0.6)*10)/10
-                }))
+                forPlaceId:place.id,forPlaceName:place.name,type:place.type,
+                municipality:getMunicipality(place),fetched:new Date().toISOString(),
+                real:false,
+                places:best.slice(0,8).map(m=>({osmId:m.osmId,name:m.name,score:null}))
             });
-            changed=true;
-            // Save incrementally so partial results show
-            sv(d);renderHome();
+            changed=true;sv(d);renderHome();
         }
     }
-    if(!changed)renderHome(); // Remove loading if nothing found
+    if(!changed)renderHome();
 }
 
 // ===== ADD/REMOVE PLACE =====
@@ -735,12 +1070,14 @@ function addPlace(name,type,placeData){
     };
     d.places.push(place);
     sv(d);
+    syncPlace(place);
 }
 function removePlace(id){
     const d=ld();
     d.places=d.places.filter(p=>p.id!==id);
     d.placeCheckins=d.placeCheckins.filter(c=>c.placeId!==id);
     sv(d);
+    if(sbUser)enqueue('places','delete',{id});
 }
 
 // ===== RENDER HOME =====
@@ -853,7 +1190,10 @@ function renderHome(){
 function saveComment(placeId,comment){
     const d=ld();const today=new Date().toDateString();
     const idx=d.placeCheckins.findIndex(c=>c.placeId===placeId&&new Date(c.ts).toDateString()===today);
-    if(idx>=0){d.placeCheckins[idx].comment=comment.trim();sv(d)}
+    if(idx>=0){
+        d.placeCheckins[idx].comment=comment.trim();sv(d);
+        syncCheckin(placeId,d.placeCheckins[idx].score,comment.trim(),d.placeCheckins[idx].ts);
+    }
 }
 
 function claimDailyReward(){
@@ -861,18 +1201,18 @@ function claimDailyReward(){
     const pts=10+Math.floor(Math.random()*16);
     d.points=(d.points||0)+pts;
     d.dailyRewardClaimed=new Date().toISOString();
-    sv(d);renderHome();toast(`🎁 +${pts} bonuspoäng!`);
+    sv(d);syncProfile(d);renderHome();toast(`🎁 +${pts} bonuspoäng!`);
 }
 
 function buyAvatar(key){
     const d=ld();const av=AVATARS[key];if(!av)return;
-    if((d.unlockedAvatars||[]).includes(key)){d.selectedAvatar=key;sv(d);renderHome();toast(`${av.emoji} ${av.label} vald!`);return}
+    if((d.unlockedAvatars||[]).includes(key)){d.selectedAvatar=key;sv(d);syncProfile(d);renderHome();toast(`${av.emoji} ${av.label} vald!`);return}
     if((d.points||0)<av.cost){toast(`Du behöver ${av.cost} poäng (har ${d.points||0})`);return}
     d.points-=av.cost;
     if(!d.unlockedAvatars)d.unlockedAvatars=[];
     d.unlockedAvatars.push(key);
     d.selectedAvatar=key;
-    sv(d);renderHome();toast(`${av.emoji} ${av.label} upplåst!`);
+    sv(d);syncProfile(d);renderHome();toast(`${av.emoji} ${av.label} upplåst!`);
 }
 
 // ===== INLINE INSIGHTS ON HOME =====
@@ -977,6 +1317,9 @@ function renderBenchmarks(d){
 
         if(userScore===null){
             html+=`<div class="bench-note">Checka in ditt mående för att se hur du ligger till</div>`;
+        }
+        if(!bg.real){
+            html+=`<div class="bench-note">Baserat på platser i närheten. Riktiga poäng visas när fler användare checkar in.</div>`;
         }
         html+=`</div>`;
     });
@@ -1235,7 +1578,7 @@ function saveProfile(){
     d.userName=document.getElementById('sett-username').value.trim();
     d.aiName=document.getElementById('sett-ainame').value.trim()||'Luna';
     d.personality=document.getElementById('sett-pers').value;
-    sv(d);toast('Sparat!');renderHome();
+    sv(d);syncProfile(d);toast('Sparat!');renderHome();
 }
 
 function exportData(){
@@ -1252,8 +1595,22 @@ function confirmDeleteAll(){
 }
 
 // ===== FAMILY =====
-function createFamily(){
-    const d=ld();d.familyId='fam_'+Date.now();d.role='parent';d.familyProfiles=[];sv(d);toast('Familj skapad!');
+async function createFamily(){
+    const d=ld();
+    if(sbUser){
+        try{
+            const{data,error}=await sb.from('families').insert({created_by:sbUser.id}).select().single();
+            if(error)throw error;
+            d.familyId=data.id;
+            d.role='parent';
+            sv(d);
+            // Add self as parent member
+            await sb.from('family_members').insert({family_id:data.id,user_id:sbUser.id,role:'parent',display_name:d.userName});
+            toast('Familj skapad!');
+        }catch(e){toast('Kunde inte skapa familj: '+e.message);return}
+    }else{
+        d.familyId='fam_'+Date.now();d.role='parent';d.familyProfiles=[];sv(d);toast('Familj skapad!');
+    }
 }
 
 function addChild(){
@@ -1334,7 +1691,7 @@ function renderFamily(){
     const d=ld();
     let html='';
 
-    // If viewing child profile, show back button
+    // If viewing child profile (legacy local mode), show back button
     if(APK!==PARENT_KEY){
         html+=`<div class="cd" style="text-align:center"><p style="font-size:.82rem;color:var(--t2);margin-bottom:10px">Du visar ett barnprofil. Gå tillbaka för att hantera familjen.</p>
             <button class="btn bp" onclick="switchToParent()">Tillbaka till föräldern</button></div>`;
@@ -1348,15 +1705,19 @@ function renderFamily(){
             <div style="font-size:2.5rem;margin-bottom:10px">👨‍👩‍👧‍👦</div>
             <h3 style="font-size:1rem;margin-bottom:8px">Skapa din familj</h3>
             <p style="font-size:.82rem;color:var(--t2);margin-bottom:16px;line-height:1.5">Följ dina barns mående över platser som skola, idrott och hem. Du ser trender och mönster — aldrig samtalstexter.</p>
-            <button class="btn ba" onclick="createFamily();renderFamily()">Skapa familj</button>
+            <button class="btn ba" onclick="createFamily().then(()=>renderFamily())">Skapa familj</button>
         </div>`;
     } else {
-        // Children dashboard
-        if(d.familyProfiles&&d.familyProfiles.length>0){
+        // Remote family dashboard container (filled async)
+        html+=`<div id="family-members-area"><div class="ac-loading">Laddar familj...</div></div>`;
+
+        // Legacy local children (offline mode fallback)
+        if(!sbUser&&d.familyProfiles&&d.familyProfiles.length>0){
+            let localHtml='';
             d.familyProfiles.forEach((fp,i)=>{
                 const childData=getChildDetailedData(fp.storageKey);
                 const avatar=childData?.avatar||'😊';
-                html+=`<div class="fam-child-card">
+                localHtml+=`<div class="fam-child-card">
                     <div class="fam-child-header">
                         <div class="fam-child-avatar">${avatar}</div>
                         <div class="fam-child-info">
@@ -1365,59 +1726,54 @@ function renderFamily(){
                         </div>
                         <button class="btn bs" style="width:auto;padding:6px 12px;font-size:.72rem" onclick="switchToProfile('${fp.storageKey}','${fp.name}')">Visa</button>
                     </div>`;
-
-                if(!childData||!childData.places.length){
-                    html+=`<p style="font-size:.78rem;color:var(--t2);padding:8px 0">Ingen data ännu</p>`;
-                }else{
-                    // Per-place mood for this child
+                if(childData&&childData.places.length){
                     childData.places.forEach(cp=>{
                         const pt=PT[cp.type]||PT.other;
                         const col=cp.avg>=4?'var(--ok)':cp.avg>=3?'var(--w)':'var(--bad)';
-                        const trendIcon=cp.trend==='up'?'↑':cp.trend==='dn'?'↓':'→';
-                        html+=`<div class="fam-place-row">
-                            <span>${pt.icon}</span><span style="flex:1">${cp.name}</span>
-                            <span style="font-size:.68rem;color:var(--t2)">${trendIcon}</span>
-                            <span class="fam-place-score" style="color:${col}">${cp.avg>0?cp.avg:'—'}</span>
-                        </div>`;
-                        if(cp.lastComment){
-                            html+=`<div class="fam-place-comment">"${cp.lastComment}"</div>`;
-                        }
+                        localHtml+=`<div class="fam-place-row"><span>${pt.icon}</span><span style="flex:1">${cp.name}</span><span class="fam-place-score" style="color:${col}">${cp.avg>0?cp.avg:'—'}</span></div>`;
+                        if(cp.lastComment)localHtml+=`<div class="fam-place-comment">"${cp.lastComment}"</div>`;
                     });
-
-                    // Alerts for this child
-                    if(childData.alerts.length){
-                        html+=`<div style="margin-top:8px">`;
-                        childData.alerts.forEach(a=>{
-                            html+=`<div style="font-size:.72rem;padding:6px 8px;border-radius:6px;margin-top:4px;background:${a.sev==='bad'?'rgba(225,112,85,.1)':'rgba(253,203,110,.1)'};color:${a.sev==='bad'?'var(--bad)':'var(--w)'}">${a.ico} ${a.title}</div>`;
-                        });
-                        html+=`</div>`;
-                    }
-                }
-                html+=`<div style="display:flex;gap:8px;margin-top:10px;padding-top:8px;border-top:1px solid rgba(255,255,255,.04)">
-                    <button class="btn bs" style="padding:6px;font-size:.7rem" onclick="removeChild(${i});renderFamily()">Ta bort</button>
-                </div></div>`;
+                }else{localHtml+=`<p style="font-size:.78rem;color:var(--t2);padding:8px 0">Ingen data ännu</p>`}
+                localHtml+=`<div style="display:flex;gap:8px;margin-top:10px;padding-top:8px;border-top:1px solid rgba(255,255,255,.04)">
+                    <button class="btn bs" style="padding:6px;font-size:.7rem" onclick="removeChild(${i});renderFamily()">Ta bort</button></div></div>`;
             });
+            html=localHtml;
         }
 
-        // Add child form
-        html+=`<div class="cd"><div class="ct">+ Lägg till barn</div>
-            <div class="sett-row"><span>Namn</span><input class="sett-input" id="new-child-name" placeholder=""></div>
-            <div class="sett-row"><span>Åldersgrupp</span><select id="new-child-age">
-                <option value="6-9">6-9 år</option><option value="10-13">10-13 år</option><option value="14-17">14-17 år</option>
-            </select></div>
-            <button class="btn ba" onclick="addChild();renderFamily()" style="margin-top:8px">+ Lägg till barn</button>
-        </div>`;
+        // Add child form (legacy local mode)
+        if(!sbUser){
+            html+=`<div class="cd"><div class="ct">+ Lägg till barn</div>
+                <div class="sett-row"><span>Namn</span><input class="sett-input" id="new-child-name" placeholder=""></div>
+                <div class="sett-row"><span>Åldersgrupp</span><select id="new-child-age">
+                    <option value="6-9">6-9 år</option><option value="10-13">10-13 år</option><option value="14-17">14-17 år</option>
+                </select></div>
+                <button class="btn ba" onclick="addChild();renderFamily()" style="margin-top:8px">+ Lägg till barn</button>
+            </div>`;
+        }
 
         // Invite
         html+=`<div class="cd"><div class="ct">📤 Bjud in</div>
             <p style="font-size:.78rem;color:var(--t2);margin-bottom:10px">Bjud in familjemedlemmar att använda Moodly.</p>
-            <button class="btn bp" onclick="shareInvite()">Dela inbjudan</button>
+            <div id="invite-code-area"></div>
+            <button class="btn bp" onclick="shareInvite()" style="margin-top:8px">Dela inbjudan</button>
         </div>`;
     }
 
     // Settings section (always shown)
     html+=`<div class="section-sep"></div>
     <div class="ct">⚙️ Inställningar</div>`;
+
+    // Account
+    if(sbUser){
+        html+=`<div class="cd"><div class="ct">🔑 Konto</div>
+            <div class="sett-row"><span>E-post</span><span style="font-size:.78rem;color:var(--t2)">${sbUser.email}</span></div>
+            <div class="sett-row"><span>Synk</span><span style="font-size:.78rem"><span class="sync-dot green"></span> Ansluten</span></div>
+            <button class="btn bs" onclick="signOut()" style="margin-top:8px">Logga ut</button></div>`;
+    }else{
+        html+=`<div class="cd"><div class="ct">🔑 Konto</div>
+            <p style="font-size:.78rem;color:var(--t2);margin-bottom:10px">Skapa konto för att synka data och dela med familjen.</p>
+            <button class="btn bp" onclick="document.getElementById('auth-screen').classList.remove('h')">Skapa konto / Logga in</button></div>`;
+    }
 
     // Profile settings
     html+=`<div class="cd"><div class="ct">👤 Profil</div>
@@ -1446,9 +1802,102 @@ function renderFamily(){
         <button class="btn bs" onclick="exportData()" style="margin-bottom:8px">Exportera data</button>
         <button class="btn bs" onclick="confirmDeleteAll()" style="background:rgba(225,112,85,.1);color:var(--bad)">Radera all data</button></div>`;
 
-    html+=`<div class="cd"><div class="ct">ℹ️ Om</div><p style="font-size:.76rem;color:var(--t2);line-height:1.5">Moodly v5.0 — All data lagras lokalt. Inget skickas till servrar.</p></div>`;
+    html+=`<div class="cd"><div class="ct">ℹ️ Om</div><p style="font-size:.76rem;color:var(--t2);line-height:1.5">Moodly v5.0${sbUser?' — Synkad till molnet':' — All data lagras lokalt'}</p></div>`;
 
     document.getElementById('family-content').innerHTML=html;
+
+    // Load remote family data async
+    if(sbUser&&d.familyId)loadRemoteFamilyMembers();
+    // Load invite code
+    if(sbUser&&d.familyId)loadInviteCode();
+}
+
+async function loadInviteCode(){
+    if(!sb||!sbUser)return;
+    const el=document.getElementById('invite-code-area');
+    if(!el)return;
+    try{
+        const d=ld();
+        const{data}=await sb.from('families').select('invite_code').eq('id',d.familyId).single();
+        if(data){
+            el.innerHTML=`<div style="background:var(--c2);border-radius:var(--rs);padding:12px;text-align:center;margin-bottom:8px">
+                <div style="font-size:.72rem;color:var(--t2);margin-bottom:4px">Inbjudningskod</div>
+                <div style="font-size:1.3rem;font-weight:800;letter-spacing:4px;color:var(--pl)">${data.invite_code.toUpperCase()}</div>
+                <div style="font-size:.68rem;color:var(--t2);margin-top:4px">Dela koden — den som har den kan gå med i din familj</div>
+            </div>`;
+        }
+    }catch(e){}
+}
+
+async function loadRemoteFamilyMembers(){
+    if(!sb||!sbUser)return;
+    const el=document.getElementById('family-members-area');
+    if(!el)return;
+    try{
+        const d=ld();
+        const{data:members}=await sb.from('family_members')
+            .select('user_id,role,display_name,age_group')
+            .eq('family_id',d.familyId);
+        if(!members||!members.length){el.innerHTML='<p style="font-size:.82rem;color:var(--t2);text-align:center;padding:16px">Inga familjemedlemmar ännu. Dela inbjudningskoden!</p>';return}
+
+        let html='';
+        for(const m of members){
+            if(m.user_id===sbUser.id)continue; // Skip self
+            // Get member's profile
+            const{data:prof}=await sb.from('profiles').select('user_name,selected_avatar,points,streak').eq('id',m.user_id).single();
+            // Get member's recent checkins
+            const since=new Date(Date.now()-30*864e5).toISOString().slice(0,10);
+            const{data:checkins}=await sb.from('place_checkins').select('place_id,score,comment,checked_at').eq('user_id',m.user_id).gte('checked_at',since);
+            const{data:memberPlaces}=await sb.from('places').select('id,name,type').eq('user_id',m.user_id);
+
+            const avatar=AVATARS[prof?.selected_avatar||'default']?.emoji||'😊';
+            const name=m.display_name||prof?.user_name||'Familjemedlem';
+            const roleLabel=m.role==='parent'?'Förälder':m.role==='child'?'Barn':'Medlem';
+
+            html+=`<div class="fam-child-card">
+                <div class="fam-child-header">
+                    <div class="fam-child-avatar">${avatar}</div>
+                    <div class="fam-child-info">
+                        <div class="fam-child-name">${name}</div>
+                        <div class="fam-child-meta"><span>${roleLabel}${m.age_group?' — '+m.age_group:''}</span>${prof?`<span>🔥 ${prof.streak||0}</span><span>🪙 ${prof.points||0}</span>`:''}</div>
+                    </div>
+                </div>`;
+
+            if(memberPlaces&&checkins){
+                memberPlaces.forEach(mp=>{
+                    const placeCheckins=checkins.filter(c=>c.place_id===mp.id);
+                    if(!placeCheckins.length)return;
+                    const avg=Math.round(placeCheckins.reduce((a,c)=>a+c.score,0)/placeCheckins.length*10)/10;
+                    const pt=PT[mp.type]||PT.other;
+                    const col=avg>=4?'var(--ok)':avg>=3?'var(--w)':'var(--bad)';
+                    const lastComment=placeCheckins.filter(c=>c.comment).slice(-1)[0]?.comment;
+                    html+=`<div class="fam-place-row"><span>${pt.icon}</span><span style="flex:1">${mp.name}</span><span class="fam-place-score" style="color:${col}">${avg}</span></div>`;
+                    if(lastComment)html+=`<div class="fam-place-comment">"${lastComment}"</div>`;
+                });
+
+                // Alert: low mood 3+ days
+                memberPlaces.forEach(mp=>{
+                    const recent=checkins.filter(c=>c.place_id===mp.id).slice(-3);
+                    if(recent.length>=3&&recent.every(c=>c.score<=2)){
+                        html+=`<div style="font-size:.72rem;padding:6px 8px;border-radius:6px;margin-top:4px;background:rgba(225,112,85,.1);color:var(--bad)">📉 Lågt mående: ${mp.name} (3+ dagar)</div>`;
+                    }
+                });
+            }else{
+                html+=`<p style="font-size:.78rem;color:var(--t2);padding:8px 0">Ingen data ännu</p>`;
+            }
+            html+=`</div>`;
+        }
+        if(!html)html='<p style="font-size:.82rem;color:var(--t2);text-align:center;padding:16px">Inga andra familjemedlemmar ännu. Dela inbjudningskoden!</p>';
+        el.innerHTML=html;
+    }catch(e){el.innerHTML='<p style="font-size:.78rem;color:var(--t2)">Kunde inte ladda familjedata</p>'}
+}
+
+async function signOut(){
+    if(!sb)return;
+    await sb.auth.signOut();
+    sbUser=null;
+    toast('Utloggad');
+    renderFamily();
 }
 
 function getChildDetailedData(storageKey){
@@ -1480,10 +1929,17 @@ function getChildDetailedData(storageKey){
     }catch(e){return null}
 }
 
-function shareInvite(){
+async function shareInvite(){
     const d=ld();
+    let url='https://guslinmarcus.github.io/kanslaflow/';
+    // Add invite code to URL if available
+    if(sbUser&&d.familyId){
+        try{
+            const{data}=await sb.from('families').select('invite_code').eq('id',d.familyId).single();
+            if(data)url+='?join='+data.invite_code;
+        }catch(e){}
+    }
     const msg=`${d.userName||'Jag'} vill att du testar Moodly — en app för att mäta välmående kopplat till platser som skola, jobb och fritid.`;
-    const url='https://guslinmarcus.github.io/kanslaflow/';
     if(navigator.share){
         navigator.share({title:'Prova Moodly',text:msg,url}).catch(()=>{});
     }else{
@@ -1669,9 +2125,12 @@ function endConversation(){
     const d=ld();const fullText=convState.fullText.trim();
     const result=analyze(fullText);
     const score=result.score;
-    d.checkins.push({ts:new Date().toISOString(),score,emotion:result.emotion,transcript:fullText.slice(0,500)});
+    const chatTs=new Date().toISOString();
+    d.checkins.push({ts:chatTs,score,emotion:result.emotion,transcript:fullText.slice(0,500)});
     d.xp=(d.xp||0)+15;
     sv(d);
+    if(sbUser)enqueue('chat_sessions','insert',{user_id:sbUser.id,score,emotion:result.emotion,duration_seconds:convState.elapsed,ts:chatTs});
+    syncProfile(d);
 
     // Show simple result
     document.getElementById('s-val').textContent=score;
@@ -1727,8 +2186,72 @@ document.getElementById('conv-text').addEventListener('focus',()=>{setTimeout(()
 
 // ===== INIT =====
 try{speechSynthesis.getVoices();speechSynthesis.onvoiceschanged=()=>speechSynthesis.getVoices()}catch(e){}
-const d0=ld();
-if(!d0.firstVisit){document.getElementById('ob').classList.add('h');document.getElementById('app').style.display='';renderHome()}
+
+function initApp(){
+    const d0=ld();
+    // Handle ?join=CODE for family invites
+    const urlParams=new URLSearchParams(window.location.search);
+    const joinCode=urlParams.get('join');
+    if(joinCode)localStorage.setItem('moodly_join_code',joinCode);
+
+    if(!d0.firstVisit){
+        document.getElementById('ob').classList.add('h');
+        document.getElementById('app').style.display='';
+        renderHome();
+        // Process pending join code after login
+        processJoinCode();
+    }
+}
+
+async function processJoinCode(){
+    const code=localStorage.getItem('moodly_join_code');
+    if(!code||!sbUser)return;
+    try{
+        const{data,error}=await sb.rpc('join_family',{p_invite_code:code,p_role:'member'});
+        if(!error&&data){
+            localStorage.removeItem('moodly_join_code');
+            toast('Du gick med i familjen!');
+            pullRemoteData();
+        }
+    }catch(e){}
+    localStorage.removeItem('moodly_join_code');
+}
+
+// Auth bootstrap
+if(sb){
+    sb.auth.onAuthStateChange((event,session)=>{
+        if(event==='SIGNED_IN'||event==='INITIAL_SESSION'){
+            if(session)onAuthReady(session);
+            else{
+                // No session — show auth screen (unless already has local data)
+                const d0=ld();
+                if(!d0.firstVisit){
+                    // Has local data — let them use app without auth
+                    document.getElementById('auth-screen').classList.add('h');
+                    initApp();
+                }
+                // Otherwise auth screen stays visible
+            }
+        }
+        if(event==='SIGNED_OUT'){
+            sbUser=null;
+        }
+    });
+    // Fallback: if onAuthStateChange doesn't fire within 2s, proceed
+    setTimeout(()=>{
+        if(!document.getElementById('auth-screen').classList.contains('h')){
+            const d0=ld();
+            if(!d0.firstVisit){
+                document.getElementById('auth-screen').classList.add('h');
+                initApp();
+            }
+        }
+    },2000);
+}else{
+    // Supabase not loaded — offline mode
+    document.getElementById('auth-screen').classList.add('h');
+    initApp();
+}
 </script>
 </body>
 </html>
