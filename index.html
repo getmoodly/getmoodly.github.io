@@ -225,6 +225,7 @@
         .ac-item:active,.ac-item:hover{background:var(--c2)}
         .ac-item .ac-name{font-size:.84rem;font-weight:600;color:var(--t)}
         .ac-item .ac-addr{font-size:.7rem;color:var(--t2);margin-top:2px;line-height:1.3}
+        .ac-tag{font-size:.65rem;color:var(--p);background:rgba(139,92,246,.1);padding:1px 6px;border-radius:8px;margin-left:6px;font-weight:500;vertical-align:middle}
         .ac-loading{padding:12px;text-align:center;font-size:.78rem;color:var(--t2)}
         .place-address{font-size:.68rem;color:var(--t2);margin-top:2px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
         .ac-wrap{position:relative}
@@ -440,20 +441,35 @@ function setupPlaceSearch(inputId,dropdownId,addrId){
 
 async function searchNominatim(query,dropdown,input,addrId){
     try{
-        const url=`https://nominatim.openstreetmap.org/search?q=${encodeURIComponent(query)}&format=json&countrycodes=se&limit=5&addressdetails=1`;
-        const res=await fetch(url,{headers:{'Accept-Language':'sv'}});
+        const base='https://nominatim.openstreetmap.org/search';
+        const params=new URLSearchParams({q:query,format:'json',countrycodes:'se',limit:'8',addressdetails:'1',extratags:'1'});
+        const res=await fetch(`${base}?${params}`,{headers:{'Accept-Language':'sv'}});
         if(!res.ok)throw new Error();
-        const results=await res.json();
+        let results=await res.json();
+
+        // Boost POIs (schools, workplaces, clubs) above generic roads/areas
+        const poiTypes=new Set(['school','university','college','kindergarten','office','company','industrial','commercial','club','sports_centre','sports_hall','stadium','community_centre','social_facility','library','hospital','clinic','church','place_of_worship']);
+        results.sort((a,b)=>{
+            const aIsPoi=poiTypes.has(a.type)||poiTypes.has(a.class==='amenity'&&a.type);
+            const bIsPoi=poiTypes.has(b.type)||poiTypes.has(b.class==='amenity'&&b.type);
+            if(aIsPoi&&!bIsPoi)return -1;
+            if(!aIsPoi&&bIsPoi)return 1;
+            return parseFloat(b.importance||0)-parseFloat(a.importance||0);
+        });
+        results=results.slice(0,5);
 
         if(!results.length){
             dropdown.innerHTML='<div class="ac-loading">Inga resultat</div>';
             return;
         }
 
+        const typeLabels={school:'Skola',university:'Universitet',college:'Högskola',kindergarten:'Förskola',office:'Kontor',company:'Företag',industrial:'Industri',commercial:'Verksamhet',club:'Förening',sports_centre:'Idrottsanläggning',sports_hall:'Sporthall',stadium:'Arena',community_centre:'Föreningslokal',social_facility:'Social verksamhet',library:'Bibliotek',hospital:'Sjukhus',clinic:'Vårdcentral',church:'Kyrka',place_of_worship:'Kyrka/Moské',residential:'Bostadsområde',suburb:'Stadsdel',village:'By',town:'Stad',city:'Stad',hamlet:'Samhälle'};
+
         dropdown.innerHTML=results.map((r,i)=>{
             const name=r.display_name.split(',')[0];
             const addr=r.display_name.split(',').slice(1,3).join(',').trim();
-            return`<div class="ac-item" data-idx="${i}"><div class="ac-name">${name}</div><div class="ac-addr">${addr}</div></div>`;
+            const tag=typeLabels[r.type]||(r.class==='amenity'?'Plats':'');
+            return`<div class="ac-item" data-idx="${i}"><div class="ac-name">${name}${tag?` <span class="ac-tag">${tag}</span>`:''}</div><div class="ac-addr">${addr}</div></div>`;
         }).join('');
 
         dropdown.querySelectorAll('.ac-item').forEach((el,i)=>{
