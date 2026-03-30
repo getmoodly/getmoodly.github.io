@@ -789,42 +789,74 @@ function startListening(){
 
     convState.listening=true;
     document.getElementById('mic-btn').className='mic-btn rec';
-    document.getElementById('listen-ind').textContent='Lyssnar...';
+    document.getElementById('listen-ind').textContent='🎤 Prata nu...';
+    document.getElementById('conv-text').value='';
 
     const rec=new SR();
     convState.recognition=rec;
-    rec.lang='sv-SE';rec.continuous=true;rec.interimResults=true;
-    let finalText='',silenceTimer=null;
+    rec.lang='sv-SE';
+    rec.continuous=false;
+    rec.interimResults=true;
+    rec.maxAlternatives=1;
+    let bestResult='';
 
     rec.onresult=(e)=>{
-        let interim='';
-        for(let i=e.resultIndex;i<e.results.length;i++){
-            if(e.results[i].isFinal)finalText+=e.results[i][0].transcript+' ';
-            else interim=e.results[i][0].transcript;
+        // Only use the latest/best transcript — no accumulation
+        let transcript='';
+        for(let i=0;i<e.results.length;i++){
+            transcript=e.results[i][0].transcript;
         }
-        document.getElementById('conv-text').value=finalText+interim;
-        document.getElementById('listen-ind').textContent='Lyssnar... (tryck mikrofon för att skicka)';
-        clearTimeout(silenceTimer);
-        silenceTimer=setTimeout(()=>{
-            if(finalText.trim().length>5){stopListening();userSend(finalText.trim())}
-        },3500);
+        bestResult=transcript;
+        document.getElementById('conv-text').value=transcript;
+        if(e.results[e.results.length-1].isFinal){
+            // Final result — auto-send after brief pause
+            document.getElementById('listen-ind').textContent='✓ Skickar...';
+            setTimeout(()=>{
+                stopListening();
+                if(bestResult.trim())userSend(bestResult.trim());
+            },400);
+        }
     };
 
     rec.onend=()=>{
         if(convState.listening){
-            // Auto-send if we have text
-            if(finalText.trim()){stopListening();userSend(finalText.trim())}
-            else{try{rec.start()}catch(e){stopListening()}}
+            // Recognition ended — send what we have or reset
+            if(bestResult.trim()){
+                stopListening();
+                userSend(bestResult.trim());
+            }else{
+                stopListening();
+                document.getElementById('listen-ind').textContent='Inget ljud uppfattat — försök igen';
+                setTimeout(()=>{document.getElementById('listen-ind').textContent=''},2000);
+            }
         }
     };
-    rec.onerror=(e)=>{
-        if(e.error==='no-speech'){try{rec.start()}catch(ex){stopListening()}}
-        else{stopListening();document.getElementById('listen-ind').textContent='Kunde inte lyssna — skriv istället'}
-    };
-    try{rec.start()}catch(e){stopListening();document.getElementById('listen-ind').textContent='Kunde inte starta mikrofon'}
 
-    // Safety timeout
-    setTimeout(()=>{if(convState.listening){if(finalText.trim()){stopListening();userSend(finalText.trim())}else stopListening()}},25000);
+    rec.onerror=(e)=>{
+        stopListening();
+        if(e.error==='no-speech'){
+            document.getElementById('listen-ind').textContent='Inget tal uppfattat — försök igen';
+        }else if(e.error==='not-allowed'){
+            document.getElementById('listen-ind').textContent='Mikrofonåtkomst nekad';
+        }else{
+            document.getElementById('listen-ind').textContent='Kunde inte lyssna — skriv istället';
+        }
+        setTimeout(()=>{document.getElementById('listen-ind').textContent=''},3000);
+    };
+
+    try{rec.start()}catch(e){
+        stopListening();
+        document.getElementById('listen-ind').textContent='Kunde inte starta mikrofon';
+        setTimeout(()=>{document.getElementById('listen-ind').textContent=''},3000);
+    }
+
+    // Safety timeout: 15 seconds max
+    setTimeout(()=>{
+        if(convState.listening){
+            if(bestResult.trim()){stopListening();userSend(bestResult.trim())}
+            else stopListening();
+        }
+    },15000);
 }
 
 function stopListening(){
