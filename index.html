@@ -330,6 +330,38 @@
         .ikt-note{font-size:.68rem;color:var(--t2);text-align:center;font-style:italic;margin-top:8px}
         .ikt-cta{text-align:center;padding:16px;margin-top:8px;background:rgba(108,92,231,.06);border:1px solid rgba(108,92,231,.1);border-radius:var(--r)}
         .ikt-cta p{font-size:.78rem;color:var(--t2);margin-bottom:8px}
+        /* HEATMAP */
+        .heatmap-wrap{overflow-x:auto;-webkit-overflow-scrolling:touch;margin:0 -4px}
+        .heatmap{display:grid;gap:3px;min-width:fit-content;padding:4px}
+        .hm-corner{font-size:.6rem;color:var(--t2)}
+        .hm-day{font-size:.58rem;color:var(--t2);text-align:center;font-weight:600}
+        .hm-place{font-size:.62rem;color:var(--t2);white-space:nowrap;overflow:hidden;text-overflow:ellipsis;display:flex;align-items:center;gap:4px}
+        .hm-cell{border-radius:4px;aspect-ratio:1;min-width:28px;min-height:28px;display:flex;align-items:center;justify-content:center;font-size:.6rem;font-weight:700;color:rgba(255,255,255,.9);transition:transform .15s}
+        .hm-cell:hover{transform:scale(1.15)}
+        .hm-cell.empty{background:rgba(255,255,255,.04);color:var(--t2)}
+        .hm-child-label{font-size:.76rem;font-weight:600;color:var(--t);margin:14px 0 6px;display:flex;align-items:center;gap:6px}
+        .hm-legend{display:flex;align-items:center;gap:4px;justify-content:center;margin-top:10px;font-size:.6rem;color:var(--t2)}
+        .hm-legend-cell{width:14px;height:14px;border-radius:3px}
+        /* PATTERN CARDS */
+        .pattern-card{display:flex;align-items:flex-start;gap:10px;padding:12px;background:rgba(255,255,255,.03);border-radius:var(--rs);margin-bottom:8px;border-left:3px solid var(--t2)}
+        .pattern-card.warning{border-left-color:var(--bad);background:rgba(255,107,107,.05)}
+        .pattern-card.positive{border-left-color:var(--ok);background:rgba(0,206,201,.05)}
+        .pattern-card.neutral{border-left-color:var(--w);background:rgba(253,203,110,.05)}
+        .pattern-icon{font-size:1.1rem;flex-shrink:0;margin-top:1px}
+        .pattern-text{font-size:.78rem;color:var(--t2);line-height:1.45}
+        .pattern-text strong{color:var(--t)}
+        /* TAG IMPACT */
+        .tag-impact-list{display:flex;flex-direction:column;gap:6px}
+        .tag-impact-row{display:flex;align-items:center;gap:8px}
+        .tag-impact-name{font-size:.72rem;color:var(--t2);width:80px;text-align:right;flex-shrink:0;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+        .tag-impact-bar-wrap{flex:1;height:16px;background:rgba(255,255,255,.04);border-radius:8px;position:relative;overflow:hidden}
+        .tag-impact-bar{height:100%;border-radius:8px;transition:width .8s cubic-bezier(.23,1,.32,1);min-width:2px}
+        .tag-impact-bar.neg{background:linear-gradient(90deg,var(--bad),rgba(255,107,107,.5))}
+        .tag-impact-bar.pos{background:linear-gradient(90deg,rgba(0,206,201,.5),var(--ok))}
+        .tag-impact-val{font-size:.64rem;font-weight:700;width:36px;flex-shrink:0}
+        .tag-impact-val.neg{color:var(--bad)}
+        .tag-impact-val.pos{color:var(--ok)}
+        .tag-child-label{font-size:.74rem;font-weight:600;color:var(--t);margin:12px 0 6px;display:flex;align-items:center;gap:6px}
 
         .toast{position:fixed;bottom:100px;left:50%;transform:translateX(-50%) translateY(8px);background:rgba(20,19,42,.95);backdrop-filter:blur(16px);-webkit-backdrop-filter:blur(16px);border:1px solid rgba(255,255,255,.1);color:var(--t);padding:12px 24px;border-radius:24px;font-size:.8rem;font-weight:600;z-index:150;opacity:0;transition:all .3s;pointer-events:none;box-shadow:0 8px 24px rgba(0,0,0,.4)}
         .toast.show{transform:translateX(-50%) translateY(0)}
@@ -2363,6 +2395,7 @@ function renderOb4(){
     document.getElementById('ob-place-name').value='';
     document.getElementById('ob-place-addr').textContent='';
     selectedPlace=null;
+    updateQuickPlaceButtons();
 }
 
 function renderOb4Places(){
@@ -3461,8 +3494,170 @@ function generateInsikterDemoData(kommun){
             {childName:'Erik',placeName:'Tallskolan',placeType:'school',avgScore:4.1,z:0.2,baseline:3.9},
             {childName:'Erik',placeName:'Simklubben',placeType:'sport',avgScore:3.8,z:-0.3,baseline:4.0},
             {childName:'Erik',placeName:'Hem',placeType:'home',avgScore:4.7,z:1.1,baseline:4.0}
+        ],
+        heatmap:[
+            {childName:'Lisa',places:[
+                {name:'Ekbackens skola',icon:'🏫',days:[3,2,4,3,2,null,null]},
+                {name:'IFK Fotboll',icon:'⚽',days:[null,5,null,4,null,4,null]},
+                {name:'Hem',icon:'🏠',days:[4,3,4,4,3,5,4]}
+            ]},
+            {childName:'Erik',places:[
+                {name:'Tallskolan',icon:'🏫',days:[4,4,3,5,4,null,null]},
+                {name:'Simklubben',icon:'⚽',days:[null,null,4,null,3,4,null]},
+                {name:'Hem',icon:'🏠',days:[5,4,5,4,5,5,5]}
+            ]}
+        ],
+        patterns:[
+            {type:'warning',icon:'⚠️',text:'<strong>Lisa</strong> mår konsekvent sämre på <strong>måndagar</strong> och <strong>fredagar</strong> i skolan (snitt 2.5 vs 3.4)'},
+            {type:'warning',icon:'📉',text:'<strong>Lisa</strong> har sjunkit under sin baseline på <strong>Ekbackens skola</strong> 4 av senaste 5 dagarna'},
+            {type:'positive',icon:'🌟',text:'<strong>Erik</strong> trivs bäst <strong>hemma</strong> — stabilt högt mående (4.7) i 3 veckor'},
+            {type:'positive',icon:'📈',text:'<strong>Eriks</strong> mående på <strong>Simklubben</strong> har förbättrats stadigt senaste 2 veckorna'},
+            {type:'neutral',icon:'🔁',text:'<strong>"Kompisar"</strong> dyker upp ofta som orsak när Lisa mår dåligt i skolan (6 av 10 dagar)'},
+            {type:'neutral',icon:'💤',text:'<strong>"Trött"</strong> är den vanligaste taggen på måndagar för båda barnen'}
+        ],
+        tagImpact:[
+            {childName:'Lisa',tags:[
+                {tag:'Kompisar',impact:-1.2,count:8},
+                {tag:'Prov/läxor',impact:-0.8,count:5},
+                {tag:'Trött',impact:-0.6,count:7},
+                {tag:'Ensam',impact:-1.5,count:3},
+                {tag:'Rolig lektion',impact:+1.1,count:4},
+                {tag:'Bra träning',impact:+1.4,count:6},
+                {tag:'Familj',impact:+0.9,count:5}
+            ]},
+            {childName:'Erik',tags:[
+                {tag:'Kompisar',impact:+0.4,count:6},
+                {tag:'Tränaren',impact:-0.7,count:4},
+                {tag:'Förlorade',impact:-1.1,count:3},
+                {tag:'Familj',impact:+1.3,count:7},
+                {tag:'Rolig lektion',impact:+0.8,count:5},
+                {tag:'Mys',impact:+1.0,count:4}
+            ]}
         ]
     };
+}
+
+function buildHeatmapData(d){
+    if(!d.familyProfiles)return[];
+    const dayNames=['Mån','Tis','Ons','Tor','Fre','Lör','Sön'];
+    const result=[];
+    const now=new Date();
+    d.familyProfiles.forEach(fp=>{
+        if(fp.storageKey&&fp.storageKey.startsWith('_demo_'))return;
+        const cd=getFullChildData(fp.storageKey);
+        if(!cd||!cd.places||!cd.placeCheckins)return;
+        const places=[];
+        cd.places.forEach(p=>{
+            const days=[null,null,null,null,null,null,null];
+            const counts=[0,0,0,0,0,0,0];
+            const totals=[0,0,0,0,0,0,0];
+            const cutoff=Date.now()-28*864e5;
+            cd.placeCheckins.filter(c=>c.placeId===p.id&&new Date(c.ts).getTime()>cutoff).forEach(c=>{
+                let dow=(new Date(c.ts).getDay()+6)%7; // 0=mån
+                totals[dow]+=c.score;counts[dow]++;
+            });
+            for(let i=0;i<7;i++){if(counts[i])days[i]=Math.round(totals[i]/counts[i]*10)/10}
+            places.push({name:p.name,icon:PT[p.type]?.icon||'📍',days});
+        });
+        if(places.length)result.push({childName:fp.name,places});
+    });
+    return result;
+}
+
+function detectPatterns(d){
+    if(!d.familyProfiles)return[];
+    const patterns=[];
+    const dayNames=['måndagar','tisdagar','onsdagar','torsdagar','fredagar','lördagar','söndagar'];
+    d.familyProfiles.forEach(fp=>{
+        if(fp.storageKey&&fp.storageKey.startsWith('_demo_'))return;
+        const cd=getFullChildData(fp.storageKey);
+        if(!cd||!cd.places||!cd.placeCheckins)return;
+        const cutoff14=Date.now()-14*864e5;
+        const cutoff7=Date.now()-7*864e5;
+        cd.places.forEach(p=>{
+            const recent14=cd.placeCheckins.filter(c=>c.placeId===p.id&&new Date(c.ts).getTime()>cutoff14);
+            const recent7=cd.placeCheckins.filter(c=>c.placeId===p.id&&new Date(c.ts).getTime()>cutoff7);
+            if(recent14.length<3)return;
+            const avg14=recent14.reduce((a,c)=>a+c.score,0)/recent14.length;
+            // Worst weekday detection
+            const dayScores={};
+            recent14.forEach(c=>{
+                const dow=(new Date(c.ts).getDay()+6)%7;
+                if(!dayScores[dow])dayScores[dow]={total:0,count:0};
+                dayScores[dow].total+=c.score;dayScores[dow].count++;
+            });
+            let worstDay=-1,worstAvg=5,bestDay=-1,bestAvg=0;
+            Object.entries(dayScores).forEach(([day,s])=>{
+                if(s.count<2)return;
+                const avg=s.total/s.count;
+                if(avg<worstAvg){worstAvg=avg;worstDay=+day}
+                if(avg>bestAvg){bestAvg=avg;bestDay=+day}
+            });
+            if(worstDay>=0&&worstAvg<avg14-0.5){
+                patterns.push({type:'warning',icon:'⚠️',text:`<strong>${esc(fp.name)}</strong> mår konsekvent sämre på <strong>${dayNames[worstDay]}</strong> på ${esc(p.name)} (snitt ${worstAvg.toFixed(1)} vs ${avg14.toFixed(1)})`});
+            }
+            // Trend down (7d vs 14d)
+            if(recent7.length>=2){
+                const avg7=recent7.reduce((a,c)=>a+c.score,0)/recent7.length;
+                const prev7=recent14.filter(c=>new Date(c.ts).getTime()<=cutoff7);
+                if(prev7.length>=2){
+                    const avgPrev=prev7.reduce((a,c)=>a+c.score,0)/prev7.length;
+                    if(avg7<avgPrev-0.6){
+                        patterns.push({type:'warning',icon:'📉',text:`<strong>${esc(fp.name)}</strong> har tappat i mående på <strong>${esc(p.name)}</strong> senaste veckan (${avg7.toFixed(1)} → från ${avgPrev.toFixed(1)})`});
+                    }else if(avg7>avgPrev+0.5){
+                        patterns.push({type:'positive',icon:'📈',text:`<strong>${esc(fp.name)}</strong>s mående på <strong>${esc(p.name)}</strong> har förbättrats senaste veckan`});
+                    }
+                }
+            }
+            // Stable high
+            if(recent7.length>=5){
+                const avg7=recent7.reduce((a,c)=>a+c.score,0)/recent7.length;
+                if(avg7>=4.2)patterns.push({type:'positive',icon:'🌟',text:`<strong>${esc(fp.name)}</strong> trivs bra på <strong>${esc(p.name)}</strong> — stabilt högt mående (${avg7.toFixed(1)})`});
+            }
+            // Recurring tag
+            const tagCount={};
+            recent7.forEach(c=>(c.tags||[]).forEach(t=>{tagCount[t]=(tagCount[t]||0)+1}));
+            Object.entries(tagCount).forEach(([tag,count])=>{
+                if(count>=3){
+                    const tagCheckins=recent7.filter(c=>(c.tags||[]).includes(tag));
+                    const tagAvg=tagCheckins.reduce((a,c)=>a+c.score,0)/tagCheckins.length;
+                    if(tagAvg<=2.5){
+                        patterns.push({type:'neutral',icon:'🔁',text:`<strong>"${esc(tag)}"</strong> dyker upp ofta när ${esc(fp.name)} mår dåligt på ${esc(p.name)} (${count} av ${recent7.length} dagar)`});
+                    }
+                }
+            });
+        });
+    });
+    // Limit to most relevant
+    patterns.sort((a,b)=>{const o={warning:0,neutral:1,positive:2};return(o[a.type]||1)-(o[b.type]||1)});
+    return patterns.slice(0,6);
+}
+
+function buildTagImpact(d){
+    if(!d.familyProfiles)return[];
+    const result=[];
+    d.familyProfiles.forEach(fp=>{
+        if(fp.storageKey&&fp.storageKey.startsWith('_demo_'))return;
+        const cd=getFullChildData(fp.storageKey);
+        if(!cd||!cd.places||!cd.placeCheckins)return;
+        const cutoff=Date.now()-30*864e5;
+        const recent=cd.placeCheckins.filter(c=>new Date(c.ts).getTime()>cutoff);
+        if(recent.length<5)return;
+        const overallAvg=recent.reduce((a,c)=>a+c.score,0)/recent.length;
+        const tagStats={};
+        recent.forEach(c=>{
+            (c.tags||[]).forEach(tag=>{
+                if(!tagStats[tag])tagStats[tag]={total:0,count:0};
+                tagStats[tag].total+=c.score;tagStats[tag].count++;
+            });
+        });
+        const tags=Object.entries(tagStats).filter(([,s])=>s.count>=2).map(([tag,s])=>{
+            const avg=s.total/s.count;
+            return{tag,impact:Math.round((avg-overallAvg)*10)/10,count:s.count};
+        }).sort((a,b)=>a.impact-b.impact);
+        if(tags.length)result.push({childName:fp.name,tags});
+    });
+    return result;
 }
 
 function renderInsikter(){
@@ -3578,22 +3773,101 @@ function renderInsikter(){
     html+=`<div class="compare-legend"><span><span class="dot" style="background:var(--pl)"></span> Din familj</span><span><span class="dot" style="background:var(--a)"></span> ${kommun||'Kommunsnitt'}</span></div>`;
     html+=`</div>`;
 
-    // 4. Z-SCORE SAMMANFATTNING per barn/plats
+    // 4. Z-SCORE — Dina barns mående vs sin egen baseline
     if(zScores&&zScores.length){
-        html+=`<div class="cd ikt-section"><div class="ct">🎯 Miljöpåverkan per barn</div>`;
-        zScores.sort((a,b)=>a.z-b.z);
-        zScores.forEach(r=>{
-            const cls=r.z>0.5?'hi':r.z<-0.5?'lo':'mid';
-            const arrow=r.z>0.3?'↑':r.z<-0.3?'↓':'→';
-            const col=r.z>0.5?'var(--ok)':r.z<-0.5?'var(--bad)':'var(--t2)';
-            const desc=r.z<-1?'mår sämre än vanligt':r.z<-0.3?'något under sin baseline':r.z>1?'mår bättre än vanligt':r.z>0.3?'något över sin baseline':'nära sin baseline';
-            html+=`<div class="zscore-card">
-                <div class="zscore-dot ${cls}"></div>
-                <div class="zscore-text"><strong>${esc(r.childName)}</strong> — ${esc(r.placeName)}: ${desc}</div>
-                <div class="zscore-val" style="color:${col}">${arrow} ${r.avgScore}</div>
+        html+=`<div class="cd ikt-section"><div class="ct">🎯 Dina barns mående vs baseline</div>`;
+        html+=`<div class="ikt-note" style="margin-bottom:8px;font-style:normal">Jämför varje barns nuvarande mående mot deras egen normalnivå</div>`;
+        // Group by child for privacy-first display
+        const byChild={};
+        zScores.forEach(r=>{if(!byChild[r.childName])byChild[r.childName]=[];byChild[r.childName].push(r)});
+        Object.entries(byChild).forEach(([name,scores])=>{
+            scores.sort((a,b)=>a.z-b.z);
+            scores.forEach(r=>{
+                const cls=r.z>0.5?'hi':r.z<-0.5?'lo':'mid';
+                const arrow=r.z>0.3?'↑':r.z<-0.3?'↓':'→';
+                const col=r.z>0.5?'var(--ok)':r.z<-0.5?'var(--bad)':'var(--t2)';
+                const desc=r.z<-1?'mår sämre än vanligt':r.z<-0.3?'något under sin baseline':r.z>1?'mår bättre än vanligt':r.z>0.3?'något över sin baseline':'nära sin baseline';
+                html+=`<div class="zscore-card">
+                    <div class="zscore-dot ${cls}"></div>
+                    <div class="zscore-text"><strong>${esc(r.childName)}</strong> — ${esc(r.placeName)}: ${desc}</div>
+                    <div class="zscore-val" style="color:${col}">${arrow} ${r.avgScore}</div>
+                </div>`;
+            });
+        });
+        if(isDemo)html+=`<div class="ikt-note">Visar hur ditt barn mår relativt sin egen normalnivå — aldrig jämfört med andra barn</div>`;
+        html+=`</div>`;
+    }
+
+    // 5. HEATMAP — Veckodag × plats per barn
+    const heatmapData=isDemo?demo.heatmap:buildHeatmapData(d);
+    if(heatmapData&&heatmapData.length){
+        const dayLabels=['Mån','Tis','Ons','Tor','Fre','Lör','Sön'];
+        html+=`<div class="cd ikt-section"><div class="ct">🗓️ Mående per veckodag</div>`;
+        html+=`<div class="ikt-note" style="margin-bottom:8px;font-style:normal">Se vilka dagar som är bäst och sämst för varje plats</div>`;
+        heatmapData.forEach(child=>{
+            html+=`<div class="hm-child-label">👤 ${esc(child.childName)}</div>`;
+            html+=`<div class="heatmap-wrap"><div class="heatmap" style="grid-template-columns:80px repeat(7,1fr)">`;
+            // Header row
+            html+=`<div class="hm-corner"></div>`;
+            dayLabels.forEach(dl=>html+=`<div class="hm-day">${dl}</div>`);
+            // Place rows
+            child.places.forEach(p=>{
+                html+=`<div class="hm-place">${p.icon} ${esc(p.name)}</div>`;
+                p.days.forEach(score=>{
+                    if(score===null){
+                        html+=`<div class="hm-cell empty">–</div>`;
+                    }else{
+                        const bg=score<=2?'rgba(255,107,107,.9)':score<=3?'rgba(253,203,110,.85)':'rgba(0,206,201,.8)';
+                        html+=`<div class="hm-cell" style="background:${bg}">${score}</div>`;
+                    }
+                });
+            });
+            html+=`</div></div>`;
+        });
+        html+=`<div class="hm-legend"><div class="hm-legend-cell" style="background:rgba(255,107,107,.9)"></div> Dåligt <div class="hm-legend-cell" style="background:rgba(253,203,110,.85);margin-left:8px"></div> Okej <div class="hm-legend-cell" style="background:rgba(0,206,201,.9);margin-left:8px"></div> Bra</div>`;
+        if(isDemo)html+=`<div class="ikt-note">Snitt senaste 4 veckorna per veckodag</div>`;
+        html+=`</div>`;
+    }
+
+    // 6. PATTERN CARDS — Automatiska insikter
+    const patternData=isDemo?demo.patterns:detectPatterns(d);
+    if(patternData&&patternData.length){
+        html+=`<div class="cd ikt-section"><div class="ct">🧠 Moodly upptäcker</div>`;
+        html+=`<div class="ikt-note" style="margin-bottom:10px;font-style:normal">Automatiska mönster baserat på check-in-data</div>`;
+        patternData.forEach(p=>{
+            html+=`<div class="pattern-card ${p.type}">
+                <div class="pattern-icon">${p.icon}</div>
+                <div class="pattern-text">${p.text}</div>
             </div>`;
         });
-        if(isDemo)html+=`<div class="ikt-note">Visar hur varje barn mår relativt sin egen normalnivå (baseline)</div>`;
+        html+=`</div>`;
+    }
+
+    // 7. TAG IMPACT — Vad påverkar måendet?
+    const tagData=isDemo?demo.tagImpact:buildTagImpact(d);
+    if(tagData&&tagData.length){
+        html+=`<div class="cd ikt-section"><div class="ct">🏷️ Vad påverkar måendet?</div>`;
+        html+=`<div class="ikt-note" style="margin-bottom:10px;font-style:normal">Vilka orsaker som hänger ihop med högt eller lågt mående</div>`;
+        tagData.forEach(child=>{
+            html+=`<div class="tag-child-label">👤 ${esc(child.childName)}</div>`;
+            html+=`<div class="tag-impact-list">`;
+            // Sort: negative first (most negative at top), then positive
+            const sorted=[...child.tags].sort((a,b)=>a.impact-b.impact);
+            const maxAbs=Math.max(...sorted.map(t=>Math.abs(t.impact)),1);
+            sorted.forEach(t=>{
+                const isNeg=t.impact<0;
+                const pct=Math.round((Math.abs(t.impact)/maxAbs)*100);
+                const cls=isNeg?'neg':'pos';
+                const sign=t.impact>0?'+':'';
+                html+=`<div class="tag-impact-row">
+                    <div class="tag-impact-name">${esc(t.tag)}</div>
+                    <div class="tag-impact-bar-wrap"><div class="tag-impact-bar ${cls}" style="width:${pct}%" data-w="${pct}"></div></div>
+                    <div class="tag-impact-val ${cls}">${sign}${t.impact}</div>
+                </div>`;
+            });
+            html+=`</div>`;
+        });
+        if(isDemo)html+=`<div class="ikt-note">Visar skillnaden mot barnets snittmående när en viss orsak väljs</div>`;
         html+=`</div>`;
     }
 
@@ -3612,11 +3886,15 @@ function renderInsikter(){
 
     el.innerHTML=html;
 
-    // Animate bars on render
+    // Animate bars and tag impact on render
     setTimeout(()=>{
         el.querySelectorAll('.bar-fill,.compare-bar').forEach(bar=>{
             const h=bar.dataset.h;
             if(h){bar.style.height='0%';setTimeout(()=>{bar.style.height=h+'%'},50)}
+        });
+        el.querySelectorAll('.tag-impact-bar').forEach(bar=>{
+            const w=bar.dataset.w;
+            if(w){bar.style.width='0%';setTimeout(()=>{bar.style.width=w+'%'},50)}
         });
     },100);
 }
