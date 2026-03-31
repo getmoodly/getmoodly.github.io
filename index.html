@@ -2428,21 +2428,58 @@ async function createFamily(){
     }
 }
 
-function addChild(){
-    const nameEl=document.getElementById('new-child-name');
-    const name=nameEl.value.trim();if(!name){toast('Ange barnets namn');return}
+let _pendingChild=null;
+
+function addChildStep1(){
+    const name=document.getElementById('new-child-name').value.trim();
+    if(!name){toast('Ange barnets namn');return}
     const ageGroup=document.getElementById('new-child-age').value;
     const id='child_'+Date.now();const storageKey='moodly_child_'+id;
     const d=ld();
-    // Get selected places from checkboxes
-    const checkboxes=document.querySelectorAll('.child-place-cb');
-    const selectedIds=new Set();
-    checkboxes.forEach(cb=>{if(cb.checked)selectedIds.add(cb.value)});
-    const childPlaces=selectedIds.size>0?d.places.filter(p=>selectedIds.has(p.id)):[];
     d.familyProfiles.push({id,name,ageGroup,storageKey});sv(d);
-    const childData={places:childPlaces.map(p=>({...p})),placeCheckins:[],benchmarks:[],checkins:[],micro:[],xp:0,level:1,points:0,streak:0,firstVisit:false,baseline:null,userName:name,aiName:d.aiName||'Luna',personality:'warm',onboarded:new Date().toISOString(),alertsSeen:[],familyId:d.familyId,role:'child',familyProfiles:[],parentKey:PARENT_KEY,unlockedAvatars:['default'],selectedAvatar:'default',dailyRewardClaimed:null,kommun:d.kommun||''};
+    const childData={places:[],placeCheckins:[],benchmarks:[],checkins:[],micro:[],xp:0,level:1,points:0,streak:0,firstVisit:false,baseline:null,userName:name,aiName:d.aiName||'Luna',personality:'warm',onboarded:new Date().toISOString(),alertsSeen:[],familyId:d.familyId,role:'child',familyProfiles:[],parentKey:PARENT_KEY,unlockedAvatars:['default'],selectedAvatar:'default',dailyRewardClaimed:null,kommun:d.kommun||''};
     if(sok)localStorage.setItem(storageKey,JSON.stringify(childData));
-    toast(name+' tillagd! Öppna profilen för att lägga till platser.');
+    _pendingChild={storageKey,name};
+    // Show step 2
+    document.getElementById('add-child-step1').classList.add('h');
+    const step2=document.getElementById('add-child-step2');
+    step2.classList.remove('h');
+    step2.innerHTML=`<div class="ct">📍 Lägg till platser för ${name}</div>
+        <p style="font-size:.78rem;color:var(--t2);margin-bottom:12px">Vilka miljöer ska ${name} checka in på?</p>
+        <div id="step2-places"></div>
+        <div style="display:flex;gap:8px;flex-wrap:wrap;margin-bottom:12px" id="step2-quick">
+            <button class="btn bs" style="padding:8px 14px;font-size:.8rem" onclick="addPlaceToChild('${storageKey}','school','Skola');refreshStep2('${storageKey}','${name}')">+ 🏫 Skola</button>
+            <button class="btn bs" style="padding:8px 14px;font-size:.8rem" onclick="addPlaceToChild('${storageKey}','sport','Idrott');refreshStep2('${storageKey}','${name}')">+ ⚽ Idrott</button>
+            <button class="btn bs" style="padding:8px 14px;font-size:.8rem" onclick="addPlaceToChild('${storageKey}','home','Hem');refreshStep2('${storageKey}','${name}')">+ 🏠 Hem</button>
+            <button class="btn bs" style="padding:8px 14px;font-size:.8rem" onclick="addPlaceToChild('${storageKey}','hobby','Hobby');refreshStep2('${storageKey}','${name}')">+ 🎨 Hobby</button>
+        </div>
+        <button class="btn ba" onclick="_pendingChild=null;renderFamily()" style="margin-top:4px">✓ Klar</button>`;
+}
+
+function refreshStep2(storageKey,name){
+    const cd=getFullChildData(storageKey);
+    const places=cd?.places||[];
+    // Update added places list
+    const listEl=document.getElementById('step2-places');
+    if(places.length){
+        listEl.innerHTML=places.map(p=>{
+            const pt=PT[p.type]||PT.other;
+            return`<div style="display:flex;align-items:center;gap:8px;padding:8px 0;border-bottom:1px solid rgba(255,255,255,.04);font-size:.82rem"><span class="fam-place-icon" style="background:${pt.bg}">${pt.icon}</span><span>${p.name}</span><span style="margin-left:auto;color:var(--ok);font-size:.7rem">✓ Tillagd</span></div>`;
+        }).join('');
+    }
+    // Update quick buttons — hide already added types
+    const types=new Set(places.map(p=>p.type));
+    const quickEl=document.getElementById('step2-quick');
+    quickEl.innerHTML='';
+    if(!types.has('school'))quickEl.innerHTML+=`<button class="btn bs" style="padding:8px 14px;font-size:.8rem" onclick="addPlaceToChild('${storageKey}','school','Skola');refreshStep2('${storageKey}','${name}')">+ 🏫 Skola</button>`;
+    if(!types.has('sport'))quickEl.innerHTML+=`<button class="btn bs" style="padding:8px 14px;font-size:.8rem" onclick="addPlaceToChild('${storageKey}','sport','Idrott');refreshStep2('${storageKey}','${name}')">+ ⚽ Idrott</button>`;
+    if(!types.has('home'))quickEl.innerHTML+=`<button class="btn bs" style="padding:8px 14px;font-size:.8rem" onclick="addPlaceToChild('${storageKey}','home','Hem');refreshStep2('${storageKey}','${name}')">+ 🏠 Hem</button>`;
+    if(!types.has('hobby'))quickEl.innerHTML+=`<button class="btn bs" style="padding:8px 14px;font-size:.8rem" onclick="addPlaceToChild('${storageKey}','hobby','Hobby');refreshStep2('${storageKey}','${name}')">+ 🎨 Hobby</button>`;
+}
+
+function addChild(){
+    // Legacy fallback
+    addChildStep1();
 }
 
 function removeChild(idx){
@@ -2581,28 +2618,15 @@ function renderFamily(){
             html+=`<div id="family-members-area" style="margin-top:8px"></div>`;
         }
 
-        // Add child form (always shown)
-        let placePicker='';
-        if(d.places.length){
-            placePicker+=`<div style="margin-top:8px"><div style="font-size:.78rem;font-weight:600;margin-bottom:6px">Vilka platser ska barnet ha?</div>`;
-            d.places.forEach(p=>{
-                const pt=PT[p.type]||PT.other;
-                const checked=p.type!=='work'?'checked':'';
-                placePicker+=`<label style="display:flex;align-items:center;gap:8px;padding:6px 0;font-size:.82rem;cursor:pointer;border-bottom:1px solid rgba(255,255,255,.04)">
-                    <input type="checkbox" class="child-place-cb" value="${p.id}" ${checked} style="width:18px;height:18px;accent-color:var(--p)">
-                    <span>${pt.icon}</span><span>${p.name}</span><span style="font-size:.68rem;color:var(--t2)">${pt.label}</span>
-                </label>`;
-            });
-            placePicker+=`</div>`;
-        }
-        html+=`<div class="cd"><div class="ct">+ Lägg till barn</div>
+        // Add child form — step 1: name + age, step 2: places
+        html+=`<div class="cd" id="add-child-step1"><div class="ct">+ Lägg till barn</div>
             <div class="sett-row"><span>Namn</span><input class="sett-input" id="new-child-name" placeholder=""></div>
             <div class="sett-row"><span>Åldersgrupp</span><select id="new-child-age">
                 <option value="6-9">6-9 år</option><option value="10-13">10-13 år</option><option value="14-17">14-17 år</option>
             </select></div>
-            ${placePicker}
-            <button class="btn ba" onclick="addChild();renderFamily()" style="margin-top:8px">+ Lägg till barn</button>
-        </div>`;
+            <button class="btn ba" onclick="addChildStep1()" style="margin-top:8px">Nästa →</button>
+        </div>
+        <div class="cd h" id="add-child-step2"></div>`;
 
         // Invite
         html+=`<div class="cd"><div class="ct">📤 Bjud in</div>
