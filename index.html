@@ -94,16 +94,25 @@
         .shop-item .s-label{font-size:.6rem;color:var(--t2);margin-top:2px}
         .shop-item .s-cost{font-size:.58rem;color:var(--g);font-weight:700}
         .section-sep{margin:20px 0 14px;padding-top:16px;border-top:1px solid rgba(255,255,255,.08)}
-        .fam-child-card{background:var(--c1);border-radius:var(--r);padding:16px;margin-bottom:12px;border:1px solid rgba(255,255,255,.04)}
-        .fam-child-header{display:flex;align-items:center;gap:12px;margin-bottom:12px}
-        .fam-child-avatar{font-size:1.8rem;width:48px;height:48px;display:flex;align-items:center;justify-content:center;background:rgba(108,92,231,.12);border-radius:50%}
+        .fam-child-card{background:var(--c1);border-radius:16px;padding:0;margin-bottom:16px;border:1px solid rgba(255,255,255,.06);overflow:hidden}
+        .fam-child-header{display:flex;align-items:center;gap:12px;padding:16px 16px 12px;background:linear-gradient(135deg,rgba(108,92,231,.1),rgba(0,206,201,.06))}
+        .fam-child-avatar{font-size:1.8rem;width:52px;height:52px;display:flex;align-items:center;justify-content:center;background:rgba(108,92,231,.18);border-radius:50%;box-shadow:0 2px 8px rgba(108,92,231,.2)}
         .fam-child-info{flex:1}
-        .fam-child-name{font-weight:700;font-size:.95rem}
-        .fam-child-meta{font-size:.72rem;color:var(--t2);margin-top:2px;display:flex;gap:12px}
-        .fam-place-row{display:flex;align-items:center;gap:8px;padding:8px 0;border-bottom:1px solid rgba(255,255,255,.04);font-size:.82rem}
+        .fam-child-name{font-weight:700;font-size:1rem}
+        .fam-child-meta{font-size:.72rem;color:var(--t2);margin-top:3px;display:flex;gap:10px}
+        .fam-child-meta span{background:rgba(255,255,255,.06);padding:2px 8px;border-radius:10px}
+        .fam-child-body{padding:4px 16px 16px}
+        .fam-status-bar{display:flex;align-items:center;gap:8px;padding:10px 16px;border-bottom:1px solid rgba(255,255,255,.05)}
+        .fam-status-bar .fsb-label{font-size:.75rem;color:var(--t2)}
+        .fam-status-bar .fsb-dots{display:flex;gap:4px;margin-left:auto}
+        .fam-status-bar .fsb-dot{width:10px;height:10px;border-radius:50%;background:rgba(255,255,255,.08)}
+        .fam-status-bar .fsb-dot.done{background:var(--ok)}
+        .fam-status-bar .fsb-dot.low{background:var(--bad)}
+        .fam-place-row{display:flex;align-items:center;gap:10px;padding:10px 0;border-bottom:1px solid rgba(255,255,255,.04);font-size:.82rem}
         .fam-place-row:last-child{border-bottom:none}
-        .fam-place-score{font-weight:700;margin-left:auto;width:30px;text-align:right}
-        .fam-place-comment{font-size:.7rem;color:var(--t2);font-style:italic;margin-left:28px;margin-top:-4px;padding-bottom:4px}
+        .fam-place-icon{width:32px;height:32px;border-radius:10px;display:flex;align-items:center;justify-content:center;font-size:.95rem}
+        .fam-place-score{font-weight:700;margin-left:auto;min-width:36px;text-align:right;font-size:.85rem}
+        .fam-place-comment{font-size:.7rem;color:var(--t2);font-style:italic;margin-left:42px;margin-top:-6px;padding-bottom:4px}
         .add-place{background:var(--c1);border-radius:var(--r);padding:18px;margin-bottom:10px;border:2px dashed rgba(255,255,255,.1);cursor:pointer;text-align:center;color:var(--t2);font-size:.84rem;transition:all .2s}
         .add-place:active{border-color:var(--p);color:var(--pl)}
 
@@ -405,12 +414,14 @@
         .adv-section.open{max-height:400px}
 
         /* Smart summary */
-        .smart-summary{background:linear-gradient(135deg,rgba(108,92,231,.08),rgba(0,206,201,.06));border:1px solid rgba(108,92,231,.15);border-radius:var(--r);padding:14px;margin-bottom:12px}
-        .smart-summary .ss-line{font-size:.82rem;line-height:1.5;margin-bottom:4px}
+        .smart-summary{background:linear-gradient(135deg,rgba(108,92,231,.1),rgba(0,206,201,.08));border:1px solid rgba(108,92,231,.12);border-radius:14px;padding:16px;margin-bottom:14px}
+        .smart-summary .ss-title{font-size:.7rem;color:var(--t2);text-transform:uppercase;letter-spacing:.5px;margin-bottom:8px}
+        .smart-summary .ss-line{font-size:.82rem;line-height:1.6;margin-bottom:6px;padding-left:20px;position:relative}
+        .smart-summary .ss-line::before{content:'';position:absolute;left:0;top:8px;width:8px;height:8px;border-radius:50%}
         .smart-summary .ss-line:last-child{margin-bottom:0}
-        .smart-summary .ss-warn{color:var(--bad)}
-        .smart-summary .ss-good{color:var(--ok)}
-        .smart-summary .ss-info{color:var(--t2)}
+        .smart-summary .ss-warn{color:#ff7675}.smart-summary .ss-warn::before{background:#ff7675}
+        .smart-summary .ss-good{color:#00b894}.smart-summary .ss-good::before{background:#00b894}
+        .smart-summary .ss-info{color:var(--t2)}.smart-summary .ss-info::before{background:var(--t2)}
     </style>
 </head>
 <body>
@@ -1513,7 +1524,8 @@ function renderParentView(){
     const hr=new Date().getHours();
     const greet=hr<10?'God morgon':hr<17?'Hej':hr<21?'God kväll':'God natt';
     document.getElementById('home-greeting').innerHTML=`${greet}, ${d.userName||'du'}!`;
-    document.getElementById('home-sub').textContent='Din förälder-dashboard';
+    const childCount=(d.familyProfiles||[]).length;
+    document.getElementById('home-sub').textContent=childCount?`${childCount} barn · Förälder-dashboard`:'Förälder-dashboard';
     document.querySelector('.streak-row').style.display='none';
 
     const summaryEl=document.getElementById('home-summary');
@@ -1536,7 +1548,7 @@ function renderParentView(){
             const cd=getFullChildData(fp.storageKey);
             const lines=generateSmartSummary(cd,fp.name);
             if(lines.length){
-                smartHtml+=`<div class="smart-summary">${lines.map(l=>`<div class="ss-line ${l.cls}">${l.text}</div>`).join('')}</div>`;
+                smartHtml+=`<div class="smart-summary"><div class="ss-title">💡 Insikter</div>${lines.map(l=>`<div class="ss-line ${l.cls}">${l.text}</div>`).join('')}</div>`;
             }
         });
     }
@@ -1580,13 +1592,22 @@ function renderParentView(){
                 <div class="fam-child-avatar">${avatar}</div>
                 <div class="fam-child-info">
                     <div class="fam-child-name">${fp.name}</div>
-                    <div class="fam-child-meta"><span>${fp.ageGroup}</span><span>🔥 ${streak}</span><span>${allDone?'✅ Klar idag':checkedCount+'/'+totalPlaces+' checkat'}</span></div>
+                    <div class="fam-child-meta"><span>${fp.ageGroup}</span><span>🔥 ${streak}</span></div>
                 </div>
-                <button class="btn bs" style="width:auto;padding:6px 12px;font-size:.72rem" onclick="switchToProfile('${fp.storageKey}','${fp.name}')">Öppna</button>
+                <button class="btn bs" style="width:auto;padding:8px 14px;font-size:.75rem;border-radius:10px" onclick="switchToProfile('${fp.storageKey}','${fp.name}')">Öppna</button>
             </div>`;
 
         if(cd&&cd.places&&cd.places.length){
-            if(checkedCount===0)html+=`<div style="font-size:.78rem;color:var(--t2);padding:6px 0;text-align:center">💡 Ge din telefon till ${fp.name} och låt hen trycka på en emoji för varje plats</div>`;
+            // Status bar with dots
+            html+=`<div class="fam-status-bar"><span class="fsb-label">${allDone?'✅ Alla platser klara':'Idag: '+checkedCount+'/'+totalPlaces}</span><span class="fsb-dots">`;
+            cd.places.forEach(p=>{
+                const tc=todayChecks.find(c=>c.placeId===p.id);
+                const dotCls=tc?(tc.score<=2?'done low':'done'):'';
+                html+=`<span class="fsb-dot ${dotCls}"></span>`;
+            });
+            html+=`</span></div>`;
+            html+=`<div class="fam-child-body">`;
+            if(checkedCount===0)html+=`<div style="font-size:.78rem;color:var(--t2);padding:8px 0;text-align:center">💡 Ge din telefon till ${fp.name} och låt hen trycka på en emoji för varje plats</div>`;
             cd.places.forEach(p=>{
                 const pt=PT[p.type]||PT.other;
                 const tc=todayChecks.find(c=>c.placeId===p.id);
@@ -1601,15 +1622,16 @@ function renderParentView(){
                 const trend=avg7&&avgPrev?(avg7-avgPrev>=0.5?'↑':avgPrev-avg7>=0.5?'↓':'→'):null;
                 const trendCol=trend==='↑'?'var(--ok)':trend==='↓'?'var(--bad)':'var(--t2)';
                 const col=avg?avg>=4?'var(--ok)':avg>=3?'var(--w)':'var(--bad)':'var(--t2)';
-                html+=`<div class="fam-place-row"><span>${pt.icon}</span><span style="flex:1">${p.name}</span><span style="font-size:1.1rem">${mood?mood.emoji:'⬜'}</span>${avg?`<span class="fam-place-score" style="color:${col}">${avg}${trend?` <span style="color:${trendCol}">${trend}</span>`:''}</span>`:''}</div>`;
+                html+=`<div class="fam-place-row"><span class="fam-place-icon" style="background:${pt.bg}">${pt.icon}</span><span style="flex:1">${p.name}</span><span style="font-size:1.1rem">${mood?mood.emoji:'⬜'}</span>${avg?`<span class="fam-place-score" style="color:${col}">${avg}${trend?` <span style="color:${trendCol}">${trend}</span>`:''}</span>`:''}</div>`;
                 // Show today's tags or top weekly tags
                 if(tc?.tags&&tc.tags.length){const sc=tc.score<=2?'neg':tc.score>=4?'pos':'neu';html+=`<div class="fam-tags">${tc.tags.map(t=>`<span class="fam-tag ${sc}">${t}</span>`).join('')}</div>`}
                 else if(last7.length){const tagC={};last7.forEach(c=>(c.tags||[]).forEach(t=>{tagC[t]=(tagC[t]||0)+1}));const top=Object.entries(tagC).sort((a,b)=>b[1]-a[1]).slice(0,2);if(top.length)html+=`<div class="fam-tags"><span style="font-size:.6rem;color:var(--t2);margin-right:2px">Veckan:</span>${top.map(([t])=>`<span class="fam-tag neu">${t}</span>`).join('')}</div>`}
                 if(tc?.comment)html+=`<div class="fam-place-comment">"${tc.comment}"</div>`;
                 if(tc)html+=renderReactRow(fp.storageKey,'',p.id);
             });
+            html+=`</div>`;
         }else{
-            html+=`<p style="font-size:.78rem;color:var(--t2);padding:8px 0">Inga platser — öppna profilen för att lägga till</p>`;
+            html+=`<div class="fam-child-body"><p style="font-size:.78rem;color:var(--t2);padding:8px 0;text-align:center">Inga platser — öppna profilen för att lägga till</p></div>`;
         }
         // All-done cheer button
         if(allDone){
@@ -1642,11 +1664,21 @@ function renderParentView(){
     if(allStats.length>=2){
         allStats.sort((a,b)=>b.avg-a.avg);
         const best=allStats[0],worst=allStats[allStats.length-1];
-        insEl.innerHTML=`<div class="section-sep"></div><div class="ct">📈 Insikter</div>
-            <div class="ins-summary"><div class="title">Senaste 30 dagarna</div>
-                <div class="ins-summary row"><span>Mår bäst</span><span class="best">${PT[best.type]?.icon||'📍'} ${best.child} @ ${best.place} (${best.avg}/5)</span></div>
-                <div class="ins-summary row"><span>Mår sämst</span><span class="worst">${PT[worst.type]?.icon||'📍'} ${worst.child} @ ${worst.place} (${worst.avg}/5)</span></div>
-            </div>`;
+        insEl.innerHTML=`<div style="margin-top:20px"><div class="ct" style="font-size:.85rem;margin-bottom:10px">📈 30 dagars överblick</div>
+            <div style="display:grid;grid-template-columns:1fr 1fr;gap:10px">
+                <div style="background:rgba(0,184,148,.08);border:1px solid rgba(0,184,148,.15);border-radius:12px;padding:12px;text-align:center">
+                    <div style="font-size:.68rem;color:var(--t2);margin-bottom:4px">Mår bäst</div>
+                    <div style="font-size:1.1rem">${PT[best.type]?.icon||'📍'}</div>
+                    <div style="font-size:.78rem;font-weight:700;margin-top:2px">${best.child}</div>
+                    <div style="font-size:.7rem;color:var(--t2)">${best.place} · ${best.avg}/5</div>
+                </div>
+                <div style="background:rgba(255,118,117,.08);border:1px solid rgba(255,118,117,.15);border-radius:12px;padding:12px;text-align:center">
+                    <div style="font-size:.68rem;color:var(--t2);margin-bottom:4px">Behöver stöd</div>
+                    <div style="font-size:1.1rem">${PT[worst.type]?.icon||'📍'}</div>
+                    <div style="font-size:.78rem;font-weight:700;margin-top:2px">${worst.child}</div>
+                    <div style="font-size:.7rem;color:var(--t2)">${worst.place} · ${worst.avg}/5</div>
+                </div>
+            </div></div>`;
     }else{insEl.innerHTML=''}
     // Kommun insights
     renderKommunInsights(d,benchEl);
