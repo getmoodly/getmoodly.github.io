@@ -3528,7 +3528,6 @@ function generateSmartSummary(cd,childName){
         const pc14=recent14.filter(c=>c.placeId===p.id);
         const avg7=pc7.length?pc7.reduce((a,c)=>a+c.score,0)/pc7.length:null;
         const avg14=pc14.length?pc14.reduce((a,c)=>a+c.score,0)/pc14.length:null;
-        // Top tags
         const tagCounts={};
         pc7.forEach(c=>(c.tags||[]).forEach(t=>{tagCounts[t]=(tagCounts[t]||0)+1}));
         const topTags=Object.entries(tagCounts).sort((a,b)=>b[1]-a[1]).slice(0,2).map(e=>e[0]);
@@ -3537,52 +3536,72 @@ function generateSmartSummary(cd,childName){
     });
 
     const withData=placeStats.filter(p=>p.avg7!==null);
-    if(!withData.length)return[{text:childName+' har inga check-ins ännu.',cls:'ss-info'}];
+    if(!withData.length)return[{text:'Inga check-ins för '+childName+' ännu — börja samla data för att se mönster.',cls:'ss-info'}];
 
     const overallAvg=withData.reduce((a,p)=>a+p.avg7,0)/withData.length;
     const worst=withData.reduce((a,b)=>(a.avg7<b.avg7?a:b));
     const best=withData.reduce((a,b)=>(a.avg7>b.avg7?a:b));
 
-    // Overall wellness
-    if(overallAvg>=4){
-        lines.push({text:childName+' verkar trivas överlag! Bäst på '+best.name+'.',cls:'ss-good'});
-    }else if(overallAvg>=3){
-        lines.push({text:childName+' mår okej — snitt '+overallAvg.toFixed(1)+'/5 senaste veckan.',cls:'ss-info'});
+    // Overall wellness — contextual and actionable
+    if(overallAvg>=4.2&&withData.length>1){
+        lines.push({text:childName+' mår bra i alla miljöer just nu. '+best.name+' sticker ut positivt — det kan vara värt att förstärka det som fungerar där.',cls:'ss-good'});
+    }else if(overallAvg>=3.5){
+        const spread=best.avg7-worst.avg7;
+        if(spread>=1.5)lines.push({text:childName+' trivs bra på '+best.name+' ('+best.avg7.toFixed(1)+') men upplever '+worst.name+' annorlunda ('+worst.avg7.toFixed(1)+'). Det kan vara värt ett samtal om skillnaden.',cls:'ss-info'});
+        else lines.push({text:childName+' har ett stabilt mående (snitt '+overallAvg.toFixed(1)+'/5). Fortsätt följa för att fånga förändringar tidigt.',cls:'ss-info'});
+    }else if(overallAvg>=2.5){
+        lines.push({text:childName+' visar ett blandat mående senaste veckan ('+overallAvg.toFixed(1)+'/5). Håll extra koll på hur det utvecklas.',cls:'ss-warn'});
     }
 
-    // Problem area
-    if(worst.avg7!==null&&worst.avg7<=2.5){
-        let txt=childName+' har det tufft på '+worst.name+'.';
-        if(worst.topTags.length)txt+=' Vanligaste orsaken: '+worst.topTags.join(', ')+'.';
+    // Problem area — specific and empathetic
+    if(worst.avg7!==null&&worst.avg7<=2.5&&withData.length>1){
+        let txt=childName+' rapporterar lågt mående på '+worst.name+' ('+worst.avg7.toFixed(1)+'/5).';
+        if(worst.topTags.length===1)txt+=' "'+worst.topTags[0]+'" verkar vara en återkommande faktor — kan vara ett bra samtalsämne.';
+        else if(worst.topTags.length>=2)txt+=' Det verkar hänga ihop med '+worst.topTags.join(' och ')+'.';
         lines.push({text:txt,cls:'ss-warn'});
     }
 
-    // Trend
+    // Trend — show direction with context
     const withTrend=withData.filter(p=>p.avg14!==null);
     if(withTrend.length){
         const avg7all=withTrend.reduce((a,p)=>a+p.avg7,0)/withTrend.length;
         const avg14all=withTrend.reduce((a,p)=>a+p.avg14,0)/withTrend.length;
-        if(avg7all-avg14all>=0.5)lines.push({text:childName+'s mående förbättras — bra utveckling!',cls:'ss-good'});
-        else if(avg14all-avg7all>=0.5)lines.push({text:'Obs: '+childName+' har tappat i mående den senaste veckan.',cls:'ss-warn'});
+        const diff=avg7all-avg14all;
+        if(diff>=0.5){
+            // Find which place improved most
+            const improved=withTrend.filter(p=>p.avg7-p.avg14>=0.5).sort((a,b)=>(b.avg7-b.avg14)-(a.avg7-a.avg14));
+            if(improved.length)lines.push({text:'Positiv trend! '+childName+'s mående har förbättrats, särskilt på '+improved[0].name+'. Något verkar ha förändrats till det bättre.',cls:'ss-good'});
+            else lines.push({text:childName+'s mående går uppåt jämfört med förra veckan — en positiv utveckling att uppmuntra.',cls:'ss-good'});
+        }else if(diff<=-0.5){
+            const declined=withTrend.filter(p=>p.avg14-p.avg7>=0.5).sort((a,b)=>(b.avg14-b.avg7)-(a.avg14-a.avg7));
+            if(declined.length)lines.push({text:childName+'s mående har sjunkit sedan förra veckan, mest på '+declined[0].name+'. Det kan vara bra att checka in med '+childName+' om hur det känns.',cls:'ss-warn'});
+            else lines.push({text:childName+' verkar må sämre den här veckan jämfört med förra. Håll ögonen öppna och fråga hur det är.',cls:'ss-warn'});
+        }
     }
 
-    // Dominant tag
+    // Dominant tag — pattern detection
     withData.forEach(p=>{
-        if(p.dominantTag)lines.push({text:'"'+p.dominantTag+'" dyker upp ofta för '+childName+' på '+p.name+'.',cls:'ss-info'});
+        if(p.dominantTag){
+            const isNeg=p.avg7&&p.avg7<=2.5;
+            if(isNeg)lines.push({text:'"'+p.dominantTag+'" återkommer ofta på '+p.name+' och verkar påverka '+childName+' negativt. Kan vara värt att prata om.',cls:'ss-warn'});
+            else lines.push({text:'"'+p.dominantTag+'" är ett mönster för '+childName+' på '+p.name+' — något att vara medveten om.',cls:'ss-info'});
+        }
     });
 
-    // Streak
+    // Streak — reinforce habits
     const streak=calcPlaceStreak(cd);
-    if(streak>=7)lines.push({text:childName+' checkar in varje dag — bra rutin!',cls:'ss-good'});
+    if(streak>=14)lines.push({text:childName+' har checkat in '+streak+' dagar i rad — en fantastisk vana som ger dig bättre insikter över tid.',cls:'ss-good'});
+    else if(streak>=7)lines.push({text:childName+' bygger en fin rutin med '+streak+' dagars streak. Rutinen gör det lättare att upptäcka mönster.',cls:'ss-good'});
 
-    // Inactivity
+    // Inactivity — gentle nudge
     if(recent7.length===0){
         const lastCheckin=allCheckins.length?allCheckins[allCheckins.length-1]:null;
         const daysAgo=lastCheckin?Math.round((now-new Date(lastCheckin.ts).getTime())/864e5):null;
-        if(daysAgo&&daysAgo>=2)lines.push({text:childName+' har inte checkat in på '+daysAgo+' dagar.',cls:'ss-warn'});
+        if(daysAgo&&daysAgo>=7)lines.push({text:childName+' har inte checkat in på '+daysAgo+' dagar. Regelbundna check-ins ger dig en tydligare bild.',cls:'ss-warn'});
+        else if(daysAgo&&daysAgo>=2)lines.push({text:childName+' har inte checkat in på '+daysAgo+' dagar. En påminnelse kan hjälpa att hålla rutinen igång.',cls:'ss-info'});
     }
 
-    return lines.slice(0,3);
+    return lines.slice(0,4);
 }
 
 // ===== DEMO MODE =====
