@@ -16,6 +16,7 @@
         *{margin:0;padding:0;box-sizing:border-box;-webkit-tap-highlight-color:transparent}
         body{font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',Roboto,sans-serif;background:var(--bg);color:var(--t);min-height:100dvh;overflow-x:hidden}
         button,label,input,select{font-family:inherit}
+        .h{display:none!important}
 
         /* NAV */
         .nav{position:fixed;bottom:0;left:0;right:0;background:var(--c1);border-top:1px solid rgba(255,255,255,.05);display:flex;z-index:100;padding-bottom:env(safe-area-inset-bottom)}
@@ -766,7 +767,7 @@ function switchAuthTab(mode){
     authMode=mode;
     document.querySelectorAll('.auth-tab').forEach((t,i)=>t.classList.toggle('on',i===(mode==='login'?0:1)));
     document.getElementById('auth-submit').textContent=mode==='login'?'Logga in':'Skapa konto';
-    document.getElementById('auth-err').textContent='';
+    const errEl=document.getElementById('auth-err');errEl.textContent='';errEl.style.color='';
 }
 
 async function authSubmit(){
@@ -851,10 +852,12 @@ function getPending(){
 function savePending(q){
     try{localStorage.setItem('moodly_pending',JSON.stringify(q))}catch(e){}
 }
-function enqueue(table,op,data){
+function enqueue(table,op,data,_unused,conflict){
     if(!sbUser)return;
     const q=getPending();
-    q.push({table,op,data,ts:new Date().toISOString()});
+    const item={table,op,data,ts:new Date().toISOString()};
+    if(conflict)item.conflict=conflict;
+    q.push(item);
     savePending(q);
     scheduleFlush();
 }
@@ -1016,18 +1019,18 @@ async function pullRemoteData(){
 
 // Sync a single checkin to Supabase
 function syncCheckin(placeId,score,comment,ts,tags){
-    if(!sbUser)return;
+    if(!sbUser||APK!==PARENT_KEY)return;
     const checkedAt=new Date(ts).toISOString().slice(0,10);
     enqueue('place_checkins','upsert',{
         user_id:sbUser.id,place_id:placeId,score,
         comment:comment||null,tags:(tags&&tags.length)?tags:null,
         checked_at:checkedAt,ts
-    });
+    },null,'user_id,place_id,checked_at');
 }
 
 // Sync a place to Supabase
 function syncPlace(place){
-    if(!sbUser)return;
+    if(!sbUser||APK!==PARENT_KEY)return;
     enqueue('places','upsert',{
         id:place.id,user_id:sbUser.id,name:place.name,type:place.type,
         osm_id:place.osmId||null,address:place.address||null,
@@ -1166,6 +1169,7 @@ function ld(){if(!sok)return{...D};try{const r=localStorage.getItem(APK);if(!r)r
 function sv(d){D=d;if(sok)try{localStorage.setItem(APK,JSON.stringify(d))}catch(e){}}
 function pick(arr){return arr[Math.floor(Math.random()*arr.length)]}
 function toast(m){const t=document.getElementById('toast');t.textContent=m;t.classList.add('show');setTimeout(()=>t.classList.remove('show'),3000)}
+function esc(s){if(!s)return'';return String(s).replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;').replace(/"/g,'&quot;')}
 
 // ===== PLACE TYPES =====
 const PT={
@@ -1223,7 +1227,7 @@ function checkInPlace(placeId,score){
         // Clear tags if score range changed
         const oldR=oldScore<=2?0:oldScore>=4?2:1;
         const newR=score<=2?0:score>=4?2:1;
-        if(oldR!==newR){d.placeCheckins[idx].tags=[];delete d.placeCheckins[idx]._tagPtsAwarded}
+        if(oldR!==newR){d.placeCheckins[idx].tags=[]}
     }else{
         d.placeCheckins.push({ts:new Date().toISOString(),placeId,score,comment,tags:[]});
         d.xp=(d.xp||0)+5;
@@ -1236,11 +1240,13 @@ function checkInPlace(placeId,score){
     const allDoneNow=d.places.length>0&&uniqueToday.size>=d.places.length;
     const wasAllDone=d.places.length>1&&(uniqueToday.size-1)>=d.places.length;
     if(d.places.length>1&&allDoneNow)pts+=10;
-    // Streak bonus
+    // Streak bonus (once per day)
     const streak=calcPlaceStreak(d);
-    if(streak===3)pts+=25;
-    if(streak===7)pts+=50;
-    if(streak===30)pts+=200;
+    const streakKey='streak_bonus_'+streak+'_'+today;
+    if(!d._claimedStreakBonuses)d._claimedStreakBonuses={};
+    if(streak===3&&!d._claimedStreakBonuses[streakKey]){pts+=25;d._claimedStreakBonuses[streakKey]=true}
+    if(streak===7&&!d._claimedStreakBonuses[streakKey]){pts+=50;d._claimedStreakBonuses[streakKey]=true}
+    if(streak===30&&!d._claimedStreakBonuses[streakKey]){pts+=200;d._claimedStreakBonuses[streakKey]=true}
     d.points=(d.points||0)+pts;
     if(d.placeCheckins.length>5000)d.placeCheckins=d.placeCheckins.slice(-5000);
     sv(d);
@@ -1522,7 +1528,7 @@ function renderHome(){
         html+=`<div class="place-card">
             <div class="place-header">
                 <div class="place-icon" style="background:${pt.bg}">${pt.icon}</div>
-                <div><div class="place-name">${place.name}</div><div class="place-type-label">${pt.label}</div></div>
+                <div><div class="place-name">${esc(place.name)}</div><div class="place-type-label">${pt.label}</div></div>
             </div>
             <div class="emoji-row">`;
         MOODS.forEach(m=>{
@@ -1634,7 +1640,7 @@ function renderParentView(){
             <div class="fam-child-header">
                 <div class="fam-child-avatar">${avatar}</div>
                 <div class="fam-child-info">
-                    <div class="fam-child-name">${fp.name}</div>
+                    <div class="fam-child-name">${esc(fp.name)}</div>
                     <div class="fam-child-meta"><span>${fp.ageGroup}</span><span>🔥 ${streak}</span></div>
                 </div>
                 <button class="btn bs" style="width:auto;padding:8px 14px;font-size:.75rem;border-radius:10px" onclick="switchToProfile('${fp.storageKey}','${fp.name}')">Öppna</button>
@@ -2432,7 +2438,7 @@ function exportData(){
 function confirmDeleteAll(){
     if(!confirm('Är du säker? All data raderas permanent.'))return;
     if(sok){const d=ld();if(d.familyProfiles)d.familyProfiles.forEach(fp=>localStorage.removeItem(fp.storageKey));localStorage.removeItem(APK)}
-    D={places:[],placeCheckins:[],checkins:[],micro:[],xp:0,level:1,firstVisit:true,baseline:null,userName:'',aiName:'Luna',personality:'warm',onboarded:null,alertsSeen:[],familyId:'',role:'self',familyProfiles:[],parentKey:'',kommun:''};
+    D={places:[],placeCheckins:[],benchmarks:[],checkins:[],micro:[],xp:0,level:1,points:0,streak:0,firstVisit:true,baseline:null,userName:'',aiName:'Luna',personality:'warm',onboarded:null,alertsSeen:[],familyId:'',role:'self',familyProfiles:[],parentKey:'',unlockedAvatars:['default'],selectedAvatar:'default',dailyRewardClaimed:null,kommun:'',parentReactions:[],cheersSent:{},_claimedStreakBonuses:{}};
     if(sok)localStorage.setItem(APK,JSON.stringify(D));
     toast('All data raderad.');renderHome();
 }
@@ -3152,8 +3158,8 @@ function sendStreakCheer(targetKey,targetUserId,childName,streakCount,cheerKey){
     const d=ld();
     d.cheersSent[cheerKey]=true;
     sv(d);
-    // Remove the cheer card from DOM
-    event.target.closest('.streak-cheer-card')?.remove();
+    // Re-render to remove cheer card
+    renderHome();
 }
 
 // ===== CELEBRATION =====
@@ -3292,8 +3298,11 @@ function scheduleParentNotification(){
 async function requestParentNotifications(){
     if(!('Notification' in window))return;
     if(Notification.permission==='granted'){
-        localStorage.setItem('moodly_notif','on');
-        scheduleParentNotification();
+        // Don't override if user explicitly turned off
+        if(localStorage.getItem('moodly_notif')!=='off'){
+            if(!localStorage.getItem('moodly_notif'))localStorage.setItem('moodly_notif','on');
+            scheduleParentNotification();
+        }
         return;
     }
     if(Notification.permission==='denied')return;
@@ -3303,7 +3312,7 @@ async function requestParentNotifications(){
     const perm=await Notification.requestPermission();
     if(perm==='granted'){
         localStorage.setItem('moodly_notif','on');
-        document.getElementById('notif-toggle').checked=true;
+        const toggle=document.getElementById('notif-toggle');if(toggle)toggle.checked=true;
         toast('Notiser aktiverade — du får en sammanfattning kl 18:00');
         scheduleParentNotification();
     }
@@ -3618,6 +3627,8 @@ function generateSmartSummary(cd,childName){
         else lines.push({text:childName+' har ett stabilt mående (snitt '+overallAvg.toFixed(1)+'/5). Fortsätt följa för att fånga förändringar tidigt.',cls:'ss-info'});
     }else if(overallAvg>=2.5){
         lines.push({text:childName+' visar ett blandat mående senaste veckan ('+overallAvg.toFixed(1)+'/5). Håll extra koll på hur det utvecklas.',cls:'ss-warn'});
+    }else{
+        lines.push({text:childName+' mår lågt i alla miljöer just nu ('+overallAvg.toFixed(1)+'/5). Det här kan vara ett bra tillfälle att sätta sig ner och prata om hur saker känns.',cls:'ss-warn'});
     }
 
     // Problem area — specific and empathetic
