@@ -90,6 +90,8 @@
         .place-comment-row{margin-top:8px;overflow:hidden;max-height:0;transition:max-height .3s ease}
         .place-comment-row.show{max-height:60px}
         .place-comment{width:100%;padding:8px 12px;background:rgba(255,255,255,.06);border:1px solid rgba(255,255,255,.1);border-radius:var(--rs);color:var(--t);font-size:.8rem;outline:none}
+        .place-comment-row{position:relative}
+        .char-count{position:absolute;right:8px;bottom:8px;font-size:.6rem;color:var(--t2);pointer-events:none}
         .place-comment::placeholder{color:var(--t2)}
         .place-prev-comment{font-size:.7rem;color:var(--t2);margin-top:4px;font-style:italic;padding:0 4px}
         .rewards-bar{display:flex;align-items:center;justify-content:center;gap:16px;padding:10px 16px;margin:-6px 0 10px;font-size:.82rem}
@@ -960,6 +962,12 @@ async function ensureProfile(){
 function getPending(){
     try{return JSON.parse(localStorage.getItem('moodly_pending')||'[]')}catch(e){return[]}
 }
+function getSyncStatus(){
+    if(!navigator.onLine)return'<span class="sync-dot red"></span> Offline';
+    const q=getPending();
+    if(q.length)return'<span class="sync-dot orange"></span> Synkar ('+q.length+')';
+    return'<span class="sync-dot green"></span> Synkad';
+}
 function savePending(q){
     try{localStorage.setItem('moodly_pending',JSON.stringify(q))}catch(e){}
 }
@@ -1732,7 +1740,8 @@ function renderHome(){
         html+=`</div>
             <div class="place-comment-row${currentScore?' show':''}">
                 <input class="place-comment" id="comment-${place.id}" placeholder="Kort kommentar (valfritt)..." maxlength="100" value="${prevComment.replace(/"/g,'&quot;')}"
-                    onchange="saveComment('${place.id}',this.value)">
+                    onchange="saveComment('${place.id}',this.value)" oninput="updateCharCount(this)">
+                <span class="char-count" id="cc-${place.id}">${prevComment.length?prevComment.length+'/100':''}</span>
             </div>`;
         if(todayCheck)html+=`<div class="place-done">Checkad idag</div>`;
         html+=`</div>`;
@@ -2134,6 +2143,11 @@ async function loadKommunRemoteData(kommun,familyAvg){
         trendHtml=`<div class="kommun-meta"><span>${tIcon} Trend: ${tText}</span><span>${stats.total_checkins} checkins</span></div>`;
     }
     remoteArea.innerHTML=`<div class="kommun-meta"><span>👥 ${stats.total_users} barn i ${kommun}</span><span>📊 ${stats.total_checkins} checkins</span></div>${trendHtml}`;
+}
+
+function updateCharCount(el){
+    const cc=el.parentElement.querySelector('.char-count');
+    if(cc)cc.textContent=el.value.length?el.value.length+'/100':'';
 }
 
 function saveComment(placeId,comment){
@@ -2887,7 +2901,7 @@ function renderFamily(){
     if(sbUser){
         html+=`<div class="cd"><div class="ct">🔑 Konto</div>
             <div class="sett-row"><span>E-post</span><span style="font-size:.78rem;color:var(--t2)">${sbUser.email}</span></div>
-            <div class="sett-row"><span>Synk</span><span style="font-size:.78rem"><span class="sync-dot green"></span> Ansluten</span></div>
+            <div class="sett-row"><span>Synk</span><span style="font-size:.78rem" id="sync-status">${getSyncStatus()}</span></div>
             <button class="btn bs" onclick="signOut()" style="margin-top:8px">Logga ut</button></div>`;
     }else{
         html+=`<div class="cd"><div class="ct">🔑 Konto</div>
@@ -4124,7 +4138,7 @@ if('serviceWorker' in navigator){
         if(localStorage.getItem('moodly_notif')==='on'&&reg.active){
             reg.active.postMessage({type:'SCHEDULE_REMINDER',hour:17,minute:0});
         }
-    }).catch(()=>{});
+    }).catch(e=>{console.warn('SW registration failed:',e)});
 }
 
 // Offline indicator
@@ -4151,6 +4165,22 @@ document.getElementById('install-close')?.addEventListener('click',()=>{
     document.getElementById('install-banner').style.display='none';
     localStorage.setItem('moodly_install_dismissed','1');
 });
+
+// iOS Safari install guide (no beforeinstallprompt support)
+(function(){
+    const isIos=/iPad|iPhone|iPod/.test(navigator.userAgent)&&!window.MSStream;
+    const isSafari=/^((?!chrome|android).)*safari/i.test(navigator.userAgent);
+    const isStandalone=window.matchMedia('(display-mode:standalone)').matches||navigator.standalone;
+    if(isIos&&isSafari&&!isStandalone&&!localStorage.getItem('moodly_install_dismissed')){
+        const banner=document.getElementById('install-banner');
+        const btn=document.getElementById('install-btn');
+        if(banner&&btn){
+            banner.querySelector('.ib-text').innerHTML='<strong>Lägg till Moodly</strong> på hemskärmen: tryck <strong style="font-size:1.1em">⬆️</strong> och sedan <strong>"Lägg till på hemskärmen"</strong>';
+            btn.style.display='none';
+            setTimeout(()=>{banner.style.display=''},3000);
+        }
+    }
+})();
 
 // ===== SENTIMENT (for chat) =====
 const EMO={glad:{w:['glad','lycklig','nöjd','fantastisk','underbar','toppen','skratta','rolig','kul','bra','härlig','glädje','positiv','tacksam','stolt','energisk','pigg','motiverad','hoppfull','avslappnad','älskar','kärlek','awesome','nice','stark','kraftfull','lättad','superbra','jättebra','perfekt','duktig','grym','levande','taggad','peppad','inspirerad','fokuserad'],v:.85},lugn:{w:['lugn','avslappnad','fridful','harmonisk','balanserad','trygg','bekväm','stabil','okej','neutral','fine','helt ok','chill','tillfreds'],v:.65},ledsen:{w:['ledsen','sorglig','nere','gråter','ensam','tom','hopplös','deprimerad','melankolisk','saknar','besviken','uppgiven','mörkt','tungt','svårt','deppig','trist','knäckt','trasig','värdelös'],v:.25},stressad:{w:['stressad','pressad','överväldigad','kaos','panik','deadline','hinner inte','sliten','utbränd','utmattad','nervös','hektisk','jäktad','överbelastad'],v:.3},orolig:{w:['orolig','ångest','rädd','osäker','ängslig','oro','skrämmande','otrygg','spänd','grubblar','bekymrad'],v:.28},arg:{w:['arg','irriterad','frustrerad','sur','rasande','ilsken','förbannad','less','upprörd','lack'],v:.2},trott:{w:['trött','utmattad','slut','dränerad','sömnig','orkeslös','seg','slutkörd'],v:.35}};
