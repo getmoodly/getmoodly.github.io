@@ -1523,6 +1523,12 @@ function renderParentView(){
     const alertsEl=document.getElementById('home-alerts');
     summaryEl.innerHTML='';
 
+    // Clean up demo profiles if any leaked
+    if(d.familyProfiles&&d.familyProfiles.some(fp=>fp.storageKey&&fp.storageKey.startsWith('_demo_'))){
+        d.familyProfiles=d.familyProfiles.filter(fp=>!fp.storageKey||!fp.storageKey.startsWith('_demo_'));
+        sv(d);try{localStorage.removeItem('_demo_maja');localStorage.removeItem('_demo_leo')}catch(e){}
+    }
+
     // Smart summaries
     let smartHtml='';
     if(d.familyProfiles&&d.familyProfiles.length){
@@ -2356,6 +2362,11 @@ function confirmDeleteAll(){
 // ===== FAMILY =====
 async function createFamily(){
     const d=ld();
+    // Clean up any demo profiles
+    if(d.familyProfiles&&d.familyProfiles.length){
+        d.familyProfiles=d.familyProfiles.filter(fp=>!fp.storageKey||!fp.storageKey.startsWith('_demo_'));
+        try{localStorage.removeItem('_demo_maja');localStorage.removeItem('_demo_leo')}catch(e){}
+    }
     if(sbUser){
         try{
             const{data,error}=await sb.from('families').insert({created_by:sbUser.id}).select().single();
