@@ -394,6 +394,18 @@
         .fam-tag.neu{background:rgba(255,255,255,.06);color:var(--t2)}
 
         /* Demo banner */
+        .fb-overlay{position:fixed;inset:0;background:rgba(0,0,0,.6);z-index:200;display:flex;align-items:center;justify-content:center;padding:16px;opacity:0;pointer-events:none;transition:opacity .2s}
+        .fb-overlay.on{opacity:1;pointer-events:auto}
+        .fb-modal{background:var(--c1);border-radius:16px;padding:24px;max-width:380px;width:100%;max-height:80vh;overflow-y:auto}
+        .fb-modal .fb-title{font-size:1rem;font-weight:700;margin-bottom:4px}
+        .fb-modal .fb-sub{font-size:.76rem;color:var(--t2);margin-bottom:16px}
+        .fb-modal textarea{width:100%;min-height:100px;padding:12px;background:var(--c2);border:1px solid rgba(255,255,255,.1);border-radius:var(--rs);color:var(--t);font-size:.84rem;font-family:inherit;resize:vertical;outline:none}
+        .fb-modal textarea::placeholder{color:var(--t2)}
+        .fb-modal textarea:focus{border-color:var(--p)}
+        .fb-stars{display:flex;gap:6px;margin-bottom:14px}
+        .fb-star{font-size:1.5rem;cursor:pointer;opacity:.3;transition:opacity .15s}
+        .fb-star.on{opacity:1}
+        .fb-btns{display:flex;gap:8px;margin-top:14px}
         .demo-banner{position:sticky;top:0;z-index:50;background:linear-gradient(135deg,var(--p),var(--pd));padding:14px 16px;text-align:center;border-radius:0 0 16px 16px;margin:-16px -16px 16px}
         .demo-banner .db-title{font-size:.88rem;font-weight:700;margin-bottom:8px}
         .demo-banner .db-sub{font-size:.72rem;color:rgba(255,255,255,.7);margin-bottom:10px}
@@ -463,6 +475,25 @@
 <div class="celebration" id="celebration"></div>
 
 <!-- REACTION MESSAGE PANEL -->
+<div class="fb-overlay" id="fb-overlay" onclick="if(event.target===this)closeFeedback()">
+    <div class="fb-modal">
+        <div class="fb-title">Ge oss feedback</div>
+        <div class="fb-sub">Hjälp oss göra Moodly bättre. Alla svar är anonyma.</div>
+        <div style="font-size:.78rem;font-weight:600;margin-bottom:6px">Hur nöjd är du med Moodly?</div>
+        <div class="fb-stars" id="fb-stars">
+            <span class="fb-star" onclick="setFbRating(1)">⭐</span>
+            <span class="fb-star" onclick="setFbRating(2)">⭐</span>
+            <span class="fb-star" onclick="setFbRating(3)">⭐</span>
+            <span class="fb-star" onclick="setFbRating(4)">⭐</span>
+            <span class="fb-star" onclick="setFbRating(5)">⭐</span>
+        </div>
+        <textarea id="fb-text" placeholder="Vad fungerar bra? Vad kan bli bättre? Saknas något?"></textarea>
+        <div class="fb-btns">
+            <button class="btn bs" style="flex:1" onclick="closeFeedback()">Avbryt</button>
+            <button class="btn ba" style="flex:1" onclick="submitFeedback()">Skicka</button>
+        </div>
+    </div>
+</div>
 <div class="react-msg-panel" id="react-msg-panel">
     <div style="text-align:center;margin-bottom:10px">
         <div style="font-size:1.2rem;font-weight:700" id="react-msg-title">Skicka meddelande</div>
@@ -2695,6 +2726,10 @@ function renderFamily(){
         <button class="btn bs" onclick="exportData()" style="margin-bottom:8px">Exportera data</button>
         <button class="btn bs" onclick="confirmDeleteAll()" style="background:rgba(225,112,85,.1);color:var(--bad)">Radera all data</button></div>`;
 
+    html+=`<div class="cd"><div class="ct">💬 Feedback</div>
+        <p style="font-size:.78rem;color:var(--t2);margin-bottom:10px">Hjälp oss göra Moodly bättre — vi läser alla svar!</p>
+        <button class="btn ba" onclick="openFeedback()">Ge feedback</button></div>`;
+
     html+=`<div class="cd"><div class="ct">ℹ️ Om</div><p style="font-size:.76rem;color:var(--t2);line-height:1.5">Moodly v5.0${sbUser?' — Synkad till molnet':' — All data lagras lokalt'}</p></div>`;
 
     document.getElementById('family-content').innerHTML=html;
@@ -3180,6 +3215,34 @@ async function toggleNotifications(enabled){
         localStorage.setItem('moodly_notif','off');
         toast('Påminnelser avstängda');
     }
+}
+
+// ===== FEEDBACK =====
+let _fbRating=0;
+function openFeedback(){_fbRating=0;document.getElementById('fb-text').value='';document.querySelectorAll('.fb-star').forEach(s=>s.classList.remove('on'));document.getElementById('fb-overlay').classList.add('on')}
+function closeFeedback(){document.getElementById('fb-overlay').classList.remove('on')}
+function setFbRating(n){_fbRating=n;document.querySelectorAll('.fb-star').forEach((s,i)=>s.classList.toggle('on',i<n))}
+async function submitFeedback(){
+    const text=document.getElementById('fb-text').value.trim();
+    if(!text&&!_fbRating){toast('Skriv något eller välj betyg');return}
+    const d=ld();
+    const feedback={rating:_fbRating||null,text:text||null,role:d.role||'unknown',kommun:d.kommun||null,children_count:(d.familyProfiles||[]).length,created_at:new Date().toISOString()};
+    if(sb&&sbUser){
+        try{
+            await sb.from('feedback').insert({user_id:sbUser.id,...feedback});
+        }catch(e){
+            // Save locally if Supabase fails
+            const pending=JSON.parse(localStorage.getItem('moodly_feedback_pending')||'[]');
+            pending.push(feedback);
+            localStorage.setItem('moodly_feedback_pending',JSON.stringify(pending));
+        }
+    }else{
+        const pending=JSON.parse(localStorage.getItem('moodly_feedback_pending')||'[]');
+        pending.push(feedback);
+        localStorage.setItem('moodly_feedback_pending',JSON.stringify(pending));
+    }
+    closeFeedback();
+    toast('Tack för din feedback! 🙏');
 }
 
 // ===== PARENT DAILY SUMMARY NOTIFICATION =====
