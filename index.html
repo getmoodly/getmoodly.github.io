@@ -3513,7 +3513,8 @@ function showDemo(){
 function exitDemo(){
     isDemo=false;
     try{localStorage.removeItem('_demo_maja');localStorage.removeItem('_demo_leo')}catch(e){}
-    D={...D,firstVisit:true};
+    // Reset D completely — remove all demo data
+    D={firstVisit:true,userName:'',role:'',kommun:'',familyProfiles:[],places:[],placeCheckins:[],points:0,streak:0,cheersSent:{},parentReactions:[],selectedAvatar:'default',unlockedAvatars:['default']};
     document.getElementById('app').style.display='none';
     document.getElementById('ob').classList.remove('h');
 }
@@ -3527,6 +3528,12 @@ function initApp(){
     if(joinCode)localStorage.setItem('moodly_join_code',joinCode);
 
     if(!d0.firstVisit){
+        // Clean up any leftover demo data
+        if((d0.familyProfiles||[]).some(fp=>fp.storageKey&&fp.storageKey.startsWith('_demo_'))){
+            d0.familyProfiles=d0.familyProfiles.filter(fp=>!fp.storageKey.startsWith('_demo_'));
+            D=d0;sv(d0);
+            try{localStorage.removeItem('_demo_maja');localStorage.removeItem('_demo_leo')}catch(e){}
+        }
         document.getElementById('ob').classList.add('h');
         document.getElementById('app').style.display='';
         renderHome();
