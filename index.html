@@ -1399,7 +1399,7 @@ function renderHome(){
                 const sel=d.selectedAvatar===k;
                 const cls=sel?'shop-item sel':owned?'shop-item owned':'shop-item locked';
                 const action=sel?'':`onclick="buyAvatar('${k}')"`;
-                rewardHtml+=`<div class="${cls}" ${action}><div class="s-emoji">${av.emoji}</div><div class="s-label">${av.label}</div>${owned?'<div class="s-cost">Ägd</div>':`<div class="s-cost">🪙 ${av.cost}</div>`}</div>`;
+                rewardHtml+=`<div class="${cls}" ${action}><div class="s-emoji">${av.emoji}</div><div class="s-label">${av.label}</div>${owned?'<div class="s-cost">✅ Upplåst</div>':`<div class="s-cost">🪙 ${av.cost}</div>`}</div>`;
             });
             rewardHtml+=`</div></div>`;
         }
