@@ -1,4 +1,4 @@
-const CACHE_NAME = 'moodly-v3';
+const CACHE_NAME = 'moodly-v4';
 const ASSETS = [
   './index.html',
   './manifest.json'
@@ -68,14 +68,41 @@ self.addEventListener('notificationclick', e => {
   );
 });
 
-// Periodic check for daily reminder
+// Message handler
 self.addEventListener('message', e => {
   if (e.data?.type === 'SCHEDULE_REMINDER') {
     const hour = e.data.hour || 17;
     const minute = e.data.minute || 0;
     scheduleCheck(hour, minute);
   }
+  if (e.data?.type === 'PARENT_SUMMARY') {
+    parentSummary = { body: e.data.body, hour: e.data.hour || 18, minute: e.data.minute || 0 };
+    scheduleParentSummary();
+  }
 });
+
+let parentSummary = null;
+let parentSummaryInterval = null;
+function scheduleParentSummary() {
+  if (parentSummaryInterval) clearInterval(parentSummaryInterval);
+  if (!parentSummary) return;
+  parentSummaryInterval = setInterval(async () => {
+    const now = new Date();
+    if (now.getHours() === parentSummary.hour && now.getMinutes() >= parentSummary.minute && now.getMinutes() < parentSummary.minute + 15) {
+      const clients = await self.clients.matchAll({ type: 'window' });
+      if (clients.length === 0) {
+        self.registration.showNotification('Moodly — Dagens sammanfattning', {
+          body: parentSummary.body,
+          icon: 'data:image/svg+xml,<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 100 100"><text y=".9em" font-size="90">📊</text></svg>',
+          tag: 'moodly-parent-summary',
+          renotify: true,
+          data: { url: './index.html' }
+        });
+        parentSummary = null; // Only show once per day
+      }
+    }
+  }, 15 * 60 * 1000);
+}
 
 let reminderInterval = null;
 function scheduleCheck(hour, minute) {

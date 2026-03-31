@@ -1650,6 +1650,10 @@ function renderParentView(){
     }else{insEl.innerHTML=''}
     // Kommun insights
     renderKommunInsights(d,benchEl);
+
+    // Schedule parent summary notification + ask permission once
+    requestParentNotifications();
+    scheduleParentNotification();
 }
 
 // ===== REMOTE CHILDREN IN DASHBOARD =====
@@ -3093,6 +3097,66 @@ async function toggleNotifications(enabled){
     }else{
         localStorage.setItem('moodly_notif','off');
         toast('Påminnelser avstängda');
+    }
+}
+
+// ===== PARENT DAILY SUMMARY NOTIFICATION =====
+function buildParentSummaryText(){
+    const d=ld();
+    if(d.role!=='parent'||!d.familyProfiles||!d.familyProfiles.length)return null;
+    const today=new Date().toDateString();
+    const lines=[];
+    d.familyProfiles.forEach(fp=>{
+        const cd=getFullChildData(fp.storageKey);
+        if(!cd||!cd.places)return;
+        const todayChecks=(cd.placeCheckins||[]).filter(c=>new Date(c.ts).toDateString()===today);
+        const checkedCount=new Set(todayChecks.map(c=>c.placeId)).size;
+        const totalPlaces=(cd.places||[]).length;
+        if(!totalPlaces)return;
+        if(checkedCount===0){
+            lines.push(`${fp.name}: Inte checkat in idag`);
+        }else{
+            const scores=todayChecks.map(c=>c.score);
+            const avg=(scores.reduce((a,b)=>a+b,0)/scores.length).toFixed(1);
+            const worst=todayChecks.reduce((a,b)=>b.score<a.score?b:a);
+            const worstPlace=cd.places.find(p=>p.id===worst.placeId);
+            const worstMood=MOODS[worst.score-1]?.emoji||'';
+            let line=`${fp.name}: ${checkedCount}/${totalPlaces} platser, snitt ${avg}/5`;
+            if(worst.score<=2&&worstPlace)line+=` — Lägst: ${worstPlace.name} ${worstMood}`;
+            lines.push(line);
+        }
+    });
+    return lines.length?lines.join('\n'):null;
+}
+
+function scheduleParentNotification(){
+    const d=ld();
+    if(d.role!=='parent')return;
+    if(!('Notification' in window)||Notification.permission!=='granted')return;
+    const body=buildParentSummaryText();
+    if(!body)return;
+    if(navigator.serviceWorker?.controller){
+        navigator.serviceWorker.controller.postMessage({type:'PARENT_SUMMARY',body,hour:18,minute:0});
+    }
+}
+
+async function requestParentNotifications(){
+    if(!('Notification' in window))return;
+    if(Notification.permission==='granted'){
+        localStorage.setItem('moodly_notif','on');
+        scheduleParentNotification();
+        return;
+    }
+    if(Notification.permission==='denied')return;
+    // Ask once — don't nag
+    if(localStorage.getItem('moodly_notif_asked'))return;
+    localStorage.setItem('moodly_notif_asked','1');
+    const perm=await Notification.requestPermission();
+    if(perm==='granted'){
+        localStorage.setItem('moodly_notif','on');
+        document.getElementById('notif-toggle').checked=true;
+        toast('Notiser aktiverade — du får en sammanfattning kl 18:00');
+        scheduleParentNotification();
     }
 }
 
