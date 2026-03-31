@@ -2451,6 +2451,17 @@ function removeChild(idx){
     d.familyProfiles.splice(idx,1);sv(d);
 }
 
+function addPlaceToChild(storageKey,type,defaultName){
+    const name=prompt('Platsnamn:',defaultName);
+    if(!name)return;
+    const cd=getFullChildData(storageKey);
+    if(!cd)return;
+    const place={id:'p_'+Date.now(),name:name.trim(),type,osmId:'',address:'',lat:null,lng:null};
+    cd.places.push(place);
+    if(sok)localStorage.setItem(storageKey,JSON.stringify(cd));
+    toast(name+' tillagd!');
+}
+
 function switchToProfile(storageKey,name){
     APK=storageKey;
     document.getElementById('profile-banner').style.display='flex';
@@ -2550,9 +2561,17 @@ function renderFamily(){
                         html+=`<div class="fam-place-row"><span>${pt.icon}</span><span style="flex:1">${cp.name}</span><span class="fam-place-score" style="color:${col}">${cp.avg>0?cp.avg:'—'}</span></div>`;
                         if(cp.lastComment)html+=`<div class="fam-place-comment">"${cp.lastComment}"</div>`;
                     });
-                }else{html+=`<p style="font-size:.78rem;color:var(--t2);padding:8px 0">Ingen data ännu</p>`}
-                html+=`<div style="display:flex;gap:8px;margin-top:10px;padding-top:8px;border-top:1px solid rgba(255,255,255,.04)">
-                    <button class="btn bs" style="padding:6px;font-size:.7rem" onclick="switchToProfile('${fp.storageKey}','${fp.name}')">Hantera platser</button>
+                }else{html+=`<p style="font-size:.78rem;color:var(--t2);padding:8px 0;text-align:center">Inga platser — lägg till nedan</p>`}
+                // Quick-add places for this child
+                html+=`<div style="display:flex;gap:6px;flex-wrap:wrap;padding:8px 0" id="child-quick-${i}">`;
+                const childPlaceTypes=new Set((childData?.places||[]).map(p=>p.type));
+                if(!childPlaceTypes.has('school'))html+=`<button class="btn bs" style="padding:6px 10px;font-size:.72rem" onclick="addPlaceToChild('${fp.storageKey}','school','Skola');renderFamily()">+ 🏫 Skola</button>`;
+                if(!childPlaceTypes.has('sport'))html+=`<button class="btn bs" style="padding:6px 10px;font-size:.72rem" onclick="addPlaceToChild('${fp.storageKey}','sport','Idrott');renderFamily()">+ ⚽ Idrott</button>`;
+                if(!childPlaceTypes.has('home'))html+=`<button class="btn bs" style="padding:6px 10px;font-size:.72rem" onclick="addPlaceToChild('${fp.storageKey}','home','Hem');renderFamily()">+ 🏠 Hem</button>`;
+                if(!childPlaceTypes.has('hobby'))html+=`<button class="btn bs" style="padding:6px 10px;font-size:.72rem" onclick="addPlaceToChild('${fp.storageKey}','hobby','Hobby');renderFamily()">+ 🎨 Hobby</button>`;
+                html+=`</div>`;
+                html+=`<div style="display:flex;gap:8px;padding-top:8px;border-top:1px solid rgba(255,255,255,.04)">
+                    <button class="btn bs" style="padding:6px;font-size:.7rem" onclick="switchToProfile('${fp.storageKey}','${fp.name}')">Öppna profil</button>
                     <button class="btn bs" style="padding:6px;font-size:.7rem;background:rgba(225,112,85,.1);color:var(--bad)" onclick="if(confirm('Ta bort ${fp.name}?')){removeChild(${i});renderFamily()}">Ta bort</button></div></div>`;
             });
         }
