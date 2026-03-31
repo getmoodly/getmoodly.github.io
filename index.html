@@ -344,6 +344,26 @@
         .toggle-slider::before{content:'';position:absolute;height:18px;width:18px;left:3px;bottom:3px;background:#fff;border-radius:50%;transition:.2s}
         .toggle-switch input:checked+.toggle-slider{background:var(--ok)}
         .toggle-switch input:checked+.toggle-slider::before{transform:translateX(20px)}
+
+        /* Parent reactions */
+        .react-row{display:flex;gap:6px;padding:4px 0 2px 28px;margin-top:-2px}
+        .react-btn{font-size:1rem;cursor:pointer;padding:2px 4px;border-radius:6px;transition:all .15s;opacity:.5}
+        .react-btn:hover,.react-btn:active{opacity:1;transform:scale(1.2)}
+        .react-btn.sent{opacity:1;animation:react-pop .4s ease;pointer-events:none}
+        .react-msg-btn{font-size:.85rem;background:rgba(255,255,255,.06);border-radius:12px;padding:2px 8px}
+        @keyframes react-pop{0%{transform:scale(1)}50%{transform:scale(1.4)}100%{transform:scale(1)}}
+        .react-msg-panel{position:fixed;bottom:0;left:0;right:0;background:var(--c1);border-top:1px solid rgba(255,255,255,.1);padding:16px;z-index:160;transform:translateY(100%);transition:transform .25s ease;border-radius:16px 16px 0 0}
+        .react-msg-panel.on{transform:translateY(0)}
+        .react-msg-input{width:100%;padding:12px;background:rgba(255,255,255,.06);border:1px solid rgba(255,255,255,.12);border-radius:var(--rs);color:var(--t);font-size:.9rem;outline:none;margin-bottom:10px;box-sizing:border-box}
+        .reaction-banner{background:linear-gradient(135deg,rgba(108,92,231,.15),rgba(0,206,201,.1));border:1px solid rgba(108,92,231,.25);border-radius:var(--r);padding:16px;margin-bottom:14px;text-align:center;animation:reaction-glow 2s ease-in-out infinite;cursor:pointer}
+        @keyframes reaction-glow{0%,100%{box-shadow:0 0 0 0 rgba(108,92,231,.2)}50%{box-shadow:0 0 16px 4px rgba(108,92,231,.15)}}
+        .reaction-banner .rb-emoji{font-size:2rem;animation:reaction-bounce 1s ease infinite}
+        @keyframes reaction-bounce{0%,100%{transform:translateY(0)}50%{transform:translateY(-6px)}}
+        .reaction-banner .rb-from{font-size:.92rem;font-weight:700;margin-top:6px}
+        .reaction-banner .rb-msg{font-size:.82rem;color:var(--t2);margin-top:4px;font-style:italic}
+        .hifive-btn{font-size:2.5rem;cursor:pointer;animation:hifive-pulse 1.2s ease infinite;display:inline-block}
+        @keyframes hifive-pulse{0%,100%{transform:scale(1)}50%{transform:scale(1.15)}}
+        .streak-cheer-card{background:linear-gradient(135deg,rgba(255,215,0,.12),rgba(255,165,0,.08));border:1px solid rgba(255,215,0,.2);border-radius:var(--r);padding:14px;text-align:center;margin-top:8px}
     </style>
 </head>
 <body>
@@ -382,6 +402,19 @@
 
 <!-- CELEBRATION OVERLAY -->
 <div class="celebration" id="celebration"></div>
+
+<!-- REACTION MESSAGE PANEL -->
+<div class="react-msg-panel" id="react-msg-panel">
+    <div style="text-align:center;margin-bottom:10px">
+        <div style="font-size:1.2rem;font-weight:700" id="react-msg-title">Skicka meddelande</div>
+        <div style="font-size:.78rem;color:var(--t2)">Max 80 tecken</div>
+    </div>
+    <input class="react-msg-input" id="react-msg-input" placeholder="Bra jobbat!" maxlength="80">
+    <div style="display:flex;gap:8px">
+        <button class="btn ba" onclick="submitReactionMessage()" style="flex:1">Skicka</button>
+        <button class="btn bs" onclick="closeReactionMessage()" style="width:80px">Avbryt</button>
+    </div>
+</div>
 
 <!-- PWA INSTALL BANNER -->
 <div class="install-banner" id="install-banner">
@@ -736,6 +769,9 @@ async function flushPendingChanges(){
                 res=await sb.from(item.table).upsert(item.data,{onConflict:item.conflict||'id'});
             }else if(item.op==='insert'){
                 res=await sb.from(item.table).insert(item.data);
+            }else if(item.op==='update'){
+                const{id,...rest}=item.data;
+                res=await sb.from(item.table).update(rest).eq('id',id);
             }else if(item.op==='delete'){
                 res=await sb.from(item.table).delete().eq('id',item.data.id);
             }
@@ -900,7 +936,7 @@ window.addEventListener('online',()=>flushPendingChanges());
 
 const PARENT_KEY='moodly';
 let APK=PARENT_KEY;
-let D={places:[],placeCheckins:[],benchmarks:[],checkins:[],micro:[],xp:0,level:1,points:0,streak:0,firstVisit:true,baseline:null,userName:'',aiName:'Luna',personality:'warm',onboarded:null,alertsSeen:[],familyId:'',role:'self',familyProfiles:[],parentKey:'',unlockedAvatars:['default'],selectedAvatar:'default',dailyRewardClaimed:null,kommun:''};
+let D={places:[],placeCheckins:[],benchmarks:[],checkins:[],micro:[],xp:0,level:1,points:0,streak:0,firstVisit:true,baseline:null,userName:'',aiName:'Luna',personality:'warm',onboarded:null,alertsSeen:[],familyId:'',role:'self',familyProfiles:[],parentKey:'',unlockedAvatars:['default'],selectedAvatar:'default',dailyRewardClaimed:null,kommun:'',parentReactions:[],cheersSent:{}};
 const AVATARS={default:{emoji:'😊',label:'Standard',cost:0},fox:{emoji:'🦊',label:'Räv',cost:50},cat:{emoji:'🐱',label:'Katt',cost:50},dog:{emoji:'🐶',label:'Hund',cost:50},unicorn:{emoji:'🦄',label:'Enhörning',cost:100},dragon:{emoji:'🐉',label:'Drake',cost:150},star:{emoji:'⭐',label:'Stjärna',cost:200},rocket:{emoji:'🚀',label:'Raket',cost:300}};
 let sok=false;try{localStorage.setItem('_','1');localStorage.removeItem('_');sok=true}catch(e){}
 
@@ -1006,7 +1042,7 @@ async function searchNominatim(query,dropdown,input,addrId){
 // Migrate old data
 (function(){if(!sok)return;try{const old=localStorage.getItem('kf3');const nw=localStorage.getItem('moodly');if(old&&!nw)localStorage.setItem('moodly',old)}catch(e){}})();
 
-function ld(){if(!sok)return{...D};try{const r=localStorage.getItem(APK);if(!r)return{...D};const d=JSON.parse(r);if(!d.places)d.places=[];if(!d.placeCheckins)d.placeCheckins=[];if(!d.benchmarks)d.benchmarks=[];if(!d.micro)d.micro=[];if(!d.checkins)d.checkins=[];if(!d.alertsSeen)d.alertsSeen=[];if(!d.familyProfiles)d.familyProfiles=[];if(!d.points)d.points=0;if(!d.unlockedAvatars)d.unlockedAvatars=['default'];if(!d.selectedAvatar)d.selectedAvatar='default';if(!d.kommun)d.kommun='';return d}catch(e){return{...D}}}
+function ld(){if(!sok)return{...D};try{const r=localStorage.getItem(APK);if(!r)return{...D};const d=JSON.parse(r);if(!d.places)d.places=[];if(!d.placeCheckins)d.placeCheckins=[];if(!d.benchmarks)d.benchmarks=[];if(!d.micro)d.micro=[];if(!d.checkins)d.checkins=[];if(!d.alertsSeen)d.alertsSeen=[];if(!d.familyProfiles)d.familyProfiles=[];if(!d.points)d.points=0;if(!d.unlockedAvatars)d.unlockedAvatars=['default'];if(!d.selectedAvatar)d.selectedAvatar='default';if(!d.kommun)d.kommun='';if(!d.parentReactions)d.parentReactions=[];if(!d.cheersSent)d.cheersSent={};return d}catch(e){return{...D}}}
 function sv(d){D=d;if(sok)try{localStorage.setItem(APK,JSON.stringify(d))}catch(e){}}
 function pick(arr){return arr[Math.floor(Math.random()*arr.length)]}
 function toast(m){const t=document.getElementById('toast');t.textContent=m;t.classList.add('show');setTimeout(()=>t.classList.remove('show'),3000)}
@@ -1275,6 +1311,42 @@ function renderHome(){
     }
     summaryEl.insertAdjacentHTML('afterbegin',rewardHtml);
 
+    // Show parent reactions for child profiles
+    if(d.role==='child'||d.parentKey){
+        const unseen=getUnseenReactions();
+        if(unseen.length){
+            // Full-screen notification on first render
+            if(!window._reactionsShown){
+                window._reactionsShown=true;
+                setTimeout(()=>showReactionNotification(unseen),600);
+            }
+            // Inline banners
+            let reactHtml='';
+            unseen.slice(0,3).forEach(r=>{
+                const emoji=r.reactionType==='high_five'?'🖐️':(r.emoji||'❤️');
+                const from=r.fromName||'Förälder';
+                const msg=r.message?`"${r.message}"`:'';
+                reactHtml+=`<div class="reaction-banner" onclick="markReactionsSeen(['${r.id}']);this.remove();renderHome()">
+                    <div class="rb-emoji">${emoji}</div>
+                    <div class="rb-from">${from} skickade</div>
+                    ${msg?`<div class="rb-msg">${msg}</div>`:''}
+                    <div style="font-size:.68rem;color:var(--t2);margin-top:6px">Tryck för att stänga</div>
+                </div>`;
+            });
+            summaryEl.insertAdjacentHTML('afterbegin',reactHtml);
+        }
+        // Also check remote reactions async
+        if(sbUser){
+            getUnseenReactionsRemote().then(remote=>{
+                if(!remote.length)return;
+                if(!window._remoteReactionsShown){
+                    window._remoteReactionsShown=true;
+                    showReactionNotification(remote);
+                }
+            });
+        }
+    }
+
     // Place cards
     const placesEl=document.getElementById('home-places');
     if(!d.places.length){
@@ -1395,9 +1467,21 @@ function renderParentView(){
                 const col=avg?avg>=4?'var(--ok)':avg>=3?'var(--w)':'var(--bad)':'var(--t2)';
                 html+=`<div class="fam-place-row"><span>${pt.icon}</span><span style="flex:1">${p.name}</span><span style="font-size:1.1rem">${mood?mood.emoji:'⬜'}</span>${avg?`<span class="fam-place-score" style="color:${col}">${avg}</span>`:''}</div>`;
                 if(tc?.comment)html+=`<div class="fam-place-comment">"${tc.comment}"</div>`;
+                if(tc)html+=renderReactRow(fp.storageKey,'',p.id);
             });
         }else{
             html+=`<p style="font-size:.78rem;color:var(--t2);padding:8px 0">Inga platser — öppna profilen för att lägga till</p>`;
+        }
+        // All-done cheer button
+        if(allDone){
+            html+=`<div style="padding:8px 0;text-align:center"><button class="btn bg" style="padding:8px 16px;font-size:.78rem;width:auto" onclick="sendReaction('${fp.storageKey}','',null,null,'🌟','Alla platser klara — bra jobbat!')">🎉 Skicka heja!</button></div>`;
+        }
+        // Streak cheer
+        if([3,7,14,30].includes(streak)){
+            const cheerKey=fp.storageKey+'_streak_'+streak;
+            if(!d.cheersSent[cheerKey]){
+                html+=`<div class="streak-cheer-card"><div style="font-size:1.3rem">🔥 ${streak} dagars streak!</div><div style="font-size:.78rem;color:var(--t2);margin:4px 0 8px">Skicka en uppmuntran till ${fp.name}!</div><button class="btn bg" style="padding:8px 16px;font-size:.82rem;width:auto" onclick="sendStreakCheer('${fp.storageKey}','','${fp.name}',${streak},'${cheerKey}')">🎉 Heja ${fp.name}!</button></div>`;
+            }
         }
         html+=`</div>`;
     });
@@ -1473,12 +1557,17 @@ async function loadRemoteChildrenToDashboard(container){
                     const todayScore=todayChecks.find(c=>c.place_id===mp.id);
                     const mood=todayScore?MOODS[todayScore.score-1]:null;
                     html+=`<div class="fam-place-row"><span>${(PT[mp.type]||PT.other).icon}</span><span style="flex:1">${mp.name}</span><span style="font-size:1.1rem">${mood?mood.emoji:'⬜'}</span><span class="fam-place-score" style="color:${col}">${avg}</span></div>`;
+                    if(todayScore)html+=renderReactRow('',m.user_id,mp.id);
                     // Low mood alert
                     const recent=pc.slice(-3);
                     if(recent.length>=3&&recent.every(c=>c.score<=2)){
                         html+=`<div style="font-size:.72rem;padding:6px 8px;border-radius:6px;margin-top:4px;background:rgba(225,112,85,.1);color:var(--bad)">📉 Lågt mående 3+ dagar</div>`;
                     }
                 });
+            }
+            // All-done cheer for remote child
+            if(allDone){
+                html+=`<div style="padding:8px 0;text-align:center"><button class="btn bg" style="padding:8px 16px;font-size:.78rem;width:auto" onclick="sendReaction('','${m.user_id}',null,null,'🌟','Alla platser klara — bra jobbat!')">🎉 Skicka heja!</button></div>`;
             }
             html+=`</div>`;
         }
@@ -2545,6 +2634,202 @@ async function finishChildOnboarding(){
     document.getElementById('app').style.display='';
     go('home');
     showCelebration('Välkommen till Moodly! 🎉');
+}
+
+// ===== PARENT REACTIONS =====
+let _reactMsgTarget=null;
+
+function sendReaction(targetKey,targetUserId,placeId,date,emoji,message){
+    const d=ld();
+    const reaction={
+        id:'r_'+Date.now()+'_'+Math.random().toString(36).slice(2,6),
+        fromName:d.userName||'Förälder',
+        toStorageKey:targetKey||null,
+        toUserId:targetUserId||null,
+        checkinPlaceId:placeId||null,
+        checkinDate:date||new Date().toISOString().slice(0,10),
+        reactionType:message?'message':emoji==='🖐️'?'high_five':'emoji',
+        emoji:emoji||null,
+        message:message||null,
+        seen:false,
+        createdAt:new Date().toISOString()
+    };
+    // Local child
+    if(targetKey){
+        if(!d.parentReactions)d.parentReactions=[];
+        d.parentReactions.push(reaction);
+        if(d.parentReactions.length>500)d.parentReactions=d.parentReactions.slice(-500);
+        sv(d);
+    }
+    // Remote child (Supabase)
+    if(targetUserId&&sbUser){
+        enqueue('parent_reactions','insert',{
+            family_id:d.familyId,
+            from_user_id:sbUser.id,
+            to_user_id:targetUserId,
+            reaction_type:reaction.reactionType,
+            emoji:emoji||null,
+            message:message||null
+        });
+    }
+    toast('Skickat! '+(emoji||'💬'));
+}
+
+function openReactionMessage(targetKey,targetUserId,placeId){
+    _reactMsgTarget={targetKey,targetUserId,placeId};
+    document.getElementById('react-msg-input').value='';
+    document.getElementById('react-msg-panel').classList.add('on');
+    setTimeout(()=>document.getElementById('react-msg-input').focus(),300);
+}
+
+function closeReactionMessage(){
+    document.getElementById('react-msg-panel').classList.remove('on');
+    _reactMsgTarget=null;
+}
+
+function submitReactionMessage(){
+    const msg=document.getElementById('react-msg-input').value.trim();
+    if(!msg||!_reactMsgTarget)return;
+    sendReaction(_reactMsgTarget.targetKey,_reactMsgTarget.targetUserId,_reactMsgTarget.placeId,null,'💬',msg);
+    closeReactionMessage();
+}
+
+function getUnseenReactions(){
+    const d=ld();
+    let unseen=[];
+    // Local mode: read from parent's data via parentKey
+    if(d.parentKey){
+        try{
+            const pd=JSON.parse(localStorage.getItem(d.parentKey)||'{}');
+            unseen=(pd.parentReactions||[]).filter(r=>r.toStorageKey===APK&&!r.seen);
+        }catch(e){}
+    }
+    return unseen;
+}
+
+async function getUnseenReactionsRemote(){
+    if(!sb||!sbUser)return[];
+    try{
+        const{data}=await sb.from('parent_reactions')
+            .select('id,emoji,message,reaction_type,created_at,from_user_id')
+            .eq('to_user_id',sbUser.id)
+            .eq('seen',false)
+            .order('created_at',{ascending:false})
+            .limit(10);
+        if(!data||!data.length)return[];
+        // Resolve parent name
+        const parentId=data[0].from_user_id;
+        const{data:prof}=await sb.from('profiles').select('user_name').eq('id',parentId).single();
+        const pName=prof?.user_name||'Din förälder';
+        return data.map(r=>({...r,fromName:pName}));
+    }catch(e){return[]}
+}
+
+function markReactionsSeen(ids){
+    if(!ids||!ids.length)return;
+    const d=ld();
+    // Award bonus points for seeing reactions
+    let bonus=ids.length*3;
+    d.points=(d.points||0)+bonus;
+    sv(d);
+    if(bonus)toast('+'+bonus+' poäng!');
+
+    // Local mode: mark in parent's data
+    if(d.parentKey){
+        try{
+            const pd=JSON.parse(localStorage.getItem(d.parentKey)||'{}');
+            (pd.parentReactions||[]).forEach(r=>{
+                if(ids.includes(r.id))r.seen=true;
+            });
+            localStorage.setItem(d.parentKey,JSON.stringify(pd));
+        }catch(e){}
+    }
+    // Remote mode
+    if(sbUser){
+        ids.forEach(id=>{
+            if(id.startsWith('r_'))return;
+            enqueue('parent_reactions','update',{id,seen:true});
+        });
+    }
+}
+
+function showReactionNotification(reactions){
+    if(!reactions.length)return;
+    const el=document.getElementById('celebration');
+    if(!el)return;
+    const r=reactions[0];
+    const emoji=r.reactionType==='high_five'?'🖐️':(r.emoji||'❤️');
+    const fromName=r.fromName||'Din förälder';
+    const isHighFive=r.reactionType==='high_five';
+
+    let html='';
+    if(isHighFive){
+        html+=`<div class="celeb-text" style="top:30%">
+            <div class="hifive-btn" onclick="completeHighFive(${JSON.stringify(reactions.map(x=>x.id)).replace(/"/g,'&quot;')})">🖐️</div>
+            <div style="font-size:1.1rem;margin-top:12px">${fromName} vill ge dig en high five!</div>
+            <div style="font-size:.78rem;color:var(--t2);margin-top:6px">Tryck på handen!</div>
+        </div>`;
+    }else{
+        html+=`<div class="celeb-text" style="top:30%">
+            <div style="font-size:3rem;animation:reaction-bounce 1s ease infinite">${emoji}</div>
+            <div style="font-size:1.1rem;margin-top:8px">${fromName} skickade:</div>`;
+        if(r.message){
+            html+=`<div style="font-size:.9rem;color:var(--t2);margin-top:6px;font-style:italic">"${r.message}"</div>`;
+        }
+        html+=`<div style="font-size:.7rem;color:var(--t2);margin-top:12px">Tryck för att stänga</div></div>`;
+    }
+    // Sparkle confetti
+    const colors=['#6C5CE7','#A29BFE','#FFD700','#00CEC9'];
+    for(let i=0;i<20;i++){
+        const left=Math.random()*100;
+        const delay=Math.random()*0.5;
+        const size=6+Math.random()*8;
+        const color=colors[Math.floor(Math.random()*colors.length)];
+        html+=`<div class="confetti" style="left:${left}%;top:-10px;width:${size}px;height:${size}px;background:${color};animation-delay:${delay}s"></div>`;
+    }
+    el.innerHTML=html;
+    el.classList.add('on');
+    el.style.pointerEvents='auto';
+    if(!isHighFive){
+        el.onclick=()=>{
+            el.classList.remove('on');el.innerHTML='';el.style.pointerEvents='none';
+            markReactionsSeen(reactions.map(x=>x.id));
+        };
+        setTimeout(()=>{
+            if(el.classList.contains('on')){
+                el.classList.remove('on');el.innerHTML='';el.style.pointerEvents='none';
+                markReactionsSeen(reactions.map(x=>x.id));
+            }
+        },5000);
+    }
+}
+
+function completeHighFive(ids){
+    const el=document.getElementById('celebration');
+    markReactionsSeen(ids);
+    // Show celebration
+    el.classList.remove('on');el.innerHTML='';el.style.pointerEvents='none';
+    showCelebration('High five! 🙌 +'+ids.length*3+' poäng!');
+}
+
+function renderReactRow(targetKey,targetUserId,placeId){
+    let h=`<div class="react-row">`;
+    ['❤️','👍','🌟','💪','🤗'].forEach(em=>{
+        h+=`<span class="react-btn" onclick="sendReaction('${targetKey||''}','${targetUserId||''}','${placeId||''}',null,'${em}');this.classList.add('sent')">${em}</span>`;
+    });
+    h+=`<span class="react-btn" onclick="sendReaction('${targetKey||''}','${targetUserId||''}','${placeId||''}',null,'🖐️');this.classList.add('sent')">🖐️</span>`;
+    h+=`<span class="react-btn react-msg-btn" onclick="openReactionMessage('${targetKey||''}','${targetUserId||''}','${placeId||''}')">💬</span>`;
+    h+=`</div>`;
+    return h;
+}
+
+function sendStreakCheer(targetKey,targetUserId,childName,streakCount,cheerKey){
+    sendReaction(targetKey,targetUserId,null,null,'🔥',streakCount+' dagars streak — fantastiskt '+childName+'!');
+    const d=ld();
+    d.cheersSent[cheerKey]=true;
+    sv(d);
+    // Remove the cheer card from DOM
+    event.target.closest('.streak-cheer-card')?.remove();
 }
 
 // ===== CELEBRATION =====
