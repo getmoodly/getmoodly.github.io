@@ -1008,7 +1008,7 @@ async function migrateLocalToRemote(){
         kommun:d.kommun||''
     }).eq('id',sbUser.id);
 
-    // Sync places
+    // Sync places (parent + all children)
     for(const p of d.places){
         await sb.from('places').upsert({
             id:p.id,user_id:sbUser.id,name:p.name,type:p.type,
@@ -1016,14 +1016,36 @@ async function migrateLocalToRemote(){
             lat:p.lat||null,lng:p.lng||null
         },{onConflict:'id'});
     }
+    for(const fp of (d.familyProfiles||[])){
+        const cd=getFullChildData(fp.storageKey);
+        if(!cd||!cd.places)continue;
+        for(const p of cd.places){
+            await sb.from('places').upsert({
+                id:p.id,user_id:sbUser.id,name:p.name,type:p.type,
+                osm_id:p.osmId||null,address:p.address||null,
+                lat:p.lat||null,lng:p.lng||null
+            },{onConflict:'id'});
+        }
+    }
 
-    // Sync checkins
+    // Sync checkins (parent + all children)
     for(const c of d.placeCheckins){
         const checkedAt=new Date(c.ts).toISOString().slice(0,10);
         await sb.from('place_checkins').upsert({
             user_id:sbUser.id,place_id:c.placeId,score:c.score,
             comment:c.comment||null,checked_at:checkedAt,ts:c.ts
         },{onConflict:'user_id,place_id,checked_at'});
+    }
+    for(const fp of (d.familyProfiles||[])){
+        const cd=getFullChildData(fp.storageKey);
+        if(!cd||!cd.placeCheckins)continue;
+        for(const c of cd.placeCheckins){
+            const checkedAt=new Date(c.ts).toISOString().slice(0,10);
+            await sb.from('place_checkins').upsert({
+                user_id:sbUser.id,place_id:c.placeId,score:c.score,
+                comment:c.comment||null,checked_at:checkedAt,ts:c.ts
+            },{onConflict:'user_id,place_id,checked_at'});
+        }
     }
 
     // Sync chat sessions (without transcript)
@@ -1066,17 +1088,42 @@ async function pullRemoteData(){
             sv(d);
         }
 
-        // Pull places
+        // Pull places — distribute to child profiles
         const{data:remotePlaces}=await sb.from('places').select('*').eq('user_id',sbUser.id);
         if(remotePlaces){
             const d=ld();
-            const localIds=new Set(d.places.map(p=>p.id));
+            // Build set of all known place IDs across parent + children
+            const allLocalIds=new Set(d.places.map(p=>p.id));
+            (d.familyProfiles||[]).forEach(fp=>{
+                const cd=getFullChildData(fp.storageKey);
+                if(cd&&cd.places)cd.places.forEach(p=>allLocalIds.add(p.id));
+            });
+            // Add unknown remote places to parent (fallback)
             remotePlaces.forEach(rp=>{
-                if(!localIds.has(rp.id)){
+                if(!allLocalIds.has(rp.id)){
                     d.places.push({id:rp.id,name:rp.name,type:rp.type,osmId:rp.osm_id||'',address:rp.address||'',lat:rp.lat,lng:rp.lng});
                 }
             });
             sv(d);
+            // Also ensure child profiles have their places — match by place ID from checkins
+            (d.familyProfiles||[]).forEach(fp=>{
+                const cd=getFullChildData(fp.storageKey);
+                if(!cd)return;
+                const childPlaceIds=new Set((cd.places||[]).map(p=>p.id));
+                const childCheckinPlaceIds=new Set((cd.placeCheckins||[]).map(c=>c.placeId));
+                let changed=false;
+                // If child has checkins for a place they don't have locally, restore it
+                childCheckinPlaceIds.forEach(pid=>{
+                    if(childPlaceIds.has(pid))return;
+                    const rp=remotePlaces.find(r=>r.id===pid);
+                    if(rp){
+                        if(!cd.places)cd.places=[];
+                        cd.places.push({id:rp.id,name:rp.name,type:rp.type,osmId:rp.osm_id||'',address:rp.address||'',lat:rp.lat,lng:rp.lng});
+                        changed=true;
+                    }
+                });
+                if(changed&&sok)localStorage.setItem(fp.storageKey,JSON.stringify(cd));
+            });
         }
 
         // Pull checkins (last 90 days)
@@ -1113,7 +1160,7 @@ async function pullRemoteData(){
 
 // Sync a single checkin to Supabase
 function syncCheckin(placeId,score,comment,ts,tags){
-    if(!sbUser||APK!==PARENT_KEY)return;
+    if(!sbUser)return;
     const checkedAt=new Date(ts).toISOString().slice(0,10);
     enqueue('place_checkins','upsert',{
         user_id:sbUser.id,place_id:placeId,score,
@@ -1124,7 +1171,7 @@ function syncCheckin(placeId,score,comment,ts,tags){
 
 // Sync a place to Supabase
 function syncPlace(place){
-    if(!sbUser||APK!==PARENT_KEY)return;
+    if(!sbUser)return;
     enqueue('places','upsert',{
         id:place.id,user_id:sbUser.id,name:place.name,type:place.type,
         osm_id:place.osmId||null,address:place.address||null,
@@ -2645,9 +2692,10 @@ function addPlaceToChild(storageKey,type,defaultName){
     if(!cd)return;
     const count=(cd.places||[]).filter(p=>p.type===type).length;
     const name=count?defaultName+' '+(count+1):defaultName;
-    const place={id:'p_'+Date.now(),name,type,osmId:'',address:'',lat:null,lng:null};
+    const place={id:'p_'+Date.now()+'_'+Math.random().toString(36).slice(2,6),name,type,osmId:'',address:'',lat:null,lng:null};
     cd.places.push(place);
     if(sok)localStorage.setItem(storageKey,JSON.stringify(cd));
+    syncPlace(place);
     toast(name+' tillagd!');
 }
 
