@@ -2160,10 +2160,9 @@ function saveNewPlace(){
 }
 
 function quickAddPlaceFromModal(type,defaultName){
-    const d=ld();
-    if(d.places.some(p=>p.type===type)){toast('Du har redan en '+defaultName);return}
-    const name=prompt('Namn på platsen:',defaultName)||defaultName;
-    addPlace(name,type,null);
+    const name=prompt('Namn på platsen:',defaultName);
+    if(!name)return;
+    addPlace(name.trim(),type,null);
     closeModal();
     renderHome();
     toast(PT[type]?.icon+' '+name+' tillagd!');
@@ -2266,9 +2265,8 @@ function switchObChild(i){
 
 function obQuickAddPlace(type,defaultName){
     const child=obChildren[obActiveChild];if(!child)return;
-    // Check if already added
-    if(child.places.some(p=>p.type===type)){toast('Redan tillagd');return}
-    const name=prompt('Namn på platsen:',defaultName)||defaultName;
+    const name=prompt('Namn på platsen:',defaultName);
+    if(!name)return;
     child.places.push({name,type,osmId:'',address:'',lat:null,lng:null});
     renderOb4Places();renderOb4();updateQuickPlaceButtons();
     toast(PT[type]?.icon+' '+name+' tillagd!');
