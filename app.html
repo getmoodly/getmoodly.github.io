@@ -875,6 +875,7 @@ async function onAuthReady(session){
         await ensureProfile();
         await migrateLocalToRemote();
     }
+    if(sbUser)await processNetworkJoin();
     initApp();
     if(sbUser)pullRemoteData();
 }
@@ -2635,7 +2636,17 @@ function buildNav(){
     const nav=document.getElementById('main-nav');
     const indicator=document.getElementById('role-indicator');
 
-    if(isParent){
+    if(d.role==='network'){
+        const childName=d.networkChildName||'barnet';
+        const roleLabel=d.familyRole?d.familyRole.charAt(0).toUpperCase()+d.familyRole.slice(1):'Familj';
+        nav.innerHTML=`
+            <div class="ni on" data-p="moodis"><svg viewBox="0 0 24 24"><path d="M11.99 2C6.47 2 2 6.48 2 12s4.47 10 9.99 10C17.52 22 22 17.52 22 12S17.52 2 11.99 2zM12 20c-4.42 0-8-3.58-8-8s3.58-8 8-8 8 3.58 8 8-3.58 8-8 8zm3.5-9c.83 0 1.5-.67 1.5-1.5S16.33 8 15.5 8 14 8.67 14 9.5s.67 1.5 1.5 1.5zm-7 0c.83 0 1.5-.67 1.5-1.5S9.33 8 8.5 8 7 8.67 7 9.5 7.67 11 8.5 11zm3.5 6.5c2.33 0 4.31-1.46 5.11-3.5H6.89c.8 2.04 2.78 3.5 5.11 3.5z"/></svg>Moodis</div>
+            <div class="ni" data-p="family"><svg viewBox="0 0 24 24"><path d="M12 12c2.21 0 4-1.79 4-4s-1.79-4-4-4-4 1.79-4 4 1.79 4 4 4zm0 2c-2.67 0-8 1.34-8 4v2h16v-2c0-2.66-5.33-4-8-4z"/></svg>Profil</div>`;
+        indicator.style.display='block';
+        indicator.style.background='linear-gradient(135deg,rgba(162,155,254,.15),rgba(108,92,231,.1))';
+        indicator.style.color='var(--pl)';
+        indicator.textContent=`💜 ${esc(roleLabel)} — ${esc(childName)}s nätverk`;
+    }else if(isParent){
         nav.innerHTML=`
             <div class="ni on" data-p="moodis"><svg viewBox="0 0 24 24"><path d="M11.99 2C6.47 2 2 6.48 2 12s4.47 10 9.99 10C17.52 22 22 17.52 22 12S17.52 2 11.99 2zM12 20c-4.42 0-8-3.58-8-8s3.58-8 8-8 8 3.58 8 8-3.58 8-8 8zm3.5-9c.83 0 1.5-.67 1.5-1.5S16.33 8 15.5 8 14 8.67 14 9.5s.67 1.5 1.5 1.5zm-7 0c.83 0 1.5-.67 1.5-1.5S9.33 8 8.5 8 7 8.67 7 9.5 7.67 11 8.5 11zm3.5 6.5c2.33 0 4.31-1.46 5.11-3.5H6.89c.8 2.04 2.78 3.5 5.11 3.5z"/></svg>Moodis</div>
             <div class="ni" data-p="insikter"><svg viewBox="0 0 24 24"><path d="M5 9.2h3V19H5V9.2zM10.6 5h2.8v14h-2.8V5zm5.6 8H19v6h-2.8v-6z"/></svg>Statistik</div>
@@ -3445,6 +3456,7 @@ function showQuizResults(){
 function renderMoodis(){
     if(_quiz.active){renderQuiz();return}
     const d=ld();
+    if(d.role==='network'){renderMoodisNetwork();return}
     const isParent=d.role==='parent'||(d.familyProfiles&&d.familyProfiles.length>0);
     if(isParent){renderMoodisParent();return}
 
@@ -3489,6 +3501,12 @@ function renderMoodis(){
         // Honesty nudge — only at start
         if(!todayCheckins.length&&step==='mood'){
             html+=`<div style="text-align:center;font-size:.72rem;color:var(--t2);margin:8px 0 12px">💜 Moodis växer mest när du berättar hur du verkligen mår</div>`;
+            // Trust network message for children
+            const parentData=getFullChildData&&PARENT_KEY?ld():null;
+            const networkSize=(parentData?.childNetwork||{})[d.networkChildId||'']?.length||0;
+            if(networkSize>=1){
+                html+=`<div style="text-align:center;font-size:.75rem;color:var(--pl);margin-bottom:8px">💜 Många bryr sig om dig</div>`;
+            }
         }
 
         if(step==='mood'){
@@ -4098,6 +4116,35 @@ function renderFamily(){
             <div id="invite-code-area"></div>
             <button class="btn ba" onclick="shareChildInvite()" style="margin-top:8px">Dela inbjudningslänk till barnet</button>
         </div>`;
+
+        // Network invites per child
+        html+=`<div class="cd"><div class="ct">💜 Trygghetsnätverk</div>
+            <p style="font-size:.78rem;color:var(--t2);margin-bottom:12px;line-height:1.5">Bjud in familj och släkt att lära känna dina barn bättre. De får göra quiz och bygga sin förståelse — ju fler som förstår, desto tryggare barn.</p>`;
+        d.familyProfiles.forEach(fp=>{
+            const emoji=childEmoji(fp);
+            const network=(d.childNetwork||{})[fp.id]||[];
+            html+=`<div style="background:rgba(108,92,231,.06);border-radius:12px;padding:14px;margin-bottom:10px">
+                <div style="display:flex;align-items:center;gap:8px;margin-bottom:10px">
+                    <span style="font-size:1.2rem">${emoji}</span>
+                    <span style="font-weight:600;font-size:.88rem">${esc(fp.name)}s trygghetsnätverk</span>
+                </div>`;
+            if(network.length){
+                network.forEach(n=>{
+                    const roleEmoji=n.role==='mamma'?'👩':n.role==='pappa'?'👨':n.role==='mormor'||n.role==='farmor'?'👵':n.role==='morfar'||n.role==='farfar'?'👴':'👤';
+                    const quizPct=n.quizPct!==undefined?n.quizPct+'%':'—';
+                    const col=n.quizPct>=70?'var(--ok)':n.quizPct>=40?'var(--w)':'var(--t2)';
+                    html+=`<div style="display:flex;align-items:center;gap:8px;padding:6px 0;font-size:.82rem">
+                        <span>${roleEmoji}</span><span style="flex:1">${esc(n.name)} <span style="color:var(--t2);font-size:.72rem">${esc(n.role)}</span></span>
+                        <span style="font-weight:600;color:${col}">${quizPct}</span>
+                    </div>`;
+                });
+            }else{
+                html+=`<div style="font-size:.78rem;color:var(--t2);text-align:center;padding:4px 0">Ingen inbjuden ännu</div>`;
+            }
+            html+=`<button class="btn ba" onclick="shareNetworkInvite('${esc(fp.id)}','${esc(fp.name)}')" style="margin-top:8px;width:100%;font-size:.82rem;padding:10px">Bjud in till ${esc(fp.name)}s nätverk</button>
+            </div>`;
+        });
+        html+=`</div>`;
     }
 
     // Settings section (always shown)
@@ -5326,6 +5373,168 @@ async function shareChildInvite(){
     }
 }
 
+// ===== NETWORK INVITE =====
+async function shareNetworkInvite(childId,childName){
+    const d=ld();
+    // Generate a network code: childId + familyId encoded
+    const networkCode=btoa(JSON.stringify({childId,childName,familyId:d.familyId,adminName:d.userName})).replace(/=/g,'');
+    const url=window.location.origin+window.location.pathname+'?network='+encodeURIComponent(networkCode);
+    const msg=`Hej! Jag vill att du ska lära känna ${childName} bättre genom Moodly. Du får göra ett quiz för att testa hur väl du förstår ${childName} — och bygga ert trygghetsnätverk. Klicka här:`;
+    if(navigator.share){
+        navigator.share({title:`Gå med i ${childName}s trygghetsnätverk`,text:msg,url}).catch(()=>{});
+    }else{
+        navigator.clipboard.writeText(msg+' '+url).then(()=>toast('Länk kopierad!')).catch(()=>toast('Kunde inte kopiera'));
+    }
+}
+
+// Detect network join from URL
+function detectNetworkJoin(){
+    const params=new URLSearchParams(window.location.search);
+    const code=params.get('network');
+    if(!code)return false;
+    try{
+        const data=JSON.parse(atob(code));
+        localStorage.setItem('moodly_network_join',JSON.stringify(data));
+        // Update auth screen
+        const badge=document.getElementById('auth-badge');
+        if(badge){badge.style.display='inline-flex';badge.className='auth-child-badge';badge.innerHTML='💜 Du har blivit inbjuden!';}
+        const titleEl=document.getElementById('auth-title');
+        if(titleEl)titleEl.textContent='Gå med i trygghets\u00ADnätverket!';
+        const descEl=document.getElementById('auth-desc');
+        if(descEl)descEl.textContent=`${data.adminName||'En förälder'} bjöd in dig att lära känna ${data.childName} bättre genom Moodly.`;
+        const emojiEl=document.getElementById('auth-emoji');
+        if(emojiEl)emojiEl.textContent='💜';
+        return true;
+    }catch(e){return false}
+}
+
+// Process network join after login
+async function processNetworkJoin(){
+    const raw=localStorage.getItem('moodly_network_join');
+    if(!raw)return;
+    try{
+        const data=JSON.parse(raw);
+        const d=ld();
+        d.role='network';
+        d.networkChildId=data.childId;
+        d.networkChildName=data.childName;
+        d.networkFamilyId=data.familyId;
+        d.networkAdminName=data.adminName;
+        if(!d.familyRole)d.familyRole='';
+        sv(d);
+        localStorage.removeItem('moodly_network_join');
+        toast('Du gick med i '+data.childName+'s trygghetsnätverk!');
+    }catch(e){}
+}
+
+// ===== NETWORK MEMBER VIEW (role=network) =====
+function renderMoodisNetwork(){
+    const d=ld();
+    const el=document.getElementById('pg-moodis');
+    const childName=d.networkChildName||'barnet';
+
+    let html='<div style="padding:12px 0">';
+    html+=`<div style="text-align:center;margin-bottom:16px">
+        <div style="font-size:2rem;margin-bottom:6px">💜</div>
+        <div style="font-size:1rem;font-weight:700">${esc(childName)}s trygghetsnätverk</div>
+        <div style="font-size:.78rem;color:var(--t2);margin-top:4px">Du hjälper ${esc(childName)} genom att förstå hen bättre</div>
+    </div>`;
+
+    // Role selector if not set
+    if(!d.familyRole){
+        html+=`<div class="cd" style="text-align:center;margin-bottom:16px">
+            <div style="font-size:.88rem;font-weight:600;margin-bottom:10px">Vem är du för ${esc(childName)}?</div>
+            <div style="display:flex;flex-wrap:wrap;gap:8px;justify-content:center">
+                <button class="btn bs" style="padding:8px 14px" onclick="setNetworkRole('mormor')">👵 Mormor</button>
+                <button class="btn bs" style="padding:8px 14px" onclick="setNetworkRole('morfar')">👴 Morfar</button>
+                <button class="btn bs" style="padding:8px 14px" onclick="setNetworkRole('farmor')">👵 Farmor</button>
+                <button class="btn bs" style="padding:8px 14px" onclick="setNetworkRole('farfar')">👴 Farfar</button>
+                <button class="btn bs" style="padding:8px 14px" onclick="setNetworkRole('mamma')">👩 Mamma</button>
+                <button class="btn bs" style="padding:8px 14px" onclick="setNetworkRole('pappa')">👨 Pappa</button>
+                <button class="btn bs" style="padding:8px 14px" onclick="setNetworkRole('annan')">👤 Annan</button>
+            </div>
+        </div>`;
+    }
+
+    // Check if we have child data (via Supabase family membership)
+    // For now, show quiz prompt if we have stored insights
+    const quizDone=d._quizDone||{};
+    const today=new Date().toDateString();
+    const doneKey=(d.networkChildId||'')+'_'+today;
+    const quizResult=quizDone[doneKey];
+
+    if(quizResult){
+        const pctCol=quizResult.pct>=70?'var(--ok)':quizResult.pct>=40?'var(--w)':'var(--bad)';
+        html+=`<div style="background:linear-gradient(135deg,rgba(108,92,231,.08),rgba(162,155,254,.05));border-radius:14px;padding:18px;text-align:center;margin-bottom:16px">
+            <div style="font-size:.7rem;color:var(--a);text-transform:uppercase;letter-spacing:.05em;margin-bottom:6px">🧩 Din förståelse för ${esc(childName)}</div>
+            <div style="font-size:2.2rem;font-weight:800;color:${pctCol}">${quizResult.pct}%</div>
+            <div style="font-size:.78rem;color:var(--t2);margin:4px 0">${quizResult.correct}/${quizResult.total} rätt</div>
+        </div>`;
+
+        // Tips
+        if(quizResult.pct<70){
+            html+=`<div style="background:rgba(108,92,231,.08);border-radius:12px;padding:14px;margin-bottom:16px;font-size:.82rem;color:var(--t2);line-height:1.5">
+                💡 Prata med ${esc(childName)} om svaren du missade — det stärker er relation! Kom tillbaka imorgon för ett nytt quiz.</div>`;
+        }else{
+            html+=`<div style="background:rgba(0,184,148,.08);border-radius:12px;padding:14px;margin-bottom:16px;font-size:.82rem;color:var(--ok);line-height:1.5">
+                🌟 Bra koll! Du har stark förståelse för ${esc(childName)}. Fortsätt göra quiz för att hålla dig uppdaterad!</div>`;
+        }
+    }else{
+        html+=`<div style="background:linear-gradient(135deg,rgba(108,92,231,.12),rgba(162,155,254,.08));border:1px solid rgba(108,92,231,.25);border-radius:16px;padding:24px;text-align:center;margin-bottom:16px">
+            <div style="font-size:2rem;margin-bottom:10px">🧩</div>
+            <div style="font-size:1.05rem;font-weight:700;color:var(--t);margin-bottom:6px">Hur väl känner du ${esc(childName)}?</div>
+            <div style="font-size:.82rem;color:var(--t2);margin-bottom:16px">${esc(childName)} har pratat med Moodis — testa om du kan matcha svaren!</div>
+            <button class="btn ba" style="padding:12px 28px;font-size:.92rem;width:auto" onclick="startNetworkQuiz()">Starta quiz →</button>
+        </div>`;
+    }
+
+    // Quiz history
+    const history=(d._quizHistory||[]).filter(h=>h.childKey===d.networkChildId);
+    if(history.length>1){
+        html+=`<div class="cd"><div class="ct">📈 Din utveckling</div>`;
+        history.slice(-5).reverse().forEach(h=>{
+            const col=h.pct>=70?'var(--ok)':h.pct>=40?'var(--w)':'var(--bad)';
+            html+=`<div style="display:flex;justify-content:space-between;padding:8px 0;border-bottom:1px solid rgba(255,255,255,.04);font-size:.82rem">
+                <span style="color:var(--t2)">${h.date}</span>
+                <span style="font-weight:700;color:${col}">${h.pct}%</span>
+            </div>`;
+        });
+        html+=`</div>`;
+    }
+
+    html+='</div>';
+    el.innerHTML=html;
+}
+
+function setNetworkRole(role){
+    const d=ld();d.familyRole=role;sv(d);
+    renderMoodis();
+}
+
+async function startNetworkQuiz(){
+    // Try to load child data from family via Supabase
+    const d=ld();
+    if(!d.networkChildId){toast('Inget barn kopplat');return}
+    // Try local first (if admin shared data)
+    const cd=getFullChildData('moodly_child_'+d.networkChildId);
+    if(cd){
+        startParentQuiz('moodly_child_'+d.networkChildId,d.networkChildName||'barnet');
+        return;
+    }
+    // If no local data, check if we're in same family via Supabase
+    if(sbUser&&d.networkFamilyId){
+        try{
+            // Try to fetch child's insights via family membership
+            const{data}=await sb.from('profiles').select('moodis_data').eq('family_id',d.networkFamilyId).neq('id',sbUser.id);
+            if(data&&data.length){
+                // Found child data remotely — for now show message
+                toast('Quiz laddas...');
+            }
+        }catch(e){}
+    }
+    toast('Väntar på data — barnet behöver prata med Moodis först');
+}
+
 // Register service worker
 if('serviceWorker' in navigator){
     navigator.serviceWorker.register('sw.js').then(reg=>{
@@ -5381,6 +5590,7 @@ document.getElementById('install-close')?.addEventListener('click',()=>{
 // ===== INIT =====
 buildKommunDatalist();
 detectChildJoin();
+detectNetworkJoin();
 
 // ===== SMART SUMMARY =====
 function generateSmartSummary(cd,childName){
