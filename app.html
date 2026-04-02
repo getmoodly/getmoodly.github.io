@@ -4081,6 +4081,26 @@ function renderFamily(){
     const d=ld();
     let html='';
 
+    // Network member profile — minimal
+    if(d.role==='network'){
+        const roleLabel=d.familyRole?d.familyRole.charAt(0).toUpperCase()+d.familyRole.slice(1):'Familj';
+        const roleEmoji=d.familyRole==='mamma'?'👩':d.familyRole==='pappa'?'👨':d.familyRole==='mormor'||d.familyRole==='farmor'?'👵':d.familyRole==='morfar'||d.familyRole==='farfar'?'👴':'👤';
+        html+=`<div style="text-align:center;padding:20px 0">
+            <div style="font-size:3rem;margin-bottom:8px">${roleEmoji}</div>
+            <h3 style="font-size:1.1rem;margin-bottom:4px">${esc(d.userName)||'Nätverksmedlem'}</h3>
+            <div style="font-size:.82rem;color:var(--t2)">${roleLabel} i ${esc(d.networkChildName||'barnets')} trygghetsnätverk</div>
+        </div>`;
+        html+=`<div class="cd"><div class="ct">👤 Profil</div>
+            <div class="sett-row"><span>Ditt namn</span><input class="sett-input" id="sett-username" value="${esc(d.userName||'')}"></div>
+            <button class="btn bp" onclick="saveProfile()" style="margin-top:10px">Spara</button></div>`;
+        if(sbUser){
+            html+=`<div class="cd"><button class="btn bs" onclick="signOut()">Logga ut</button></div>`;
+        }
+        html+=`<div class="cd"><div class="ct">ℹ️ Om</div><p style="font-size:.76rem;color:var(--t2);line-height:1.5">Moodly v5.1 — Moodis Edition</p></div>`;
+        document.getElementById('family-content').innerHTML=html;
+        return;
+    }
+
     // Child profile — simplified view
     if(d.role==='child'||APK!==PARENT_KEY){
         const avatarObj=AVATARS[d.selectedAvatar]||AVATARS.default;
@@ -5480,6 +5500,8 @@ async function processNetworkJoin(){
         const data=JSON.parse(raw);
         const d=ld();
         d.role='network';
+        d.firstVisit=false;
+        d.onboarded=new Date().toISOString();
         d.networkChildId=data.childId;
         d.networkChildName=data.childName;
         d.networkFamilyId=data.familyId;
@@ -5797,6 +5819,15 @@ function initApp(){
     const urlParams=new URLSearchParams(window.location.search);
     const joinCode=urlParams.get('join');
     if(joinCode)localStorage.setItem('moodly_join_code',joinCode);
+
+    // Network members skip onboarding entirely
+    if(d0.role==='network'){
+        document.getElementById('ob').classList.add('h');
+        document.getElementById('app').style.display='';
+        buildNav();
+        go('moodis');
+        return;
+    }
 
     buildNav();
     if(!d0.firstVisit){
