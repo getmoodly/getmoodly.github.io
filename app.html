@@ -677,9 +677,14 @@
         <div id="ob-children-list" style="width:100%;max-width:320px;margin-bottom:12px"></div>
         <div style="width:100%;max-width:320px;margin-bottom:8px">
             <input type="text" id="ob-child-name" placeholder="Barnets namn" maxlength="30" style="width:100%;padding:12px;background:rgba(255,255,255,.06);border:1px solid rgba(255,255,255,.12);border-radius:var(--rs);color:var(--t);font-size:.95rem;text-align:center;outline:none;margin-bottom:8px">
-            <select id="ob-child-age" style="width:100%;padding:10px;background:rgba(255,255,255,.06);border:1px solid rgba(255,255,255,.12);border-radius:var(--rs);color:var(--t);font-size:.88rem;outline:none;margin-bottom:10px;text-align:center">
-                <option value="" disabled selected>Välj åldersgrupp</option><option value="6-9">6–9 år</option><option value="10-13">10–13 år</option><option value="14-17">14–17 år</option>
-            </select>
+            <div style="display:flex;gap:8px;margin-bottom:10px">
+                <select id="ob-child-age" style="flex:1;padding:10px;background:rgba(255,255,255,.06);border:1px solid rgba(255,255,255,.12);border-radius:var(--rs);color:var(--t);font-size:.88rem;outline:none;text-align:center">
+                    <option value="" disabled selected>Ålder</option><option value="6-9">6–9 år</option><option value="10-13">10–13 år</option><option value="14-17">14–17 år</option>
+                </select>
+                <select id="ob-child-gender" style="flex:1;padding:10px;background:rgba(255,255,255,.06);border:1px solid rgba(255,255,255,.12);border-radius:var(--rs);color:var(--t);font-size:.88rem;outline:none;text-align:center">
+                    <option value="" disabled selected>Kön</option><option value="flicka">Flicka</option><option value="pojke">Pojke</option><option value="annat">Annat</option>
+                </select>
+            </div>
             <button class="btn ba" onclick="obAddChild()" style="width:100%">+ Lägg till barn</button>
         </div>
         <button class="btn bp" onclick="obNext(4)" id="ob3-next" disabled style="max-width:280px;margin-top:12px">Nästa</button>
@@ -689,23 +694,20 @@
     <div class="ob-step" id="ob4">
         <div style="font-size:2.5rem;margin-bottom:10px">📍</div>
         <h1 id="ob4-title">Platser</h1>
-        <p id="ob4-desc">Vilka platser ska ditt barn checka in på?</p>
+        <p id="ob4-desc">Välj platstyp och döp den</p>
         <div id="ob4-child-tabs" style="display:flex;gap:6px;margin-bottom:12px;flex-wrap:wrap;justify-content:center"></div>
         <div id="ob4-places-list" style="width:100%;margin-bottom:12px"></div>
-        <div class="quick-places" id="ob-quick-places">
-            <div class="quick-place" data-type="school" onclick="obQuickAddPlace('school','Skola')"><div class="qp-icon">🏫</div><div class="qp-label">Skola</div></div>
-            <div class="quick-place" data-type="sport" onclick="obQuickAddPlace('sport','Idrott')"><div class="qp-icon">⚽</div><div class="qp-label">Idrott</div></div>
-            <div class="quick-place" data-type="home" onclick="obQuickAddPlace('home','Hem')"><div class="qp-icon">🏠</div><div class="qp-label">Hem</div></div>
+        <div style="display:flex;flex-wrap:wrap;gap:8px;justify-content:center;margin-bottom:10px" id="ob-place-type-btns">
+            <button class="btn bs place-type-btn" style="padding:8px 14px;font-size:.85rem" onclick="obSelectPlaceType('school','Skola',this)">🏫 Skola</button>
+            <button class="btn bs place-type-btn" style="padding:8px 14px;font-size:.85rem" onclick="obSelectPlaceType('sport','Idrott',this)">⚽ Idrott</button>
+            <button class="btn bs place-type-btn" style="padding:8px 14px;font-size:.85rem" onclick="obSelectPlaceType('home','Hem',this)">🏠 Hem</button>
+            <button class="btn bs place-type-btn" style="padding:8px 14px;font-size:.85rem" onclick="obSelectPlaceType('afterschool','Fritids',this)">🏫 Fritids</button>
+            <button class="btn bs place-type-btn" style="padding:8px 14px;font-size:.85rem" onclick="obSelectPlaceType('hobby','Hobby',this)">🎨 Hobby</button>
+            <button class="btn bs place-type-btn" style="padding:8px 14px;font-size:.85rem" onclick="obSelectPlaceType('other','Annat',this)">📍 Annat</button>
         </div>
-        <div class="adv-toggle" id="ob-adv-toggle" onclick="document.getElementById('ob-adv-section').classList.toggle('open');this.textContent=this.textContent.includes('Sök')?'Dölj sökning':'Sök specifik plats'">Sök specifik plats</div>
-        <div class="adv-section" id="ob-adv-section">
-            <div class="ac-wrap" style="width:100%">
-                <input type="text" id="ob-place-name" placeholder="Sök plats (t.ex. Ytterbyskolan)" maxlength="80" autocomplete="off" style="width:100%;padding:14px;background:rgba(255,255,255,.06);border:1px solid rgba(255,255,255,.12);border-radius:var(--rs);color:var(--t);font-size:1.1rem;text-align:center;outline:none">
-                <div class="ac-dropdown" id="ac-drop-ob"></div>
-            </div>
-            <div id="ob-place-addr" class="place-address" style="margin-bottom:8px;text-align:center"></div>
-            <div class="pt-grid" id="ob-place-types" style="margin-bottom:12px"></div>
-            <button class="btn ba" onclick="obAddPlace()" style="margin-bottom:12px">+ Lägg till plats</button>
+        <div id="ob-place-name-section" style="display:none;width:100%;max-width:320px;margin-bottom:12px">
+            <input type="text" id="ob-place-name" placeholder="Döp platsen" maxlength="80" style="width:100%;padding:12px;background:rgba(255,255,255,.06);border:1px solid rgba(255,255,255,.12);border-radius:var(--rs);color:var(--t);font-size:.95rem;text-align:center;outline:none;margin-bottom:8px">
+            <button class="btn ba" onclick="obConfirmPlace()" style="width:100%">Lägg till</button>
         </div>
         <button class="btn bp" onclick="obNextChild()" id="ob4-next" style="margin-top:8px">Nästa barn</button>
         <div id="ob4-skip" style="margin-top:6px"></div>
@@ -2448,30 +2450,54 @@ function obAddChild(){
     if(!name){toast('Ange barnets namn');return}
     const ageGroup=document.getElementById('ob-child-age').value;
     if(!ageGroup){toast('Välj åldersgrupp');return}
-    obChildren.push({name,ageGroup,places:[]});
+    const gender=document.getElementById('ob-child-gender').value||'';
+    obChildren.push({name,ageGroup,gender,places:[]});
     nameEl.value='';
+    document.getElementById('ob-child-age').selectedIndex=0;
+    document.getElementById('ob-child-gender').selectedIndex=0;
     renderObChildren();
     toast(name+' tillagd!');
 }
 
 function obRemoveChild(i){if(obChildren.length<=1){toast('Du måste ha minst ett barn');return}obChildren.splice(i,1);if(obActiveChild>=obChildren.length)obActiveChild=obChildren.length-1;renderObChildren()}
 
+let _obPlaceType='';
+function obSelectPlaceType(type,defaultName,btn){
+    _obPlaceType=type;
+    const section=document.getElementById('ob-place-name-section');
+    const input=document.getElementById('ob-place-name');
+    if(section)section.style.display='block';
+    if(input){input.value=defaultName;input.placeholder='T.ex. '+defaultName;input.focus();input.select()}
+    document.querySelectorAll('#ob-place-type-btns .place-type-btn').forEach(b=>{b.style.background='';b.style.color=''});
+    if(btn){btn.style.background='var(--p)';btn.style.color='#fff'}
+}
+function obConfirmPlace(){
+    const child=obChildren[obActiveChild];if(!child)return;
+    const input=document.getElementById('ob-place-name');
+    const name=(input?.value||'').trim();
+    if(!name){toast('Ange ett namn');return}
+    if(!_obPlaceType){toast('Välj platstyp först');return}
+    child.places.push({name,type:_obPlaceType,osmId:'',address:'',lat:null,lng:null});
+    if(input)input.value='';
+    document.getElementById('ob-place-name-section').style.display='none';
+    document.querySelectorAll('#ob-place-type-btns .place-type-btn').forEach(b=>{b.style.background='';b.style.color=''});
+    _obPlaceType='';
+    renderOb4Places();renderOb4();
+    toast(PT[child.places[child.places.length-1].type]?.icon+' '+name+' tillagd!');
+}
+
 function renderOb4(){
     const child=obChildren[obActiveChild];if(!child)return;
     document.getElementById('ob4-title').textContent='Platser för '+child.name;
-    document.getElementById('ob4-desc').textContent='Var befinner sig '+child.name+'? Lägg till skola, idrott, hem och andra platser.';
+    document.getElementById('ob4-desc').textContent='Välj platstyp och döp den';
     document.getElementById('ob4-child-tabs').innerHTML=obChildren.map((c,i)=>
-        `<div style="padding:6px 14px;border-radius:16px;font-size:.78rem;font-weight:600;cursor:pointer;${i===obActiveChild?'background:var(--p);color:#fff':'background:rgba(255,255,255,.06);color:var(--t2)'}" onclick="switchObChild(${i})">${c.name}${c.places.length?' ('+c.places.length+')':''}</div>`
+        `<div style="padding:6px 14px;border-radius:16px;font-size:.78rem;font-weight:600;cursor:pointer;${i===obActiveChild?'background:var(--p);color:#fff':'background:rgba(255,255,255,.06);color:var(--t2)'}" onclick="switchObChild(${i})">${esc(c.name)}${c.places.length?' ('+c.places.length+')':''}</div>`
     ).join('');
     renderOb4Places();
     const isLast=obActiveChild>=obChildren.length-1;
     document.getElementById('ob4-next').textContent=isLast?'Klar':'Nästa barn →';
     document.getElementById('ob4-skip').innerHTML=child.places.length===0?
-        `<button class="btn" onclick="obNextChild()" style="background:none;color:var(--t2);font-size:.78rem">Hoppa över ${child.name}</button>`:'';
-    document.getElementById('ob-place-name').value='';
-    document.getElementById('ob-place-addr').textContent='';
-    selectedPlace=null;
-    updateQuickPlaceButtons();
+        `<button class="btn" onclick="obNextChild()" style="background:none;color:var(--t2);font-size:.78rem">Hoppa över ${esc(child.name)}</button>`:'';
 }
 
 function renderOb4Places(){
@@ -2484,19 +2510,10 @@ function renderOb4Places(){
 }
 
 function switchObChild(i){
-    obActiveChild=i;selectedPlaceType='school';selectedPlace=null;
-    renderPlaceTypeGrid('ob-place-types');
-    setupPlaceSearch('ob-place-name','ac-drop-ob','ob-place-addr');
+    obActiveChild=i;_obPlaceType='';
+    document.getElementById('ob-place-name-section').style.display='none';
+    document.querySelectorAll('#ob-place-type-btns .place-type-btn').forEach(b=>{b.style.background='';b.style.color=''});
     renderOb4();
-}
-
-function obQuickAddPlace(type,defaultName){
-    const child=obChildren[obActiveChild];if(!child)return;
-    const count=child.places.filter(p=>p.type===type).length;
-    const name=count?defaultName+' '+(count+1):defaultName;
-    child.places.push({name,type,osmId:'',address:'',lat:null,lng:null});
-    renderOb4Places();renderOb4();updateQuickPlaceButtons();
-    toast(PT[type]?.icon+' '+name+' tillagd!');
 }
 
 function updateQuickPlaceButtons(){
@@ -2536,9 +2553,8 @@ function obRemovePlace(i){
 
 function obNextChild(){
     if(obActiveChild<obChildren.length-1){
-        obActiveChild++;selectedPlaceType='school';selectedPlace=null;
-        renderPlaceTypeGrid('ob-place-types');
-        setupPlaceSearch('ob-place-name','ac-drop-ob','ob-place-addr');
+        obActiveChild++;_obPlaceType='';
+        document.getElementById('ob-place-name-section').style.display='none';
         renderOb4();
     }else{obNext(5)}
 }
@@ -2561,7 +2577,7 @@ function finishOnboarding(){
         const id='child_'+Date.now()+'_'+Math.random().toString(36).slice(2,4);
         const storageKey='moodly_child_'+id;
         const childPlaces=child.places.map(p=>({id:'p_'+Date.now()+'_'+Math.random().toString(36).slice(2,6),name:p.name,type:p.type,osmId:p.osmId||'',address:p.address||'',lat:p.lat||null,lng:p.lng||null}));
-        d.familyProfiles.push({id,name:child.name,ageGroup:child.ageGroup,storageKey});
+        d.familyProfiles.push({id,name:child.name,ageGroup:child.ageGroup,gender:child.gender||'',storageKey});
         const childData={places:childPlaces,placeCheckins:[],benchmarks:[],checkins:[],micro:[],xp:0,level:1,points:0,streak:0,firstVisit:false,baseline:null,userName:child.name,aiName:'Luna',personality:'warm',onboarded:new Date().toISOString(),alertsSeen:[],familyId:d.familyId,role:'child',familyProfiles:[],parentKey:PARENT_KEY,unlockedAvatars:['default'],selectedAvatar:'default',dailyRewardClaimed:null,kommun:d.kommun};
         if(sok)localStorage.setItem(storageKey,JSON.stringify(childData));
         childPlaces.forEach(p=>syncPlace(p));
