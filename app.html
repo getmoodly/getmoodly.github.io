@@ -759,17 +759,7 @@
     </div>
 
     <!-- MOODIS -->
-    <div class="pg" id="pg-moodis">
-        <div style="text-align:center;padding:20px 0 8px">
-            <h2 style="font-size:1.2rem;font-weight:800;margin-bottom:4px;letter-spacing:-.01em" id="moodis-title">Moodis</h2>
-            <p style="font-size:.8rem;color:var(--t2);margin-bottom:16px" id="moodis-subtitle">Din kompis som växer med dig</p>
-        </div>
-        <div id="moodis-creature-area"></div>
-        <div class="moodis-msg" id="moodis-msg"></div>
-        <div class="moodis-progress" id="moodis-progress"></div>
-        <div id="moodis-challenge"></div>
-        <div id="moodis-shop"></div>
-    </div>
+    <div class="pg" id="pg-moodis"></div>
 
     <!-- RESULT (shown after conversation) -->
     <div class="pg" id="pg-result">
@@ -1406,7 +1396,7 @@ function checkInPlace(placeId,score){
     syncCheckin(placeId,score,comment,new Date().toISOString(),ci?.tags||[]);
     if(pts>0)syncProfile(d);
     renderHome();
-    if(allDoneNow&&!wasAllDone){showCelebration('Alla platser klara! 🎉 +'+pts+' poäng');setTimeout(()=>{go(d.role==='parent'?'insikter':'moodis')},2500)}
+    if(allDoneNow&&!wasAllDone){if(d.role==='parent'){showCelebration('Alla platser klara! 🎉 +'+pts+' poäng');setTimeout(()=>go('insikter'),2500)}}
     else if(pts>5){toast(`+${pts} poäng!`)}
 }
 
@@ -2559,7 +2549,7 @@ function finishOnboarding(){
     syncProfile(d);
     document.getElementById('ob').classList.add('h');
     document.getElementById('app').style.display='';
-    go('home');
+    go(d.role==='parent'?'home':'moodis');
     obChildren=[];
 }
 
@@ -2575,13 +2565,14 @@ function go(p){
     window.scrollTo(0,0);
 }
 
-// ===== MOODIS COMPANION =====
+
+// ===== MOODIS COMPANION — CONVERSATIONAL CHECK-IN =====
 const MOODIS_STAGES=[
-    {id:'egg',label:'Ägg',minStreak:0,size:70,emoji:'🥚'},
-    {id:'small',label:'Liten',minStreak:3,size:75,emoji:'🐣'},
-    {id:'medium',label:'Medium',minStreak:7,size:90,emoji:'🐥'},
-    {id:'large',label:'Stor',minStreak:14,size:105,emoji:'🐤'},
-    {id:'special',label:'Stjärna',minStreak:30,size:110,emoji:'⭐'}
+    {id:'egg',label:'Ägg',minStreak:0,emoji:'🥚'},
+    {id:'small',label:'Liten',minStreak:3,emoji:'🐣'},
+    {id:'medium',label:'Medium',minStreak:7,emoji:'🐥'},
+    {id:'large',label:'Stor',minStreak:14,emoji:'🐤'},
+    {id:'special',label:'Stjärna',minStreak:30,emoji:'⭐'}
 ];
 const MOODIS_COLORS={purple:'#6C5CE7',blue:'#0984E3',green:'#00B894',pink:'#FD79A8',orange:'#E17055'};
 const MOODIS_HATS=[
@@ -2592,85 +2583,309 @@ const MOODIS_HATS=[
     {id:'star_hat',emoji:'💫',label:'Stjärna',cost:120},
     {id:'bow',emoji:'🎀',label:'Rosett',cost:60}
 ];
-const DAILY_CHALLENGES=[
-    {id:'c1',text:'Ge en kompis en komplimang idag',pts:10,type:'action'},
-    {id:'c2',text:'Om din dag var en färg — vilken?',pts:5,type:'choice',options:['🔴 Röd','🔵 Blå','🟡 Gul','🟢 Grön','🟣 Lila','🟠 Orange']},
-    {id:'c3',text:'Vad var bäst med din dag?',pts:10,type:'choice',options:['Kompisar','Maten','Något roligt','Lärde mig nåt','Fick vila','Annat']},
-    {id:'c4',text:'Gör något snällt för någon idag',pts:10,type:'action'},
-    {id:'c5',text:'Hur känns din kropp just nu?',pts:5,type:'choice',options:['😊 Pigg','😴 Trött','💪 Stark','🤒 Sjuk','😌 Lugn','⚡ Energisk']},
-    {id:'c6',text:'Ta tre djupa andetag och känn efter',pts:5,type:'action'},
-    {id:'c7',text:'Tänk på något du är tacksam för',pts:10,type:'action'},
-    {id:'c8',text:'Om du kunde ha en superkraft — vilken?',pts:5,type:'choice',options:['🦸 Flyga','🦸 Osynlig','🦸 Supersnabb','🦸 Superstark','🦸 Läsa tankar','🦸 Tidsresa']},
-    {id:'c9',text:'Sjung eller nynna en låt du gillar',pts:5,type:'action'},
-    {id:'c10',text:'Vad gör dig glad på riktigt?',pts:10,type:'choice',options:['Familj','Kompisar','Idrott','Spel','Djur','Musik','Natur','Mat']},
-    {id:'c11',text:'Berätta något roligt som hänt',pts:10,type:'action'},
-    {id:'c12',text:'Vilken emoji beskriver din vecka?',pts:5,type:'choice',options:['😄','😊','😐','😕','😢','🤩','😴','🔥']},
-    {id:'c13',text:'Gå ut och titta på himlen i 1 minut',pts:5,type:'action'},
-    {id:'c14',text:'Skriv ner en sak du vill göra i helgen',pts:10,type:'action'},
-    {id:'c15',text:'Om du var ett djur — vilket?',pts:5,type:'choice',options:['🐶 Hund','🐱 Katt','🦊 Räv','🐬 Delfin','🦅 Örn','🐉 Drake']},
-    {id:'c16',text:'Le mot dig själv i spegeln',pts:5,type:'action'},
-    {id:'c17',text:'Vad är din favoritplats i hela världen?',pts:10,type:'action'},
-    {id:'c18',text:'Vilken årstid passar dig bäst?',pts:5,type:'choice',options:['🌸 Vår','☀️ Sommar','🍂 Höst','❄️ Vinter']},
-    {id:'c19',text:'Gör 10 hopp på stället!',pts:5,type:'action'},
-    {id:'c20',text:'Tänk på tre saker som gick bra idag',pts:10,type:'action'}
+
+// Mood-adaptive follow-up questions — options change based on mood score
+const FOLLOWUPS={
+    why:{
+        question:s=>s>=4?'Vad var det bästa?':'Vad berodde det på?',
+        options:{
+            school:{
+                high:['😊 Kompisar','📚 Rolig lektion','⭐ Lyckades med nåt','🎯 Bra betyg','🎉 Kul rast','👩‍🏫 Bra lärare'],
+                mid:['📖 Vanlig dag','😴 Lite trött','📝 Prov/läxor','👫 Kompisar','🕐 Lång dag'],
+                low:['😔 Kompisar','😰 Stressad','📝 Prov/läxor','😴 Trött','😒 Tråkigt','😢 Bråk','😶 Ensam','👩‍🏫 Lärare']
+            },
+            sport:{
+                high:['🏆 Vann','💪 Bra träning','😊 Kompisar','⭐ Lyckades','🎯 Mål/poäng','🎉 Roligt'],
+                mid:['🏃 Vanlig träning','😴 Trött','👫 Kompisar','⚽ Okej match','👨‍🏫 Tränaren'],
+                low:['😞 Förlorade','🤕 Ont','😴 Trötthet','👨‍🏫 Tränaren','😔 Kompisar','😶 Bänkad','😰 Stressad']
+            },
+            home:{
+                high:['👨‍👩‍👧 Familj','🛋️ Mys','🎮 Lekte','🍕 Bra mat','😌 Lugnt','🐶 Husdjur'],
+                mid:['😐 Vanlig dag','😴 Trött','📝 Läxor','😌 Lugnt','📱 Skärm','😑 Uttråkad'],
+                low:['😢 Bråk','😶 Ensam','😴 Trött','📱 Skärm','📝 Läxor','😔 Syskon','😢 Ledsen']
+            },
+            _default:{
+                high:['😊 Kompisar','🎉 Kul','⭐ Lyckades','😌 Bra dag','🎯 Nöjd','💪 Stark'],
+                mid:['😐 Vanlig dag','😴 Trött','😌 Okej','🤷 Inget speciellt','😑 Lugnt'],
+                low:['😴 Trött','😰 Stressad','😶 Ensam','😢 Ledsen','😠 Bråk','😒 Tråkigt','😟 Orolig']
+            }
+        },
+        pts:3
+    },
+    who:{
+        question:s=>s>=4?'Vilka var du med?':'Var du med någon?',
+        options:{
+            high:['👫 Kompisar','👨‍👩‍👧 Familj','👩‍🏫 Vuxna','🐶 Husdjur','👥 Många'],
+            mid:['👫 Kompisar','👨‍👩‍👧 Familj','👤 Ensam','👩‍🏫 Vuxna'],
+            low:['👤 Ensam','👫 Kompisar','👨‍👩‍👧 Familj','👩‍🏫 Vuxna']
+        },
+        pts:3
+    },
+    body:{
+        question:s=>s>=4?'Hur känns kroppen?':'Hur mår kroppen?',
+        options:{
+            high:['⚡ Energisk','💪 Stark','😌 Avslappnad','🏃 Pigg','😊 Bra'],
+            mid:['😐 Okej','😴 Lite trött','😌 Lugn','🤷 Vet inte'],
+            low:['😴 Trött','🤕 Ont','😵 Slut','😰 Spänd','🤒 Sjuk','😶 Tom']
+        },
+        pts:2
+    }
+};
+
+// Fun questions — unlimited, rotates, always choice-based
+const FUN_QUESTIONS=[
+    {text:'Om din dag var en färg — vilken?',options:['🔴 Röd','🔵 Blå','🟡 Gul','🟢 Grön','🟣 Lila','🟠 Orange']},
+    {text:'Om du kunde ha en superkraft?',options:['🦸 Flyga','👻 Osynlig','⚡ Supersnabb','💪 Superstark','🧠 Läsa tankar','⏰ Tidsresa']},
+    {text:'Vilken emoji är du just nu?',options:['😄','😊','😎','🤩','😴','🥳','💪','🤔']},
+    {text:'Om du var ett djur?',options:['🐶 Hund','🐱 Katt','🦊 Räv','🐬 Delfin','🦅 Örn','🐉 Drake']},
+    {text:'Vilken årstid passar dig bäst?',options:['🌸 Vår','☀️ Sommar','🍂 Höst','❄️ Vinter']},
+    {text:'Vad gör dig gladast?',options:['👨‍👩‍👧 Familj','👫 Kompisar','⚽ Idrott','🎮 Spel','🐶 Djur','🎵 Musik','🌳 Natur','🍕 Mat']},
+    {text:'Vad vill du göra i helgen?',options:['😴 Sova','👫 Träffa kompisar','🎮 Spela','⚽ Idrott','🎬 Film','🌳 Vara ute']},
+    {text:'Vilken superhjälte gillar du mest?',options:['🕷️ Spiderman','🦇 Batman','⚡ Flash','💪 Hulk','🔨 Thor','🌟 Annat']},
+    {text:'Vad är bäst med dig?',options:['😊 Snäll','😂 Rolig','💪 Stark','🧠 Smart','🎨 Kreativ','❤️ Omtänksam']},
+    {text:'Vad skulle du önska dig?',options:['🐶 Husdjur','🎮 Nytt spel','✈️ Resa','👫 Mer tid med kompisar','⏰ Mer fritid','🍕 Favoritmat']},
+    {text:'Vad tycker du om mest i skolan?',options:['👫 Rasterna','📚 Lektioner','🎨 Skapande','⚽ Idrotten','🍕 Maten','👩‍🏫 Läraren']},
+    {text:'Ge en kompis en komplimang idag!',options:['👍 Ska göra det!','✅ Redan gjort!','🤔 Ska tänka på det']},
+    {text:'Ta tre djupa andetag just nu 🧘',options:['😌 Ahh skönt!','💪 Klart!','😊 Mår bättre nu']},
+    {text:'Le mot dig själv! 😊',options:['😁 Haha okej!','😊 Klart!','🤗 Känns bra!']},
+    {text:'Om du fick bestämma middagen?',options:['🍕 Pizza','🌮 Tacos','🍝 Pasta','🍔 Hamburgare','🍣 Sushi','🥞 Pannkakor']},
+    {text:'Vad drömde du om inatt?',options:['🤔 Minns inte','😊 Nåt bra','😱 Nåt läskigt','🤪 Nåt konstigt','😴 Sov för gott']},
+    {text:'Hur mycket energi har du just nu?',options:['🔋 100%','🔋 75%','🔋 50%','🔋 25%','🪫 Nästan slut']},
+    {text:'Vad ser du fram emot mest?',options:['🏖️ Sommarlov','🎂 Födelsedag','🎄 Jul','👫 Helgen','⚽ Nästa match','🎮 Speltid']}
 ];
 
+// Moodis conversation state
+let moodisFlow={placeIdx:0,step:'mood',currentScore:null,placesData:[],funIdx:0,todayPts:0};
+
 function getMoodisData(d){
-    if(!d.moodis)d.moodis={stage:'egg',hat:null,color:'purple',ownedHats:[],mood:'neutral'};
+    if(!d.moodis)d.moodis={stage:'egg',hat:null,color:'purple',ownedHats:[],mood:'neutral',_lastStage:null};
     return d.moodis;
 }
-
 function getMoodisStage(d){
-    const streak=calcPlaceStreak(d);
-    let stage=MOODIS_STAGES[0];
+    const streak=calcPlaceStreak(d);let stage=MOODIS_STAGES[0];
     for(const s of MOODIS_STAGES){if(streak>=s.minStreak)stage=s}
     return stage;
 }
 
-function getMoodisMood(d){
-    const today=new Date().toDateString();
-    const todayCheckins=(d.placeCheckins||[]).filter(c=>new Date(c.ts).toDateString()===today);
-    if(!todayCheckins.length)return'neutral';
-    const avg=todayCheckins.reduce((a,c)=>a+c.score,0)/todayCheckins.length;
-    if(avg>=4)return'happy';
-    if(avg<=2)return'sad';
-    return'neutral';
+function getScoreRange(score){return score>=4?'high':score<=2?'low':'mid'}
+
+function getMoodisCreatureHtml(d,moodClass){
+    const m=getMoodisData(d);
+    const stage=getMoodisStage(d);
+    const color=MOODIS_COLORS[m.color]||MOODIS_COLORS.purple;
+    const hat=m.hat?MOODIS_HATS.find(h=>h.id===m.hat):null;
+    return`<div class="moodis-wrap">
+        <div class="moodis-creature moodis-stage-${stage.id} ${moodClass||''}">
+            <div class="glow" style="background:radial-gradient(circle,${color},${color}33)"></div>
+            ${hat?`<div class="moodis-hat">${hat.emoji}</div>`:''}
+            <div class="body" style="background:radial-gradient(circle,${color}88,${color})">
+                <div class="eyes"><div class="eye"></div><div class="eye"></div></div>
+                <div class="mouth"></div>
+            </div>
+        </div>
+    </div>`;
 }
 
-function getMoodisMessage(d,stage,mood){
+function moodisGrowthBar(d){
     const streak=calcPlaceStreak(d);
+    const stage=getMoodisStage(d);
+    const nextStage=MOODIS_STAGES.find(s=>s.minStreak>streak);
+    if(!nextStage)return`<div class="moodis-progress-label">⭐ Max nivå! ${streak} dagars streak — 🪙 ${d.points||0}</div>`;
+    const prevMin=stage.minStreak;
+    const pct=Math.min(100,Math.round((streak-prevMin)/(nextStage.minStreak-prevMin)*100));
+    return`<div class="moodis-progress-bar"><div class="moodis-progress-fill" style="width:${pct}%"></div></div>
+        <div class="moodis-progress-label">${stage.emoji} → ${nextStage.emoji} ${nextStage.label} (${streak}/${nextStage.minStreak} dagar) — 🪙 ${d.points||0}</div>`;
+}
+
+function addMoodisPts(pts){
+    const d=ld();d.points=(d.points||0)+pts;d.xp=(d.xp||0)+pts;sv(d);syncProfile(d);
+    moodisFlow.todayPts+=pts;
+}
+
+function moodisReact(score){
+    // Reaction messages based on mood
+    if(score>=4)return pick(['Det låter jättebra! 😄','Vad kul att höra! ✨','Så bra! Det gör Moodis glad 🌟','Härligt! 😊']);
+    if(score===3)return pick(['Okej, tack för att du berättar! 😊','Förstår! Alla dagar är lite olika 🌤️','Tack! Moodis lyssnar alltid 💜']);
+    return pick(['Tack för att du delar, det är modigt ❤️','Moodis finns här för dig 💜','Alla dagar är inte lika — det är okej 🌈','Tack att du berättar — det hjälper 💜']);
+}
+
+function renderMoodis(){
+    const d=ld();
+    const m=getMoodisData(d);
     const today=new Date().toDateString();
     const todayCheckins=(d.placeCheckins||[]).filter(c=>new Date(c.ts).toDateString()===today);
-    const name=d.userName?esc(d.userName):'du';
-    // Evolution messages
-    const prevStage=d.moodis?._lastStage;
-    if(prevStage&&prevStage!==stage.id){
-        d.moodis._lastStage=stage.id;sv(d);
-        return`🎉 Moodis har växt till ${stage.label}!`;
+    const uncheckedPlaces=d.places.filter(p=>!todayCheckins.find(c=>c.placeId===p.id));
+    const allDone=d.places.length>0&&uncheckedPlaces.length===0;
+    const el=document.getElementById('pg-moodis');
+
+    // Reset flow if new session
+    if(!moodisFlow._date||moodisFlow._date!==today){
+        moodisFlow={placeIdx:0,step:'mood',currentScore:null,placesData:[],funIdx:0,todayPts:0,_date:today};
     }
-    if(d.moodis)d.moodis._lastStage=stage.id;
-    if(!todayCheckins.length)return`Moodis väntar på dig, ${name}...`;
-    if(todayCheckins.length>=d.places.length&&d.places.length>0)return pick(['Alla platser klara! Moodis är stolt 🌟','Bra jobbat idag! 🎉','Du är grym, '+name+'! 💪']);
-    if(streak>=7)return`🔥 ${streak} dagars streak! Moodis är superglad!`;
-    if(streak>=3)return`🔥 ${streak} dagar i rad — fortsätt så!`;
-    if(mood==='happy')return pick(['Moodis märker att du mår bra! 😊','Vilken bra dag! ✨','Moodis ler med dig 😄']);
-    if(mood==='sad')return pick(['Moodis finns här för dig ❤️','Alla dagar är inte lätta — du är modig som delar 💜','Imorgon blir bättre 🌈']);
-    return pick(['Bra att du checkar in! ⭐','Moodis är glad att se dig 😊','Fortsätt checka in — Moodis växer! 🌱']);
+
+    let html='';
+
+    // Always show Moodis creature + growth bar at top
+    const moodClass=allDone?'happy':todayCheckins.length?'':'neutral';
+    html+=getMoodisCreatureHtml(d,moodClass);
+    html+=`<div class="moodis-progress" style="margin:12px auto">${moodisGrowthBar(d)}</div>`;
+
+    // Honesty note (subtle)
+    if(!allDone&&!todayCheckins.length){
+        html+=`<div style="text-align:center;font-size:.7rem;color:var(--t2);margin-bottom:16px;opacity:.7">Moodis växer mest när du berättar hur du verkligen mår 💜</div>`;
+    }
+
+    if(!d.places.length){
+        // No places added yet
+        html+=`<div class="challenge-card"><div class="challenge-text">Moodis väntar på att du lägger till platser!</div>
+            <div style="font-size:.8rem;color:var(--t2);margin-top:8px">Be en förälder hjälpa dig komma igång</div></div>`;
+    } else if(!allDone){
+        // === CHECK-IN FLOW ===
+        const place=uncheckedPlaces[0];
+        const pt=PT[place.type]||PT.other;
+        const step=moodisFlow.step;
+        const score=moodisFlow.currentScore;
+
+        if(step==='mood'){
+            // Main mood question
+            const greeting=todayCheckins.length===0?
+                `Hej${d.userName?` ${esc(d.userName)}`:' där'}! `:
+                '';
+            html+=`<div class="moodis-msg" style="font-size:1rem;margin-bottom:20px;color:var(--t)">${greeting}Hur var det på <strong>${pt.icon} ${esc(place.name)}</strong> idag?</div>`;
+            html+=`<div style="display:flex;justify-content:center;gap:12px;margin:16px 0">`;
+            MOODS.forEach(m=>{
+                html+=`<button class="mood-btn-big" onclick="moodisCheckIn('${place.id}',${m.score})" style="font-size:2rem;width:56px;height:56px;border-radius:50%;border:2px solid rgba(255,255,255,.08);background:rgba(255,255,255,.04);cursor:pointer;transition:all .15s;display:flex;align-items:center;justify-content:center">${m.emoji}</button>`;
+            });
+            html+=`</div>`;
+            html+=`<div style="display:flex;justify-content:space-between;padding:0 8px;font-size:.68rem;color:var(--t2)"><span>Dåligt</span><span>Jättebra</span></div>`;
+        } else if(step==='why'){
+            const range=getScoreRange(score);
+            const q=FOLLOWUPS.why;
+            const typeOpts=q.options[place.type]||q.options._default;
+            const opts=typeOpts[range];
+            html+=`<div class="moodis-msg" style="font-size:.92rem;margin-bottom:4px;color:var(--t)">${moodisReact(score)}</div>`;
+            html+=`<div class="moodis-msg" style="font-size:.95rem;margin:12px 0 16px;color:var(--t)">${q.question(score)}</div>`;
+            html+=`<div class="challenge-options" style="gap:10px">${opts.map(o=>`<button class="challenge-opt" onclick="moodisFollowUp('why','${esc(o)}')">${o}</button>`).join('')}</div>`;
+            html+=`<div style="text-align:center;margin-top:12px"><button style="background:none;border:none;color:var(--t2);font-size:.75rem;cursor:pointer" onclick="moodisFollowUp('why','skip')">Hoppa över →</button></div>`;
+        } else if(step==='who'){
+            const range=getScoreRange(score);
+            const q=FOLLOWUPS.who;
+            const opts=q.options[range];
+            html+=`<div class="moodis-msg" style="font-size:.95rem;margin-bottom:16px;color:var(--t)">${q.question(score)}</div>`;
+            html+=`<div class="challenge-options" style="gap:10px">${opts.map(o=>`<button class="challenge-opt" onclick="moodisFollowUp('who','${esc(o)}')">${o}</button>`).join('')}</div>`;
+            html+=`<div style="text-align:center;margin-top:12px"><button style="background:none;border:none;color:var(--t2);font-size:.75rem;cursor:pointer" onclick="moodisFollowUp('who','skip')">Hoppa över →</button></div>`;
+        } else if(step==='body'){
+            const range=getScoreRange(score);
+            const q=FOLLOWUPS.body;
+            const opts=q.options[range];
+            html+=`<div class="moodis-msg" style="font-size:.95rem;margin-bottom:16px;color:var(--t)">${q.question(score)}</div>`;
+            html+=`<div class="challenge-options" style="gap:10px">${opts.map(o=>`<button class="challenge-opt" onclick="moodisFollowUp('body','${esc(o)}')">${o}</button>`).join('')}</div>`;
+            html+=`<div style="text-align:center;margin-top:12px"><button style="background:none;border:none;color:var(--t2);font-size:.75rem;cursor:pointer" onclick="moodisFollowUp('body','skip')">Hoppa över →</button></div>`;
+        } else if(step==='next_place'){
+            html+=`<div class="moodis-msg" style="font-size:.95rem;margin:16px 0;color:var(--t)">${pick(['Toppen! 🌟','Bra! ✨','Tack! 💜'])} +${FOLLOWUPS.body.pts} poäng</div>`;
+            // Auto-advance to next place
+            setTimeout(()=>{moodisFlow.step='mood';moodisFlow.currentScore=null;renderMoodis()},800);
+        }
+
+        // Show remaining places indicator
+        const total=d.places.length;
+        const done=todayCheckins.length;
+        const dots=d.places.map(p=>todayCheckins.find(c=>c.placeId===p.id)?'●':'○').join(' ');
+        html+=`<div style="text-align:center;margin-top:20px;font-size:.75rem;color:var(--t2)">${dots}<br>${done}/${total} platser</div>`;
+
+    } else {
+        // === ALL DONE — FUN MODE ===
+        const streak=calcPlaceStreak(d);
+        const avgToday=todayCheckins.length?Math.round(todayCheckins.reduce((a,c)=>a+c.score,0)/todayCheckins.length*10)/10:0;
+
+        // Completion message
+        html+=`<div class="moodis-msg" style="font-size:1rem;margin:8px 0 4px;color:var(--t)">${pick([
+            'Tack för att du delade din dag med mig! 💜',
+            'Nu förstår jag din dag bättre — tack! 🌟',
+            'Moodis lyssnade på allt! Tack att du var ärlig 💜',
+            'Bra jobbat! Moodis gör sitt bästa för att alla dagar ska bli så bra som möjligt 🌈'
+        ])}</div>`;
+
+        if(streak>=3)html+=`<div style="text-align:center;font-size:.85rem;color:var(--a);margin:8px 0">🔥 ${streak} dagar i rad!</div>`;
+        html+=`<div style="text-align:center;font-size:.8rem;color:var(--t2);margin-bottom:16px">+${moodisFlow.todayPts} poäng idag</div>`;
+
+        // Fun questions — unlimited
+        const funQ=FUN_QUESTIONS[(moodisFlow.funIdx||0)%FUN_QUESTIONS.length];
+        html+=`<div class="challenge-card">
+            <div style="font-size:.7rem;color:var(--a);margin-bottom:6px;text-transform:uppercase;letter-spacing:.05em">Bonusfråga +2 🪙</div>
+            <div class="challenge-text">${esc(funQ.text)}</div>
+            <div class="challenge-options">${funQ.options.map(o=>`<button class="challenge-opt" onclick="moodisFunAnswer('${esc(o)}')">${o}</button>`).join('')}</div>
+        </div>`;
+
+        // Moodis shop
+        html+=`<div class="cd" style="margin-top:16px"><div class="ct">🎨 Moodis-shop <span style="font-size:.75rem;font-weight:400;color:var(--t2)">🪙 ${d.points||0}</span></div>`;
+        MOODIS_HATS.forEach(h=>{
+            const owned=m.ownedHats.includes(h.id);
+            const equipped=m.hat===h.id;
+            const canBuy=(d.points||0)>=h.cost;
+            const label=equipped?'✅ Påtagen':owned?'Byt till':`${h.cost} 🪙`;
+            const cls=equipped?'owned':'';
+            html+=`<div class="moodis-shop-item ${cls}" onclick="buyMoodisHat('${h.id}')"><span style="font-size:1.3rem">${h.emoji}</span><span style="flex:1;font-size:.82rem">${esc(h.label)}</span><span style="font-size:.75rem;color:${canBuy||owned?'var(--ok)':'var(--t2)'}">${label}</span></div>`;
+        });
+        html+=`</div>`;
+    }
+
+    el.innerHTML=`<div style="padding:16px 0">${html}</div>`;
 }
 
-function getTodayChallenge(){
-    const dateStr=new Date().toDateString();
-    let hash=0;for(let i=0;i<dateStr.length;i++){hash=((hash<<5)-hash)+dateStr.charCodeAt(i);hash|=0}
-    return DAILY_CHALLENGES[Math.abs(hash)%DAILY_CHALLENGES.length];
+// Handle mood emoji tap
+function moodisCheckIn(placeId,score){
+    // Save the actual check-in (reuses existing logic)
+    checkInPlace(placeId,score);
+    moodisFlow.currentScore=score;
+    moodisFlow.step='why';
+    addMoodisPts(0); // checkInPlace already added 5pts
+    renderMoodis();
 }
 
-function completeChallenge(choiceLabel){
+// Handle follow-up answer
+function moodisFollowUp(type,answer){
+    if(answer==='skip'){
+        // Advance to next step
+        if(type==='why')moodisFlow.step='who';
+        else if(type==='who')moodisFlow.step='body';
+        else if(type==='body'){moodisFlow.step='mood';moodisFlow.currentScore=null;}
+        renderMoodis();return;
+    }
+    const pts=FOLLOWUPS[type]?.pts||2;
+    addMoodisPts(pts);
+
+    // Save follow-up data to the check-in
     const d=ld();
-    const challenge=getTodayChallenge();
-    d.dailyChallengeDate=new Date().toDateString();
-    d.points=(d.points||0)+challenge.pts;
-    sv(d);syncProfile(d);
-    toast(`+${challenge.pts} poäng! 🎉`);
+    const today=new Date().toDateString();
+    const place=d.places.filter(p=>!d.placeCheckins.filter(c=>new Date(c.ts).toDateString()===today).find(c=>c.placeId===p.id));
+    // Find the most recent check-in for today (the one we just did)
+    const recentCheckins=d.placeCheckins.filter(c=>new Date(c.ts).toDateString()===today);
+    const lastCheckin=recentCheckins[recentCheckins.length-1];
+    if(lastCheckin){
+        if(!lastCheckin.tags)lastCheckin.tags=[];
+        // Clean emoji prefix for tag storage
+        const cleanAnswer=answer.replace(/^[^\s]+\s/,'').trim();
+        if(type==='why')lastCheckin.tags.push(cleanAnswer);
+        if(type==='who'){if(!lastCheckin.who)lastCheckin.who=cleanAnswer;else lastCheckin.who=cleanAnswer}
+        if(type==='body'){if(!lastCheckin.body)lastCheckin.body=cleanAnswer;else lastCheckin.body=cleanAnswer}
+        sv(d);
+        // Sync the updated tags
+        syncCheckin(lastCheckin.placeId,lastCheckin.score,lastCheckin.comment,lastCheckin.ts,lastCheckin.tags||[]);
+    }
+
+    // Advance
+    if(type==='why')moodisFlow.step='who';
+    else if(type==='who')moodisFlow.step='body';
+    else if(type==='body'){moodisFlow.step='mood';moodisFlow.currentScore=null;}
+    renderMoodis();
+}
+
+// Handle fun question answer
+function moodisFunAnswer(answer){
+    addMoodisPts(2);
+    moodisFlow.funIdx=(moodisFlow.funIdx||0)+1;
+    toast('+2 🪙');
     renderMoodis();
 }
 
@@ -2687,76 +2902,6 @@ function buyMoodisHat(hatId){
     sv(d);syncProfile(d);
     toast(`${hat.emoji} ${hat.label} köpt!`);
     renderMoodis();
-}
-
-function renderMoodis(){
-    const d=ld();
-    const m=getMoodisData(d);
-    const stage=getMoodisStage(d);
-    const mood=getMoodisMood(d);
-    const streak=calcPlaceStreak(d);
-    const color=MOODIS_COLORS[m.color]||MOODIS_COLORS.purple;
-    const colorLight=color+'33';
-    const hat=m.hat?MOODIS_HATS.find(h=>h.id===m.hat):null;
-    const moodClass=mood==='happy'?'happy':mood==='sad'?'sad':streak>=7?'excited':'';
-
-    // Creature
-    const creatureEl=document.getElementById('moodis-creature-area');
-    creatureEl.innerHTML=`<div class="moodis-wrap">
-        <div class="moodis-creature moodis-stage-${stage.id} ${moodClass}">
-            <div class="glow" style="background:radial-gradient(circle,${color},${colorLight})"></div>
-            ${hat?`<div class="moodis-hat">${hat.emoji}</div>`:''}
-            <div class="body" style="background:radial-gradient(circle,${color}88,${color})">
-                <div class="eyes"><div class="eye"></div><div class="eye"></div></div>
-                <div class="mouth"></div>
-            </div>
-        </div>
-    </div>`;
-
-    // Message
-    document.getElementById('moodis-msg').textContent=getMoodisMessage(d,stage,mood);
-
-    // Progress to next stage
-    const nextStage=MOODIS_STAGES.find(s=>s.minStreak>streak);
-    const progEl=document.getElementById('moodis-progress');
-    if(nextStage){
-        const prevMin=stage.minStreak;
-        const pct=Math.min(100,Math.round((streak-prevMin)/(nextStage.minStreak-prevMin)*100));
-        progEl.innerHTML=`<div class="moodis-progress-bar"><div class="moodis-progress-fill" style="width:${pct}%"></div></div>
-            <div class="moodis-progress-label">${stage.emoji} ${stage.label} → ${nextStage.emoji} ${nextStage.label} (${streak}/${nextStage.minStreak} dagars streak)</div>`;
-    }else{
-        progEl.innerHTML=`<div class="moodis-progress-label">⭐ Max nivå! ${streak} dagars streak</div>`;
-    }
-
-    // Daily challenge
-    const challengeEl=document.getElementById('moodis-challenge');
-    const challenge=getTodayChallenge();
-    const challengeDone=d.dailyChallengeDate===new Date().toDateString();
-    if(challengeDone){
-        challengeEl.innerHTML=`<div class="challenge-card"><div style="font-size:1.5rem;margin-bottom:8px">✅</div><div class="challenge-text">Dagens utmaning klar!</div><div style="font-size:.75rem;color:var(--t2)">Kom tillbaka imorgon för en ny</div></div>`;
-    }else{
-        let actionHtml='';
-        if(challenge.type==='action'){
-            actionHtml=`<button class="btn bg" style="padding:10px 24px;font-size:.85rem;width:auto" onclick="completeChallenge()">Klart! ✅</button>`;
-        }else if(challenge.type==='choice'){
-            actionHtml=`<div class="challenge-options">${challenge.options.map(o=>`<button class="challenge-opt" onclick="completeChallenge('${esc(o)}')">${esc(o)}</button>`).join('')}</div>`;
-        }
-        challengeEl.innerHTML=`<div class="challenge-card"><div style="font-size:.7rem;color:var(--a);margin-bottom:6px;text-transform:uppercase;letter-spacing:.05em">Dagens utmaning</div><div class="challenge-text">${esc(challenge.text)}</div><div class="challenge-pts">+${challenge.pts} poäng</div>${actionHtml}</div>`;
-    }
-
-    // Moodis shop
-    const shopEl=document.getElementById('moodis-shop');
-    let shopHtml=`<div class="cd" style="margin-top:16px"><div class="ct">🎨 Moodis-shop <span style="font-size:.75rem;font-weight:400;color:var(--t2)">🪙 ${d.points||0} poäng</span></div>`;
-    MOODIS_HATS.forEach(h=>{
-        const owned=m.ownedHats.includes(h.id);
-        const equipped=m.hat===h.id;
-        const canBuy=(d.points||0)>=h.cost;
-        const label=equipped?'✅ Påtagen':owned?'Byt till':`${h.cost} 🪙`;
-        const cls=equipped?'owned':'';
-        shopHtml+=`<div class="moodis-shop-item ${cls}" onclick="buyMoodisHat('${h.id}')"><span style="font-size:1.3rem">${h.emoji}</span><span style="flex:1;font-size:.82rem">${esc(h.label)}</span><span style="font-size:.75rem;color:${canBuy||owned?'var(--ok)':'var(--t2)'}">${label}</span></div>`;
-    });
-    shopHtml+=`</div>`;
-    shopEl.innerHTML=shopHtml;
 }
 
 function saveProfile(){
@@ -3342,7 +3487,8 @@ async function finishChildOnboarding(){
 
     document.getElementById('ob').classList.add('h');
     document.getElementById('app').style.display='';
-    go('home');
+    const cd=ld();
+    go(cd.role==='child'?'moodis':'home');
     showCelebration('Välkommen till Moodly! 🎉');
 }
 
@@ -4566,7 +4712,7 @@ async function tryRestoreFromRemote(){
             await pullRemoteData();
             document.getElementById('ob').classList.add('h');
             document.getElementById('app').style.display='';
-            renderHome();
+            go(d.role==='child'?'moodis':'home');
             processJoinCode();
             return;
         }
@@ -4593,7 +4739,7 @@ function initApp(){
         }
         document.getElementById('ob').classList.add('h');
         document.getElementById('app').style.display='';
-        renderHome();
+        go(d0.role==='child'?'moodis':'home');
         // Process pending join code after login
         processJoinCode();
     }else if(isChildJoin){
