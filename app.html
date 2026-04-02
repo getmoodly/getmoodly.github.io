@@ -2631,8 +2631,8 @@ function getFollowups(placeType,score){
     const Q={
         school:{
             why:{
-                question:score>=4?'Vad var bäst i skolan idag?':score<=2?'Vad var det som hände i skolan?':'Hur var dagen i skolan?',
-                high:['😊 Bra kompisar på rasten','📚 Rolig lektion','⭐ Lyckades på prov','🎉 Kul aktivitet','👩‍🏫 Bra lärare idag','🎨 Skapande/pyssel'],
+                question:score>=4?'Vad var bäst i skolan?':score<=2?'Vad var det som hände i skolan?':'Hur var det i skolan?',
+                high:['😊 Bra kompisar på rasten','📚 Rolig lektion','⭐ Lyckades på prov','🎉 Kul aktivitet','👩‍🏫 Bra lärare','🎨 Skapande/pyssel'],
                 mid:['📖 Vanlig skoldag','👫 Kompisar','📝 Hade prov/läxor','🕐 Lång dag','😌 Lugna lektioner'],
                 low:['😔 Problem med klasskompis','😰 Stressad av skolan','📝 Svårt prov','😴 Orkade inte i skolan','😒 Tråkiga lektioner','😢 Bråk i klassen','😶 Kände mig ensam på rasten']
             },
@@ -2671,7 +2671,7 @@ function getFollowups(placeType,score){
         },
         home:{
             why:{
-                question:score>=4?'Vad var bäst hemma idag?':score<=2?'Vad hände hemma?':'Hur var det hemma?',
+                question:score>=4?'Vad var bäst hemma?':score<=2?'Vad hände hemma?':'Hur var det hemma?',
                 high:['👨‍👩‍👧 Mys med familjen','🎮 Spelade/lekte','🍕 Riktigt god mat','😌 Lugnt och skönt','🐶 Var med husdjuret','📺 Såg nåt bra'],
                 mid:['😌 Lugnt hemma','📝 Gjorde läxor','📱 Var på telefonen','😐 Inget speciellt','👨‍👩‍👧 Var med familjen'],
                 low:['😢 Bråk med familjen','😶 Kände mig ensam hemma','😴 Jättetrött','📝 Stressad av läxor','😔 Bråk med syskon','😢 Var ledsen hemma']
@@ -2759,7 +2759,7 @@ function getDeepQuestions(placeType,score){
     const ptLabel=PT[pt]?.label||'platsen';
     const questions=[];
     if(score<=2){
-        questions.push({text:`Har det känts så på ${ptLabel.toLowerCase()} länge?`,options:['📅 Bara idag','📆 Några dagar','📅 Mer än en vecka','📅 Ganska länge'],pts:5,tag:'duration'});
+        questions.push({text:`Har det känts så på ${ptLabel.toLowerCase()} länge?`,options:['📅 Bara just nu','📆 Några dagar','📅 Mer än en vecka','📅 Ganska länge'],pts:5,tag:'duration'});
         if(pt==='school')questions.push({text:'Vad skulle göra skolan bättre?',options:['👫 Snällare kompisar','📚 Roligare lektioner','😌 Mindre stress','👩‍🏫 Bättre lärare','🕐 Kortare dagar','🤷 Vet inte'],pts:5,tag:'wish'});
         else if(pt==='sport')questions.push({text:'Vad skulle göra träningen bättre?',options:['👫 Bättre stämning i laget','👨‍🏫 Bättre tränare','⚽ Få spela mer','🤕 Slippa ha ont','😌 Mindre press','🤷 Vet inte'],pts:5,tag:'wish'});
         else if(pt==='home')questions.push({text:'Vad skulle göra det bättre hemma?',options:['❤️ Mindre bråk','👨‍👩‍👧 Mer tid med familjen','😌 Mer lugn och ro','🧒 Bättre med syskon','🤷 Vet inte'],pts:5,tag:'wish'});
@@ -2775,7 +2775,7 @@ function getDeepQuestions(placeType,score){
     }
     // General wellness questions (always relevant)
     questions.push({text:'Hur sov du inatt?',options:['😴 Jättebra','🙂 Okej','😕 Lite dåligt','😢 Dåligt'],pts:3,tag:'sleep'});
-    questions.push({text:'Har du skrattat idag?',options:['😂 Ja massor!','😊 Lite','😐 Inte riktigt','😢 Nej'],pts:3,tag:'joy'});
+    questions.push({text:'Har du skrattat mycket på sistone?',options:['😂 Ja massor!','😊 Lite','😐 Inte riktigt','😢 Nej'],pts:3,tag:'joy'});
     return questions;
 }
 
@@ -3036,7 +3036,7 @@ function renderMoodisParent(){
                 const sleep=todayInsights.find(i=>i.tag==='sleep');
                 const strength=todayInsights.find(i=>i.tag==='strength');
 
-                if(dur&&dur.answer!=='Bara idag')narrative+=`<br><br>⚠️ ${esc(fp.name)} berättade att det känt sig så <strong>${esc(dur.answer).toLowerCase()}</strong>. `;
+                if(dur&&dur.answer!=='Bara just nu')narrative+=`<br><br>⚠️ ${esc(fp.name)} berättade att det känt sig så <strong>${esc(dur.answer).toLowerCase()}</strong>. `;
                 if(wish)narrative+=`Hen önskar: <strong>${esc(wish.answer)}</strong>. `;
                 if(support){
                     if(support.answer==='Ingen')narrative+=`<br>💜 <strong>Viktigt:</strong> ${esc(fp.name)} sa att hen inte har någon att prata med om det. `;
