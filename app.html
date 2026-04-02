@@ -5460,7 +5460,30 @@ async function shareChildInvite(){
 // ===== NETWORK INVITE =====
 async function shareNetworkInvite(childId,childName){
     const d=ld();
-    // Generate a network code: childId + familyId encoded
+    // Find child data and push to Supabase for network members
+    const fp=d.familyProfiles.find(f=>f.id===childId);
+    if(fp){
+        const cd=getFullChildData(fp.storageKey);
+        if(cd&&sbUser){
+            const sharedData={
+                places:cd.places||[],
+                placeCheckins:(cd.placeCheckins||[]).slice(-100),
+                moodisInsights:(cd.moodisInsights||[]).slice(-100),
+                selectedAvatar:cd.selectedAvatar||'default',
+                points:cd.points||0,
+                streak:calcPlaceStreak(cd)
+            };
+            try{
+                await sb.from('shared_child_data').upsert({
+                    family_id:d.familyId,
+                    child_id:childId,
+                    child_name:childName,
+                    data:sharedData,
+                    updated_at:new Date().toISOString()
+                },{onConflict:'family_id,child_id'});
+            }catch(e){}
+        }
+    }
     const networkCode=btoa(JSON.stringify({childId,childName,familyId:d.familyId,adminName:d.userName})).replace(/=/g,'');
     const url=window.location.origin+window.location.pathname+'?network='+encodeURIComponent(networkCode);
     const msg=`Hej! Jag vill att du ska lära känna ${childName} bättre genom Moodly. Du får göra ett quiz för att testa hur väl du förstår ${childName} — och bygga ert trygghetsnätverk. Klicka här:`;
@@ -5598,27 +5621,48 @@ function setNetworkRole(role){
 }
 
 async function startNetworkQuiz(){
-    // Try to load child data from family via Supabase
     const d=ld();
     if(!d.networkChildId){toast('Inget barn kopplat');return}
-    // Try local first (if admin shared data)
-    const cd=getFullChildData('moodly_child_'+d.networkChildId);
-    if(cd){
-        startParentQuiz('moodly_child_'+d.networkChildId,d.networkChildName||'barnet');
+    const childName=d.networkChildName||'barnet';
+
+    // Try local first
+    const localCd=getFullChildData('moodly_child_'+d.networkChildId);
+    if(localCd&&(localCd.moodisInsights||[]).length){
+        startParentQuiz('moodly_child_'+d.networkChildId,childName);
         return;
     }
-    // If no local data, check if we're in same family via Supabase
+
+    // Fetch from Supabase shared data
     if(sbUser&&d.networkFamilyId){
         try{
-            // Try to fetch child's insights via family membership
-            const{data}=await sb.from('profiles').select('moodis_data').eq('family_id',d.networkFamilyId).neq('id',sbUser.id);
-            if(data&&data.length){
-                // Found child data remotely — for now show message
-                toast('Quiz laddas...');
+            const{data,error}=await sb.from('shared_child_data')
+                .select('data,child_name')
+                .eq('family_id',d.networkFamilyId)
+                .eq('child_id',d.networkChildId)
+                .single();
+            if(data&&data.data){
+                // Store temporarily in localStorage so quiz can use it
+                const tempKey='_network_child_'+d.networkChildId;
+                const childData={
+                    places:data.data.places||[],
+                    placeCheckins:data.data.placeCheckins||[],
+                    moodisInsights:data.data.moodisInsights||[],
+                    selectedAvatar:data.data.selectedAvatar||'default',
+                    points:data.data.points||0,
+                    userName:data.child_name||childName
+                };
+                localStorage.setItem(tempKey,JSON.stringify(childData));
+                const questions=getQuizQuestions(childData,childName);
+                if(questions.length){
+                    startParentQuiz(tempKey,childName);
+                    return;
+                }
+                toast('Inte tillräckligt med data ännu — barnet behöver svara på fler frågor');
+                return;
             }
         }catch(e){}
     }
-    toast('Väntar på data — barnet behöver prata med Moodis först');
+    toast('Väntar på data — föräldern behöver dela inbjudan igen efter att barnet pratat med Moodis');
 }
 
 // Register service worker
