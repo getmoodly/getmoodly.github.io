@@ -670,48 +670,10 @@
         <button class="btn" onclick="obNext(1)" style="background:none;color:var(--t2);font-size:.78rem;margin-top:6px">Tillbaka</button>
     </div>
 
+    <!-- Combined child info + places -->
     <div class="ob-step" id="ob3">
-        <div style="font-size:2.5rem;margin-bottom:10px">👧</div>
-        <h1>Lägg till dina barn</h1>
-        <p>Vilka barn vill du följa? Du kan alltid lägga till fler senare.</p>
-        <div id="ob-children-list" style="width:100%;max-width:320px;margin-bottom:12px"></div>
-        <div style="width:100%;max-width:320px;margin-bottom:8px">
-            <input type="text" id="ob-child-name" placeholder="Barnets namn" maxlength="30" style="width:100%;padding:12px;background:rgba(255,255,255,.06);border:1px solid rgba(255,255,255,.12);border-radius:var(--rs);color:var(--t);font-size:.95rem;text-align:center;outline:none;margin-bottom:8px">
-            <div style="display:flex;gap:8px;margin-bottom:10px">
-                <select id="ob-child-age" style="flex:1;padding:10px;background:rgba(255,255,255,.06);border:1px solid rgba(255,255,255,.12);border-radius:var(--rs);color:var(--t);font-size:.88rem;outline:none;text-align:center">
-                    <option value="" disabled selected>Ålder</option><option value="6-9">6–9 år</option><option value="10-13">10–13 år</option><option value="14-17">14–17 år</option>
-                </select>
-                <select id="ob-child-gender" style="flex:1;padding:10px;background:rgba(255,255,255,.06);border:1px solid rgba(255,255,255,.12);border-radius:var(--rs);color:var(--t);font-size:.88rem;outline:none;text-align:center">
-                    <option value="" disabled selected>Kön</option><option value="flicka">Flicka</option><option value="pojke">Pojke</option><option value="annat">Annat</option>
-                </select>
-            </div>
-            <button class="btn ba" onclick="obAddChild()" style="width:100%">+ Lägg till barn</button>
-        </div>
-        <button class="btn bp" onclick="obNext(4)" id="ob3-next" disabled style="max-width:280px;margin-top:12px">Nästa</button>
+        <div id="ob3-content"></div>
         <button class="btn" onclick="obNext(2)" style="background:none;color:var(--t2);font-size:.78rem;margin-top:6px">Tillbaka</button>
-    </div>
-
-    <div class="ob-step" id="ob4">
-        <div style="font-size:2.5rem;margin-bottom:10px">📍</div>
-        <h1 id="ob4-title">Platser</h1>
-        <p id="ob4-desc">Välj platstyp och döp den</p>
-        <div id="ob4-child-tabs" style="display:flex;gap:6px;margin-bottom:12px;flex-wrap:wrap;justify-content:center"></div>
-        <div id="ob4-places-list" style="width:100%;margin-bottom:12px"></div>
-        <div style="display:flex;flex-wrap:wrap;gap:8px;justify-content:center;margin-bottom:10px" id="ob-place-type-btns">
-            <button class="btn bs place-type-btn" style="padding:8px 14px;font-size:.85rem" onclick="obSelectPlaceType('school','Skola',this)">🏫 Skola</button>
-            <button class="btn bs place-type-btn" style="padding:8px 14px;font-size:.85rem" onclick="obSelectPlaceType('sport','Idrott',this)">⚽ Idrott</button>
-            <button class="btn bs place-type-btn" style="padding:8px 14px;font-size:.85rem" onclick="obSelectPlaceType('home','Hem',this)">🏠 Hem</button>
-            <button class="btn bs place-type-btn" style="padding:8px 14px;font-size:.85rem" onclick="obSelectPlaceType('afterschool','Fritids',this)">🏫 Fritids</button>
-            <button class="btn bs place-type-btn" style="padding:8px 14px;font-size:.85rem" onclick="obSelectPlaceType('hobby','Hobby',this)">🎨 Hobby</button>
-            <button class="btn bs place-type-btn" style="padding:8px 14px;font-size:.85rem" onclick="obSelectPlaceType('other','Annat',this)">📍 Annat</button>
-        </div>
-        <div id="ob-place-name-section" style="display:none;width:100%;max-width:320px;margin-bottom:12px">
-            <input type="text" id="ob-place-name" placeholder="Döp platsen" maxlength="80" style="width:100%;padding:12px;background:rgba(255,255,255,.06);border:1px solid rgba(255,255,255,.12);border-radius:var(--rs);color:var(--t);font-size:.95rem;text-align:center;outline:none;margin-bottom:8px">
-            <button class="btn ba" onclick="obConfirmPlace()" style="width:100%">Lägg till</button>
-        </div>
-        <button class="btn bp" onclick="obNextChild()" id="ob4-next" style="margin-top:8px">Nästa barn</button>
-        <div id="ob4-skip" style="margin-top:6px"></div>
-        <button class="btn" onclick="obNext(3)" style="background:none;color:var(--t2);font-size:.78rem;margin-top:4px">Tillbaka</button>
     </div>
 
     <div class="ob-step" id="ob5">
@@ -2418,13 +2380,7 @@ function obNext(step){
     document.querySelectorAll('.ob-step').forEach(s=>s.classList.remove('on'));
     const stepId=typeof step==='string'&&step.startsWith('child-')?'ob-'+step:'ob'+step;
     document.getElementById(stepId).classList.add('on');
-    if(step===3){renderObChildren()}
-    if(step===4){
-        obActiveChild=0;selectedPlaceType='school';selectedPlace=null;
-        renderPlaceTypeGrid('ob-place-types');
-        setupPlaceSearch('ob-place-name','ac-drop-ob','ob-place-addr');
-        renderOb4();
-    }
+    if(step===3){renderOb3()}
     if(step===5){
         const parts=obChildren.map(c=>c.name+' ('+c.places.length+' platser)');
         const names=parts.length>1?parts.slice(0,-1).join(', ')+' och '+parts[parts.length-1]:parts[0];
@@ -2432,34 +2388,118 @@ function obNext(step){
     }
 }
 
-function renderObChildren(){
-    const el=document.getElementById('ob-children-list');
-    if(!el)return;
-    if(!obChildren.length){el.innerHTML='';document.getElementById('ob3-next').disabled=true;return}
-    document.getElementById('ob3-next').disabled=false;
-    el.innerHTML=obChildren.map((c,i)=>
-        `<div style="display:flex;align-items:center;gap:8px;padding:10px 12px;background:var(--c2);border-radius:8px;margin-bottom:6px">
-            <span>${c.gender==='pojke'?'👦':c.gender==='flicka'?'👧':'🧒'}</span><div style="flex:1"><div style="font-size:.84rem;font-weight:600">${esc(c.name)} <span style="font-size:.68rem;color:var(--t2)">${esc(c.ageGroup)}</span></div></div>
-            <button style="background:none;border:none;color:var(--bad);font-size:1rem;cursor:pointer" onclick="obRemoveChild(${i})">×</button></div>`
-    ).join('');
+let _ob3Phase='info'; // 'info' or 'places'
+
+function renderOb3(){
+    const el=document.getElementById('ob3-content');
+    if(_ob3Phase==='info')renderOb3Info(el);
+    else renderOb3Places(el);
 }
 
-function obAddChild(){
+function renderOb3Info(el){
+    const childNum=obChildren.length+1;
+    let html='';
+    // Show already added children
+    if(obChildren.length){
+        html+=`<div style="margin-bottom:16px">`;
+        obChildren.forEach((c,i)=>{
+            const emoji=c.gender==='pojke'?'👦':c.gender==='flicka'?'👧':'🧒';
+            html+=`<div style="display:flex;align-items:center;gap:8px;padding:8px 12px;background:var(--c2);border-radius:8px;margin-bottom:6px">
+                <span>${emoji}</span><span style="flex:1;font-size:.84rem;font-weight:600">${esc(c.name)} <span style="font-size:.68rem;color:var(--t2)">${esc(c.ageGroup)} • ${c.places.length} platser</span></span>
+                </div>`;
+        });
+        html+=`</div>`;
+    }
+    html+=`<div style="font-size:2rem;margin-bottom:10px">${childNum===1?'👧':'➕'}</div>
+        <h2 style="font-size:1.1rem;margin-bottom:6px">${childNum===1?'Berätta om ditt barn':'Lägg till ett barn till'}</h2>
+        <p style="font-size:.8rem;color:var(--t2);margin-bottom:16px">${childNum===1?'Vi börjar med ditt första barn':'Du kan alltid lägga till fler senare'}</p>
+        <div style="width:100%;max-width:320px">
+            <input type="text" id="ob-child-name" placeholder="Barnets namn" maxlength="30" style="width:100%;padding:12px;background:rgba(255,255,255,.06);border:1px solid rgba(255,255,255,.12);border-radius:var(--rs);color:var(--t);font-size:.95rem;text-align:center;outline:none;margin-bottom:8px">
+            <div style="display:flex;gap:8px;margin-bottom:12px">
+                <select id="ob-child-age" style="flex:1;padding:10px;background:rgba(255,255,255,.06);border:1px solid rgba(255,255,255,.12);border-radius:var(--rs);color:var(--t);font-size:.88rem;outline:none;text-align:center">
+                    <option value="" disabled selected>Ålder</option><option value="6-9">6–9 år</option><option value="10-13">10–13 år</option><option value="14-17">14–17 år</option>
+                </select>
+                <select id="ob-child-gender" style="flex:1;padding:10px;background:rgba(255,255,255,.06);border:1px solid rgba(255,255,255,.12);border-radius:var(--rs);color:var(--t);font-size:.88rem;outline:none;text-align:center">
+                    <option value="" disabled selected>Kön</option><option value="flicka">Flicka</option><option value="pojke">Pojke</option><option value="annat">Annat</option>
+                </select>
+            </div>
+            <button class="btn bp" onclick="ob3ChildInfoDone()" style="width:100%">Nästa →</button>
+        </div>`;
+    if(obChildren.length){
+        html+=`<button class="btn ba" onclick="obNext(5)" style="margin-top:12px;max-width:280px">Klar — gå vidare</button>`;
+    }
+    el.innerHTML=html;
+}
+
+function ob3ChildInfoDone(){
     const nameEl=document.getElementById('ob-child-name');
     const name=nameEl.value.trim();
-    if(!name){toast('Ange barnets namn');return}
+    if(!name){toast('Ange barnets namn');nameEl.focus();return}
     const ageGroup=document.getElementById('ob-child-age').value;
     if(!ageGroup){toast('Välj åldersgrupp');return}
     const gender=document.getElementById('ob-child-gender').value||'';
     obChildren.push({name,ageGroup,gender,places:[]});
-    nameEl.value='';
-    document.getElementById('ob-child-age').selectedIndex=0;
-    document.getElementById('ob-child-gender').selectedIndex=0;
-    renderObChildren();
-    toast(name+' tillagd!');
+    obActiveChild=obChildren.length-1;
+    _ob3Phase='places';
+    renderOb3();
 }
 
-function obRemoveChild(i){if(obChildren.length<=1){toast('Du måste ha minst ett barn');return}obChildren.splice(i,1);if(obActiveChild>=obChildren.length)obActiveChild=obChildren.length-1;renderObChildren()}
+function renderOb3Places(el){
+    const child=obChildren[obActiveChild];
+    if(!child){_ob3Phase='info';renderOb3();return}
+    const emoji=child.gender==='pojke'?'👦':child.gender==='flicka'?'👧':'🧒';
+
+    let html=`<div style="font-size:2rem;margin-bottom:10px">${emoji}</div>
+        <h2 style="font-size:1.1rem;margin-bottom:6px">Var vistas ${esc(child.name)} på dagarna?</h2>
+        <p style="font-size:.8rem;color:var(--t2);margin-bottom:16px">Välj typ och döp platsen — t.ex. "Vaxholms skola"</p>`;
+
+    // Added places
+    if(child.places.length){
+        html+=`<div style="width:100%;margin-bottom:12px">`;
+        child.places.forEach((p,i)=>{
+            const pt=PT[p.type]||PT.other;
+            html+=`<div style="display:flex;align-items:center;gap:8px;padding:8px 12px;background:var(--c2);border-radius:8px;margin-bottom:6px;font-size:.84rem">
+                <span>${pt.icon}</span><span style="flex:1">${esc(p.name)}</span>
+                <button style="background:none;border:none;color:var(--bad);font-size:1rem;cursor:pointer" onclick="obRemovePlace(${i})">×</button></div>`;
+        });
+        html+=`</div>`;
+    }
+
+    // Place type buttons
+    html+=`<div style="display:flex;flex-wrap:wrap;gap:8px;justify-content:center;margin-bottom:10px" id="ob-place-type-btns">
+        <button class="btn bs place-type-btn" style="padding:8px 14px;font-size:.85rem" onclick="obSelectPlaceType('school','Skola',this)">🏫 Skola</button>
+        <button class="btn bs place-type-btn" style="padding:8px 14px;font-size:.85rem" onclick="obSelectPlaceType('sport','Idrott',this)">⚽ Idrott</button>
+        <button class="btn bs place-type-btn" style="padding:8px 14px;font-size:.85rem" onclick="obSelectPlaceType('home','Hem',this)">🏠 Hem</button>
+        <button class="btn bs place-type-btn" style="padding:8px 14px;font-size:.85rem" onclick="obSelectPlaceType('afterschool','Fritids',this)">🏫 Fritids</button>
+        <button class="btn bs place-type-btn" style="padding:8px 14px;font-size:.85rem" onclick="obSelectPlaceType('hobby','Hobby',this)">🎨 Hobby</button>
+        <button class="btn bs place-type-btn" style="padding:8px 14px;font-size:.85rem" onclick="obSelectPlaceType('other','Annat',this)">📍 Annat</button>
+    </div>`;
+
+    // Name input (hidden until type selected)
+    html+=`<div id="ob-place-name-section" style="display:none;width:100%;max-width:320px;margin-bottom:12px">
+        <input type="text" id="ob-place-name" placeholder="Döp platsen" maxlength="80" style="width:100%;padding:12px;background:rgba(255,255,255,.06);border:1px solid rgba(255,255,255,.12);border-radius:var(--rs);color:var(--t);font-size:.95rem;text-align:center;outline:none;margin-bottom:8px">
+        <button class="btn ba" onclick="obConfirmPlace()" style="width:100%">Lägg till</button>
+    </div>`;
+
+    // Next buttons
+    if(child.places.length){
+        html+=`<div style="display:flex;gap:8px;margin-top:12px;justify-content:center">
+            <button class="btn bs" onclick="_ob3Phase='info';renderOb3()" style="padding:10px 20px">+ Lägg till ett barn till</button>
+            <button class="btn bp" onclick="obNext(5)" style="padding:10px 20px">Klar ✓</button>
+        </div>`;
+    }else{
+        html+=`<div style="font-size:.78rem;color:var(--t2);margin-top:12px;text-align:center">Lägg till minst en plats för ${esc(child.name)}</div>`;
+    }
+
+    el.innerHTML=html;
+}
+
+function obRemovePlace(i){
+    const child=obChildren[obActiveChild];
+    if(child){child.places.splice(i,1);renderOb3()}
+}
+
+function obRemoveChild(i){obChildren.splice(i,1);if(obActiveChild>=obChildren.length)obActiveChild=Math.max(0,obChildren.length-1);_ob3Phase='info';renderOb3()}
 
 let _obPlaceType='';
 function obSelectPlaceType(type,defaultName,btn){
@@ -2478,11 +2518,8 @@ function obConfirmPlace(){
     if(!name){toast('Ange ett namn');return}
     if(!_obPlaceType){toast('Välj platstyp först');return}
     child.places.push({name,type:_obPlaceType,osmId:'',address:'',lat:null,lng:null});
-    if(input)input.value='';
-    document.getElementById('ob-place-name-section').style.display='none';
-    document.querySelectorAll('#ob-place-type-btns .place-type-btn').forEach(b=>{b.style.background='';b.style.color=''});
     _obPlaceType='';
-    renderOb4Places();renderOb4();
+    renderOb3();
     toast(PT[child.places[child.places.length-1].type]?.icon+' '+name+' tillagd!');
 }
 
