@@ -1320,6 +1320,7 @@ const PT={
     work:{icon:'💼',label:'Arbetsplats',bg:'rgba(0,206,201,.15)'},
     home:{icon:'🏠',label:'Hem',bg:'rgba(253,203,110,.15)'},
     sport:{icon:'⚽',label:'Idrott',bg:'rgba(0,184,148,.15)'},
+    afterschool:{icon:'🏫',label:'Fritids',bg:'rgba(253,121,168,.15)'},
     hobby:{icon:'🎨',label:'Hobby',bg:'rgba(162,155,254,.15)'},
     other:{icon:'📍',label:'Annat',bg:'rgba(167,169,190,.15)'}
 };
@@ -3192,6 +3193,11 @@ function buyMoodisHat(hatId){
     renderMoodis();
 }
 
+function toggleAddPlace(idx,storageKey){
+    const el=document.getElementById('add-place-options-'+idx);
+    if(el)el.style.display=el.style.display==='none'?'flex':'none';
+}
+
 function saveProfile(){
     const d=ld();
     d.userName=document.getElementById('sett-username').value.trim();
@@ -3479,14 +3485,18 @@ function renderFamily(){
                         if(cp.lastComment)html+=`<div class="fam-place-comment">"${esc(cp.lastComment)}"</div>`;
                     });
                 }else{html+=`<p style="font-size:.78rem;color:var(--t2);padding:8px 0;text-align:center">Inga platser — lägg till nedan</p>`}
-                // Quick-add places for this child
-                html+=`<div style="display:flex;gap:6px;flex-wrap:wrap;padding:8px 0" id="child-quick-${i}">`;
-                const childPlaceTypes=new Set((childData?.places||[]).map(p=>p.type));
-                if(!childPlaceTypes.has('school'))html+=`<button class="btn bs" style="padding:6px 10px;font-size:.72rem" onclick="addPlaceToChild('${esc(fp.storageKey)}','school','Skola');renderFamily()">+ 🏫 Skola</button>`;
-                if(!childPlaceTypes.has('sport'))html+=`<button class="btn bs" style="padding:6px 10px;font-size:.72rem" onclick="addPlaceToChild('${esc(fp.storageKey)}','sport','Idrott');renderFamily()">+ ⚽ Idrott</button>`;
-                if(!childPlaceTypes.has('home'))html+=`<button class="btn bs" style="padding:6px 10px;font-size:.72rem" onclick="addPlaceToChild('${esc(fp.storageKey)}','home','Hem');renderFamily()">+ 🏠 Hem</button>`;
-                if(!childPlaceTypes.has('hobby'))html+=`<button class="btn bs" style="padding:6px 10px;font-size:.72rem" onclick="addPlaceToChild('${esc(fp.storageKey)}','hobby','Hobby');renderFamily()">+ 🎨 Hobby</button>`;
-                html+=`</div>`;
+                // Add place button with all options
+                html+=`<div style="padding:8px 0" id="child-places-${i}">
+                    <button class="btn bs" style="padding:8px 14px;font-size:.78rem;width:100%" onclick="toggleAddPlace(${i},'${esc(fp.storageKey)}')">+ Lägg till plats</button>
+                    <div id="add-place-options-${i}" style="display:none;flex-wrap:wrap;gap:6px;margin-top:8px">
+                        <button class="btn bs" style="padding:6px 10px;font-size:.72rem" onclick="addPlaceToChild('${esc(fp.storageKey)}','school','Skola');renderFamily()">🏫 Skola</button>
+                        <button class="btn bs" style="padding:6px 10px;font-size:.72rem" onclick="addPlaceToChild('${esc(fp.storageKey)}','sport','Idrott');renderFamily()">⚽ Idrott</button>
+                        <button class="btn bs" style="padding:6px 10px;font-size:.72rem" onclick="addPlaceToChild('${esc(fp.storageKey)}','home','Hem');renderFamily()">🏠 Hem</button>
+                        <button class="btn bs" style="padding:6px 10px;font-size:.72rem" onclick="addPlaceToChild('${esc(fp.storageKey)}','afterschool','Fritids');renderFamily()">🏫 Fritids</button>
+                        <button class="btn bs" style="padding:6px 10px;font-size:.72rem" onclick="addPlaceToChild('${esc(fp.storageKey)}','hobby','Hobby');renderFamily()">🎨 Hobby</button>
+                        <button class="btn bs" style="padding:6px 10px;font-size:.72rem" onclick="addPlaceToChild('${esc(fp.storageKey)}','other','Annan plats');renderFamily()">📍 Annat</button>
+                    </div>
+                </div>`;
                 html+=`<div style="display:flex;gap:8px;padding-top:8px;border-top:1px solid rgba(255,255,255,.04)">
                     <button class="btn bs" style="padding:6px;font-size:.7rem" onclick="switchToProfile('${esc(fp.storageKey)}','${esc(fp.name)}')">Öppna profil</button>
                     <button class="btn bs" style="padding:6px;font-size:.7rem;background:rgba(225,112,85,.1);color:var(--bad)" onclick="removeChildConfirm(${i},'${esc(fp.name)}')">Ta bort</button></div></div>`;
@@ -3538,33 +3548,14 @@ function renderFamily(){
         <div class="sett-row"><span>Hemkommun</span><input class="sett-input" id="sett-kommun" list="kommun-list" value="${esc(d.kommun||'')}" placeholder="T.ex. Täby" autocomplete="off"></div>
         <button class="btn bp" onclick="saveProfile()" style="margin-top:10px">Spara</button></div>`;
 
-    // Places management
-    html+=`<div class="cd"><div class="ct">📍 Dina platser</div>`;
-    if(d.places.length){
-        d.places.forEach(p=>{
-            const pt=PT[p.type]||PT.other;
-            const linked=p.osmId?'<span style="font-size:.55rem;color:var(--ok);margin-left:4px">kopplad</span>':'';
-            html+=`<div class="sett-place"><span style="font-size:1.1rem">${pt.icon}</span><div class="info"><div class="nm">${esc(p.name)}${linked}</div><div class="tp">${pt.label}</div></div><button class="alert-dismiss" onclick="if(confirm('Ta bort ${esc(p.name)}?')){removePlace('${esc(p.id)}');renderFamily()}" title="Ta bort">×</button></div>`;
-        });
-    }
-    html+=`<button class="btn ba" onclick="openAddPlace()" style="margin-top:10px">+ Lägg till plats</button></div>`;
-
     // Notifications
     const notifEnabled=localStorage.getItem('moodly_notif')==='on';
     html+=`<div class="cd"><div class="ct">🔔 Påminnelser</div>
         <div class="notif-toggle">
-            <div class="nt-label">Daglig påminnelse<small>Kl 17:00 — "Dags att checka in!"</small></div>
+            <div class="nt-label">Daglig påminnelse<small>Kl 17:00 — Påminn barnet att prata med Moodis</small></div>
             <label class="toggle-switch"><input type="checkbox" id="notif-toggle" ${notifEnabled?'checked':''} onchange="toggleNotifications(this.checked)"><span class="toggle-slider"></span></label>
         </div>
     </div>`;
-
-    // Share with child
-    if(d.role==='parent'&&d.familyProfiles&&d.familyProfiles.length>0){
-        html+=`<div class="cd"><div class="ct">📱 Barnets egen enhet</div>
-            <p style="font-size:.78rem;color:var(--t2);margin-bottom:10px;line-height:1.5">Lägg till Moodly på ditt barns telefon eller surfplatta. Barnet pratar med Moodis på sin enhet och du får insikterna här.</p>
-            <button class="btn ba" onclick="shareChildInvite()">Dela inbjudningslänk till barn</button>
-        </div>`;
-    }
 
     // Data
     html+=`<div class="cd"><div class="ct">💾 Data & integritet</div>
