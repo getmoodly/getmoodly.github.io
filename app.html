@@ -2957,22 +2957,20 @@ function getNextQuestion(d){
     return{type:'fun',...q,pts:2};
 }
 
+
 function renderMoodisParent(){
     const d=ld();
     const el=document.getElementById('pg-moodis');
     let html='<div style="padding:12px 0">';
 
-    // Moodis creature (smaller, as narrator)
-    html+=getMoodisCreatureHtml(d,'happy','100px');
-    html+=`<div style="text-align:center;font-size:.82rem;color:var(--t2);margin:8px 0 16px">Moodis sammanfattar barnens dag</div>`;
-
     if(!d.familyProfiles||!d.familyProfiles.length){
+        html+=getMoodisCreatureHtml(d,'happy','100px');
         html+=`<div class="challenge-card"><div style="font-size:2rem;margin-bottom:8px">👋</div>
             <div class="challenge-text">Lägg till ditt barn under Profil för att börja följa hur de mår</div></div>`;
         el.innerHTML=html+'</div>';return;
     }
 
-    // For each child, generate Moodis insights
+    // Per child: quiz first, then insights
     d.familyProfiles.forEach(fp=>{
         const cd=getFullChildData(fp.storageKey);
         if(!cd)return;
@@ -2982,26 +2980,65 @@ function renderMoodisParent(){
         const streak=calcPlaceStreak(cd);
         const insights=cd.moodisInsights||[];
         const todayInsights=insights.filter(i=>i.date===today);
+        const quizQs=getQuizQuestions(cd,fp.name);
+        const quizDone=d._quizDone||{};
+        const doneKey=fp.storageKey+'_'+today;
+        const quizResult=quizDone[doneKey];
+        const avatar=AVATARS[cd.selectedAvatar]?.emoji||'😊';
 
-        html+=`<div class="cd" style="margin-bottom:16px">`;
-        html+=`<div style="display:flex;align-items:center;gap:10px;margin-bottom:12px">
-            <span style="font-size:1.5rem">${AVATARS[cd.selectedAvatar]?.emoji||'😊'}</span>
-            <div><div style="font-weight:700;font-size:.95rem">${esc(fp.name)}</div>
-            <div style="font-size:.72rem;color:var(--t2)">${streak>0?'🔥 '+streak+' dagars streak':''} ${todayCheckins.length?'✅ Checkat in idag':'⏳ Inte checkat in idag'}</div></div>
+        // Child header
+        html+=`<div style="display:flex;align-items:center;gap:10px;margin:16px 0 12px;padding-bottom:8px;border-bottom:1px solid rgba(255,255,255,.06)">
+            <span style="font-size:1.5rem">${avatar}</span>
+            <div style="flex:1"><div style="font-weight:700;font-size:.95rem">${esc(fp.name)}</div>
+            <div style="font-size:.72rem;color:var(--t2)">${streak>0?'🔥 '+streak+' dagar i rad • ':''}${todayCheckins.length?'✅ Pratat med Moodis':'⏳ Väntar på check-in'}</div></div>
         </div>`;
 
+        // === QUIZ SECTION (always first) ===
         if(!todayCheckins.length){
-            html+=`<div style="background:rgba(255,255,255,.04);border-radius:12px;padding:16px;font-size:.88rem;line-height:1.6;color:var(--t2);font-style:italic">
-                Moodis har inte pratat med ${esc(fp.name)} idag ännu. Jag berättar så fort hen checkar in! 💜</div>`;
-        }else{
-            // Build narrative from today's check-ins
-            let narrative='';
+            // No check-ins yet
+            html+=`<div style="background:rgba(108,92,231,.06);border-radius:14px;padding:20px;text-align:center;margin-bottom:16px">
+                <div style="font-size:1.3rem;margin-bottom:8px">🤗</div>
+                <div style="font-size:.88rem;color:var(--t);margin-bottom:4px">${esc(fp.name)} har inte pratat med Moodis ännu</div>
+                <div style="font-size:.78rem;color:var(--t2)">Quizet och insikterna kommer så fort hen checkar in!</div>
+            </div>`;
+        } else if(quizQs.length&&!quizResult){
+            // Quiz available — PRIMARY CTA
+            html+=`<div style="background:linear-gradient(135deg,rgba(108,92,231,.12),rgba(162,155,254,.08));border:1px solid rgba(108,92,231,.25);border-radius:16px;padding:24px;text-align:center;margin-bottom:16px">
+                <div style="font-size:2rem;margin-bottom:10px">🧩</div>
+                <div style="font-size:1.05rem;font-weight:700;color:var(--t);margin-bottom:6px">Hur väl känner du ${esc(fp.name)}?</div>
+                <div style="font-size:.82rem;color:var(--t2);margin-bottom:4px">${esc(fp.name)} svarade på ${quizQs.length} frågor genom Moodis</div>
+                <div style="font-size:.78rem;color:var(--t2);margin-bottom:16px">Testa om du kan matcha svaren — det tar 2 minuter!</div>
+                <button class="btn ba" style="padding:12px 28px;font-size:.92rem;width:auto" onclick="startParentQuiz('${esc(fp.storageKey)}','${esc(fp.name)}')">Starta quiz →</button>
+            </div>`;
+        } else if(quizResult){
+            // Quiz done — show result summary + insights unlocked
+            const pctCol=quizResult.pct>=70?'var(--ok)':quizResult.pct>=40?'var(--w)':'var(--bad)';
+
+            // Understanding score
+            html+=`<div style="background:linear-gradient(135deg,rgba(108,92,231,.08),rgba(162,155,254,.05));border-radius:14px;padding:18px;text-align:center;margin-bottom:12px">
+                <div style="font-size:.7rem;color:var(--a);text-transform:uppercase;letter-spacing:.05em;margin-bottom:6px">🧩 Din förståelse för ${esc(fp.name)}</div>
+                <div style="font-size:2.2rem;font-weight:800;color:${pctCol}">${quizResult.pct}%</div>
+                <div style="font-size:.78rem;color:var(--t2);margin:4px 0">${quizResult.correct}/${quizResult.total} rätt</div>
+                <button style="background:none;border:none;color:var(--pl);font-size:.75rem;cursor:pointer;margin-top:6px" onclick="showQuizHistory('${esc(fp.storageKey)}','${esc(fp.name)}')">Visa detaljer →</button>
+            </div>`;
+
+            // === INSIGHTS (unlocked after quiz) ===
+            html+=`<div style="font-size:.72rem;color:var(--a);text-transform:uppercase;letter-spacing:.05em;margin:16px 0 10px;font-weight:600">💡 Insikter från Moodis</div>`;
+
+            // Build rich insights
             const avgScore=todayCheckins.reduce((a,c)=>a+c.score,0)/todayCheckins.length;
-            const overallMood=avgScore>=4?'en bra':avgScore>=3?'en helt okej':avgScore<=2?'en tuff':'en blandad';
 
-            narrative+=`<strong>${esc(fp.name)}</strong> har haft ${overallMood} dag. `;
+            // Overall mood card
+            const moodEmoji=avgScore>=4?'😄':avgScore>=3?'😐':avgScore<=2?'😢':'😕';
+            const moodText=avgScore>=4?'verkar ha mått bra':avgScore>=3?'har haft en helt okej dag':avgScore<=2?'verkar ha haft det tufft':'har haft en blandad dag';
+            html+=`<div style="background:rgba(255,255,255,.04);border-radius:12px;padding:14px;margin-bottom:10px">
+                <div style="display:flex;align-items:center;gap:10px">
+                    <span style="font-size:1.5rem">${moodEmoji}</span>
+                    <div style="font-size:.88rem;color:var(--t);line-height:1.5"><strong>${esc(fp.name)}</strong> ${moodText}.</div>
+                </div>
+            </div>`;
 
-            // Per place details
+            // Per place cards
             todayCheckins.forEach(ci=>{
                 const place=places.find(p=>p.id===ci.placeId);
                 if(!place)return;
@@ -3010,105 +3047,168 @@ function renderMoodisParent(){
                 const tags=(ci.tags||[]).join(', ');
                 const who=ci.who||'';
                 const body=ci.body||'';
+                const isLow=ci.score<=2;
+                const isHigh=ci.score>=4;
+                const bg=isLow?'rgba(225,112,85,.06)':isHigh?'rgba(0,184,148,.06)':'rgba(255,255,255,.04)';
+                const border=isLow?'border-left:3px solid var(--bad)':isHigh?'border-left:3px solid var(--ok)':'border-left:3px solid var(--t2)';
 
-                if(ci.score>=4){
-                    narrative+=`${pt.icon} <strong>${esc(place.name)}</strong> gick ${mood.label.toLowerCase()}`;
-                    if(tags)narrative+=` — ${esc(tags)} var det bästa`;
-                    narrative+='. ';
-                }else if(ci.score<=2){
-                    narrative+=`${pt.icon} På <strong>${esc(place.name)}</strong> var det ${mood.label.toLowerCase()}`;
-                    if(tags)narrative+=` — det berodde på ${esc(tags).toLowerCase()}`;
-                    narrative+='. ';
-                }else{
-                    narrative+=`${pt.icon} <strong>${esc(place.name)}</strong> var ${mood.label.toLowerCase()}`;
-                    if(tags)narrative+=` (${esc(tags)})`;
-                    narrative+='. ';
+                html+=`<div style="background:${bg};${border};border-radius:0 12px 12px 0;padding:14px;margin-bottom:8px">`;
+                html+=`<div style="display:flex;align-items:center;gap:8px;margin-bottom:6px">
+                    <span>${pt.icon}</span><span style="font-weight:600;font-size:.88rem">${esc(place.name)}</span>
+                    <span style="margin-left:auto;font-size:1.1rem">${mood.emoji}</span>
+                </div>`;
+
+                // What happened
+                if(tags){
+                    const label=isHigh?'Det bästa':isLow?'Vad som hände':'Hur det var';
+                    html+=`<div style="font-size:.8rem;color:var(--t2);line-height:1.5"><span style="color:var(--t)">${label}:</span> ${esc(tags)}</div>`;
                 }
-                if(who)narrative+=`Hen var med ${esc(who).toLowerCase()}. `;
-                if(body)narrative+=`Kroppen kändes ${esc(body).toLowerCase()}. `;
+                if(who)html+=`<div style="font-size:.8rem;color:var(--t2)"><span style="color:var(--t)">Med:</span> ${esc(who)}</div>`;
+                if(body)html+=`<div style="font-size:.8rem;color:var(--t2)"><span style="color:var(--t)">Kroppen:</span> ${esc(body)}</div>`;
+
+                // Action suggestion for low moods
+                if(isLow){
+                    html+=`<div style="font-size:.78rem;color:var(--bad);margin-top:8px;font-style:italic">💬 Kanske värt att fråga ${esc(fp.name)} om ${esc(place.name).toLowerCase()}</div>`;
+                }
+                html+=`</div>`;
             });
 
             // Deep insights
-            if(todayInsights.length){
-                const dur=todayInsights.find(i=>i.tag==='duration');
-                const wish=todayInsights.find(i=>i.tag==='wish');
-                const support=todayInsights.find(i=>i.tag==='support');
-                const sleep=todayInsights.find(i=>i.tag==='sleep');
-                const strength=todayInsights.find(i=>i.tag==='strength');
+            const dur=todayInsights.find(i=>i.tag==='duration');
+            const wish=todayInsights.find(i=>i.tag==='wish');
+            const support=todayInsights.find(i=>i.tag==='support');
+            const strength=todayInsights.find(i=>i.tag==='strength');
+            const sleep=todayInsights.find(i=>i.tag==='sleep');
+            const joy=todayInsights.find(i=>i.tag==='joy');
 
-                if(dur&&dur.answer!=='Bara just nu')narrative+=`<br><br>⚠️ ${esc(fp.name)} berättade att det känt sig så <strong>${esc(dur.answer).toLowerCase()}</strong>. `;
-                if(wish)narrative+=`Hen önskar: <strong>${esc(wish.answer)}</strong>. `;
-                if(support){
-                    if(support.answer==='Ingen')narrative+=`<br>💜 <strong>Viktigt:</strong> ${esc(fp.name)} sa att hen inte har någon att prata med om det. `;
-                    else narrative+=`Hen kan prata med ${esc(support.answer).toLowerCase()}. `;
-                }
-                if(strength)narrative+=`Det som gör platsen bra: <strong>${esc(strength.answer)}</strong>. `;
-                if(sleep)narrative+=`Sömnen inatt: ${esc(sleep.answer).toLowerCase()}. `;
+            const deepCards=[];
+            if(dur&&dur.answer!=='Bara just nu')deepCards.push({icon:'⏳',title:'Varaktighet',text:`${esc(fp.name)} berättade att det känt sig så <strong>${esc(dur.answer).toLowerCase()}</strong>`,urgent:true});
+            if(support){
+                if(support.answer==='Ingen')deepCards.push({icon:'💜',title:'Stödnätverk',text:`<strong>Viktigt:</strong> ${esc(fp.name)} sa att hen inte har någon att prata med`,urgent:true});
+                else deepCards.push({icon:'👥',title:'Stödnätverk',text:`${esc(fp.name)} kan prata med <strong>${esc(support.answer).toLowerCase()}</strong>`});
+            }
+            if(wish)deepCards.push({icon:'💭',title:'Önskan',text:`${esc(fp.name)} önskar: <strong>${esc(wish.answer)}</strong>`});
+            if(strength)deepCards.push({icon:'⭐',title:'Styrka',text:`Det som gör platsen bra: <strong>${esc(strength.answer)}</strong>`});
+            if(sleep)deepCards.push({icon:'😴',title:'Sömn',text:`Sov: <strong>${esc(sleep.answer).toLowerCase()}</strong>`});
+            if(joy){
+                const joyLevel=joy.answer.includes('massor')?'mycket':joy.answer.includes('Lite')?'lite':'inte mycket';
+                deepCards.push({icon:'😊',title:'Glädje',text:`Har skrattat <strong>${joyLevel}</strong> på sistone`});
             }
 
-            html+=`<div style="background:rgba(255,255,255,.04);border-radius:12px;padding:16px;font-size:.88rem;line-height:1.7;color:var(--t)">${narrative}</div>`;
+            if(deepCards.length){
+                html+=`<div style="font-size:.72rem;color:var(--a);text-transform:uppercase;letter-spacing:.05em;margin:14px 0 8px;font-weight:600">🔍 Djupare insikter</div>`;
+                deepCards.forEach(card=>{
+                    const bg=card.urgent?'rgba(225,112,85,.06)':'rgba(255,255,255,.04)';
+                    html+=`<div style="display:flex;gap:10px;align-items:flex-start;background:${bg};border-radius:10px;padding:12px;margin-bottom:6px">
+                        <span style="font-size:1rem;flex-shrink:0">${card.icon}</span>
+                        <div><div style="font-size:.72rem;color:var(--t2);margin-bottom:2px">${card.title}</div>
+                        <div style="font-size:.82rem;color:var(--t);line-height:1.5">${card.text}</div></div>
+                    </div>`;
+                });
+            }
 
-            // Alerts for low moods
-            const lowPlaces=todayCheckins.filter(c=>c.score<=2);
-            if(lowPlaces.length){
-                html+=`<div style="margin-top:10px;padding:12px;background:rgba(225,112,85,.08);border-radius:10px;border-left:3px solid var(--bad)">
-                    <div style="font-size:.82rem;font-weight:600;color:var(--bad);margin-bottom:4px">⚠️ Behöver uppmärksamhet</div>
-                    <div style="font-size:.8rem;color:var(--t2);line-height:1.5">${esc(fp.name)} rapporterade lågt mående på ${lowPlaces.map(c=>{const p=places.find(pp=>pp.id===c.placeId);return p?esc(p.name):'okänd plats'}).join(' och ')}. Kanske värt ett samtal ikväll?</div>
+            // Weekly trend
+            const week=(cd.placeCheckins||[]).filter(c=>Date.now()-new Date(c.ts).getTime()<7*864e5);
+            if(week.length>=3){
+                const weekAvg=Math.round(week.reduce((a,c)=>a+c.score,0)/week.length*10)/10;
+                const prevWeek=(cd.placeCheckins||[]).filter(c=>{const age=Date.now()-new Date(c.ts).getTime();return age>=7*864e5&&age<14*864e5});
+                const prevAvg=prevWeek.length?Math.round(prevWeek.reduce((a,c)=>a+c.score,0)/prevWeek.length*10)/10:null;
+                const trend=prevAvg?(weekAvg-prevAvg>=0.3?'↑ Uppåt':prevAvg-weekAvg>=0.3?'↓ Nedåt':'→ Stabilt'):'';
+                const col=weekAvg>=4?'var(--ok)':weekAvg>=3?'var(--w)':'var(--bad)';
+                html+=`<div style="display:flex;justify-content:space-between;margin-top:12px;padding:10px;background:rgba(255,255,255,.03);border-radius:10px;font-size:.8rem">
+                    <span style="color:var(--t2)">Veckans snitt</span>
+                    <span style="font-weight:700;color:${col}">${weekAvg}/5 ${trend}</span>
                 </div>`;
             }
-
-            // Positive highlights
-            const highPlaces=todayCheckins.filter(c=>c.score>=4);
-            if(highPlaces.length){
-                html+=`<div style="margin-top:10px;padding:12px;background:rgba(0,184,148,.08);border-radius:10px;border-left:3px solid var(--ok)">
-                    <div style="font-size:.82rem;font-weight:600;color:var(--ok);margin-bottom:4px">🌟 Positiv signal</div>
-                    <div style="font-size:.8rem;color:var(--t2);line-height:1.5">${esc(fp.name)} mådde bra på ${highPlaces.map(c=>{const p=places.find(pp=>pp.id===c.placeId);return p?esc(p.name):'okänd plats'}).join(' och ')}!</div>
-                </div>`;
-            }
+        } else {
+            // Has check-ins but no quiz questions (shouldn't happen often)
+            html+=`<div style="font-size:.82rem;color:var(--t2);text-align:center;padding:12px">Moodis samlar svar — quizet kommer snart!</div>`;
         }
+    });
 
-        // 7-day trends
-        const week=(cd.placeCheckins||[]).filter(c=>Date.now()-new Date(c.ts).getTime()<7*864e5);
-        if(week.length>=3){
-            const weekAvg=Math.round(week.reduce((a,c)=>a+c.score,0)/week.length*10)/10;
-            const prevWeek=(cd.placeCheckins||[]).filter(c=>{const age=Date.now()-new Date(c.ts).getTime();return age>=7*864e5&&age<14*864e5});
-            const prevAvg=prevWeek.length?Math.round(prevWeek.reduce((a,c)=>a+c.score,0)/prevWeek.length*10)/10:null;
-            const trend=prevAvg?(weekAvg-prevAvg>=0.3?'↑ Uppåt':prevAvg-weekAvg>=0.3?'↓ Nedåt':'→ Stabilt'):'';
-            const col=weekAvg>=4?'var(--ok)':weekAvg>=3?'var(--w)':'var(--bad)';
-            html+=`<div style="display:flex;justify-content:space-between;margin-top:12px;padding:10px;background:rgba(255,255,255,.03);border-radius:10px;font-size:.8rem">
-                <span style="color:var(--t2)">Senaste veckan</span>
-                <span style="font-weight:700;color:${col}">${weekAvg}/5 ${trend}</span>
+    // Quiz history link
+    const history=d._quizHistory||[];
+    if(history.length>1){
+        html+=`<div style="text-align:center;margin-top:16px">
+            <button style="background:none;border:none;color:var(--pl);font-size:.78rem;cursor:pointer" onclick="showAllQuizHistory()">📊 Visa quiz-historik</button>
+        </div>`;
+    }
+
+    html+='</div>';
+    el.innerHTML=html;
+}
+
+// Show detailed quiz results for a specific child
+function showQuizHistory(childKey,childName){
+    const d=ld();
+    const el=document.getElementById('pg-moodis');
+    const history=(d._quizHistory||[]).filter(h=>h.childKey===childKey).slice(-10).reverse();
+    const latest=d._quizDone||{};
+    const doneKey=childKey+'_'+new Date().toDateString();
+    const todayResult=latest[doneKey];
+
+    let html='<div style="padding:12px 0">';
+    html+=`<div style="display:flex;align-items:center;gap:10px;margin-bottom:16px">
+        <button style="background:none;border:none;color:var(--pl);font-size:1.2rem;cursor:pointer" onclick="renderMoodis()">←</button>
+        <span style="font-weight:700;font-size:1rem">Quiz-historik: ${esc(childName)}</span>
+    </div>`;
+
+    // Today's detailed results
+    if(todayResult&&_quiz.results&&_quiz.results.length){
+        html+=`<div class="cd"><div class="ct">Senaste quizet — ${todayResult.pct}%</div>`;
+        _quiz.results.forEach(r=>{
+            const icon=r.correct?'✅':'❌';
+            const bg=r.correct?'rgba(0,184,148,.06)':'rgba(225,112,85,.06)';
+            html+=`<div style="background:${bg};border-radius:8px;padding:10px;margin-bottom:6px;font-size:.8rem">
+                <div style="margin-bottom:4px">${icon} ${esc(r.question)}</div>
+                ${!r.correct?`<div style="color:var(--t2)">Du: ${esc(r.yourAnswer)} → Rätt: <strong>${esc(r.correctAnswer)}</strong></div>`:''}
             </div>`;
-        }
-
+        });
         html+=`</div>`;
-    });
+    }
 
-    // Quiz cards per child
-    d.familyProfiles.forEach(fp=>{
-        const cd=getFullChildData(fp.storageKey);
-        if(!cd)return;
-        const quizQs=getQuizQuestions(cd,fp.name);
-        const quizDone=d._quizDone||{};
-        const doneKey=fp.storageKey+'_'+new Date().toDateString();
-        if(quizQs.length&&!quizDone[doneKey]){
-            html+=`<div class="challenge-card" style="border:1px solid rgba(108,92,231,.3)">
-                <div style="font-size:1.3rem;margin-bottom:8px">🧩</div>
-                <div class="challenge-text">Hur väl känner du ${esc(fp.name)}?</div>
-                <div style="font-size:.8rem;color:var(--t2);margin-bottom:12px">${quizQs.length} frågor att matcha</div>
-                <button class="btn ba" style="padding:10px 24px;font-size:.88rem;width:auto" onclick="startParentQuiz('${esc(fp.storageKey)}','${esc(fp.name)}')">Starta quiz →</button>
+    // Historical trend
+    if(history.length>1){
+        html+=`<div class="cd"><div class="ct">📈 Utveckling över tid</div>`;
+        history.forEach(h=>{
+            const col=h.pct>=70?'var(--ok)':h.pct>=40?'var(--w)':'var(--bad)';
+            html+=`<div style="display:flex;justify-content:space-between;padding:8px 0;border-bottom:1px solid rgba(255,255,255,.04);font-size:.82rem">
+                <span style="color:var(--t2)">${h.date}</span>
+                <span style="font-weight:700;color:${col}">${h.pct}% (${h.correct}/${h.total})</span>
             </div>`;
-        }else if(quizDone[doneKey]){
-            const result=quizDone[doneKey];
-            html+=`<div class="cd" style="text-align:center">
-                <div style="font-size:.7rem;color:var(--a);text-transform:uppercase;letter-spacing:.05em;margin-bottom:6px">🧩 Förståelse-quiz</div>
-                <div style="font-size:1.8rem;font-weight:700;color:${result.pct>=70?'var(--ok)':result.pct>=40?'var(--w)':'var(--bad)'}">${result.pct}%</div>
-                <div style="font-size:.82rem;color:var(--t2);margin:4px 0">Du matchade ${result.correct}/${result.total} av ${esc(fp.name)}s svar</div>
-                ${result.pct<70?`<div style="font-size:.78rem;color:var(--t2);margin-top:8px">💡 Prata med ${esc(fp.name)} om det du missade — det stärker er relation!</div>`:''}
-            </div>`;
-        }
-    });
+        });
+        html+=`</div>`;
+    }
 
+    html+=`<button class="btn bs" style="margin-top:16px;width:100%" onclick="renderMoodis()">← Tillbaka</button>`;
+    html+='</div>';
+    el.innerHTML=html;
+}
+
+function showAllQuizHistory(){
+    const d=ld();
+    const el=document.getElementById('pg-moodis');
+    const history=(d._quizHistory||[]).slice(-20).reverse();
+
+    let html='<div style="padding:12px 0">';
+    html+=`<div style="display:flex;align-items:center;gap:10px;margin-bottom:16px">
+        <button style="background:none;border:none;color:var(--pl);font-size:1.2rem;cursor:pointer" onclick="renderMoodis()">←</button>
+        <span style="font-weight:700;font-size:1rem">📊 Quiz-historik</span>
+    </div>`;
+
+    if(!history.length){
+        html+=`<div style="text-align:center;color:var(--t2);padding:20px">Ingen historik ännu</div>`;
+    }else{
+        history.forEach(h=>{
+            const col=h.pct>=70?'var(--ok)':h.pct>=40?'var(--w)':'var(--bad)';
+            html+=`<div style="display:flex;justify-content:space-between;align-items:center;padding:10px 0;border-bottom:1px solid rgba(255,255,255,.04)">
+                <div><div style="font-size:.85rem;font-weight:600">${esc(h.childName)}</div><div style="font-size:.72rem;color:var(--t2)">${h.date}</div></div>
+                <span style="font-weight:700;font-size:1rem;color:${col}">${h.pct}%</span>
+            </div>`;
+        });
+    }
+
+    html+=`<button class="btn bs" style="margin-top:16px;width:100%" onclick="renderMoodis()">← Tillbaka</button>`;
     html+='</div>';
     el.innerHTML=html;
 }
@@ -3119,39 +3219,37 @@ let _quiz={active:false,childKey:'',childName:'',questions:[],idx:0,correct:0,re
 function getQuizQuestions(cd,childName){
     const insights=cd.moodisInsights||[];
     const today=new Date().toDateString();
-    // Get recent answers (today + last 2 days)
     const recent=insights.filter(i=>{
-        const d=new Date(i.ts);const age=Date.now()-d.getTime();
+        const age=Date.now()-new Date(i.ts).getTime();
         return age<3*864e5&&i.options&&i.options.length>=2;
     });
-    // Also add mood check-in questions
     const questions=[];
+    // Mood check-in questions
     const todayCheckins=(cd.placeCheckins||[]).filter(c=>new Date(c.ts).toDateString()===today);
     todayCheckins.forEach(ci=>{
         const place=(cd.places||[]).find(p=>p.id===ci.placeId);
         if(!place)return;
         const pt=PT[place.type]||PT.other;
         questions.push({
-            question:`Hur tror du ${esc(childName)} mådde på ${pt.icon} ${esc(place.name)}?`,
+            question:`Hur mådde ${esc(childName)} på ${pt.icon} ${esc(place.name)}?`,
             options:MOODS.map(m=>m.emoji),
             answer:MOODS[ci.score-1].emoji,
             type:'mood',
             placeName:place.name
         });
     });
-    // Add insight-based questions
+    // Insight-based questions
     recent.forEach(ins=>{
         if(!ins.question||!ins.options||ins.options.length<2)return;
-        const prefix=ins.placeName?`(${esc(ins.placeName)}) `:'';
+        const ctx=ins.placeName?`${esc(ins.placeName)}: `:'';
         questions.push({
-            question:`${prefix}${esc(ins.question)}`,
+            question:`${ctx}${esc(ins.question)}`,
             options:ins.options,
             answer:ins.rawAnswer||ins.answer,
             type:ins.tag||'fun',
             placeName:ins.placeName||''
         });
     });
-    // Shuffle and limit
     for(let i=questions.length-1;i>0;i--){const j=Math.floor(Math.random()*(i+1));[questions[i],questions[j]]=[questions[j],questions[i]]}
     return questions.slice(0,15);
 }
@@ -3161,7 +3259,7 @@ function startParentQuiz(childKey,childName){
     const cd=getFullChildData(childKey);
     if(!cd)return;
     const questions=getQuizQuestions(cd,childName);
-    if(!questions.length){toast('Inga frågor ännu — vänta tills barnet pratat med Moodis');return}
+    if(!questions.length){toast('Inga frågor ännu');return}
     _quiz={active:true,childKey,childName,questions,idx:0,correct:0,results:[]};
     renderQuiz();
 }
@@ -3174,18 +3272,15 @@ function renderQuiz(){
     const num=_quiz.idx+1;
 
     let html=`<div style="padding:16px 0">`;
-    // Progress
     html+=`<div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:16px">
         <span style="font-size:.78rem;color:var(--t2)">Fråga ${num}/${total}</span>
         <span style="font-size:.78rem;color:var(--ok)">${_quiz.correct} rätt</span>
     </div>`;
-    html+=`<div class="moodis-progress-bar" style="margin-bottom:20px"><div class="moodis-progress-fill" style="width:${Math.round(num/total*100)}%"></div></div>`;
+    html+=`<div class="moodis-progress-bar" style="margin-bottom:24px"><div class="moodis-progress-fill" style="width:${Math.round(num/total*100)}%"></div></div>`;
 
-    // Question
-    html+=`<div style="text-align:center;margin-bottom:8px;font-size:.78rem;color:var(--t2)">Vad tror du ${esc(_quiz.childName)} svarade?</div>`;
-    html+=`<div style="text-align:center;font-size:1rem;font-weight:600;margin-bottom:24px;color:var(--t);line-height:1.5">${q.question}</div>`;
+    html+=`<div style="text-align:center;margin-bottom:8px;font-size:.8rem;color:var(--t2)">Vad tror du ${esc(_quiz.childName)} svarade?</div>`;
+    html+=`<div style="text-align:center;font-size:1.02rem;font-weight:600;margin-bottom:24px;color:var(--t);line-height:1.5">${q.question}</div>`;
 
-    // Options
     if(q.type==='mood'){
         html+=`<div style="display:flex;justify-content:center;gap:14px">`;
         q.options.forEach(o=>{
@@ -3202,24 +3297,23 @@ function renderQuiz(){
 
 function quizAnswer(answer){
     const q=_quiz.questions[_quiz.idx];
-    const cleanAnswer=answer.replace(/^[^\s]+\s/,'').trim();
-    const cleanCorrect=(q.answer||'').replace(/^[^\s]+\s/,'').trim();
-    const isCorrect=answer===q.answer||cleanAnswer===cleanCorrect||answer.includes(cleanCorrect)||q.answer.includes(cleanAnswer);
+    const cleanA=answer.replace(/^[^\s]+\s/,'').trim();
+    const cleanC=(q.answer||'').replace(/^[^\s]+\s/,'').trim();
+    const isCorrect=answer===q.answer||cleanA===cleanC||answer.includes(cleanC)||q.answer.includes(cleanA);
     if(isCorrect)_quiz.correct++;
     _quiz.results.push({question:q.question,yourAnswer:answer,correctAnswer:q.answer,correct:isCorrect,type:q.type,placeName:q.placeName});
 
-    // Show feedback
     const el=document.getElementById('pg-moodis');
-    const feedbackColor=isCorrect?'var(--ok)':'var(--bad)';
-    const feedbackBg=isCorrect?'rgba(0,184,148,.1)':'rgba(225,112,85,.1)';
-    const feedbackIcon=isCorrect?'✅':'❌';
-    const feedbackText=isCorrect?
-        pick(['Rätt! Du känner ditt barn bra! 💚','Precis rätt! 🎯','Du hade koll! ✨']):
-        `Inte riktigt — ${esc(_quiz.childName)} sa: <strong>${esc(q.answer)}</strong>`;
+    const col=isCorrect?'var(--ok)':'var(--bad)';
+    const bg=isCorrect?'rgba(0,184,148,.1)':'rgba(225,112,85,.1)';
+    const icon=isCorrect?'✅':'❌';
+    const text=isCorrect?
+        pick(['Rätt! Du känner ditt barn bra! 💚','Precis! 🎯','Bra koll! ✨','Du hade rätt! 💚']):
+        `${esc(_quiz.childName)} sa: <strong>${esc(q.answer)}</strong>`;
 
     el.innerHTML=`<div style="padding:40px 16px;text-align:center">
-        <div style="font-size:3rem;margin-bottom:16px;animation:fu .3s ease">${feedbackIcon}</div>
-        <div style="font-size:1rem;color:${feedbackColor};background:${feedbackBg};padding:16px;border-radius:12px;line-height:1.5">${feedbackText}</div>
+        <div style="font-size:3rem;margin-bottom:16px;animation:fu .3s ease">${icon}</div>
+        <div style="font-size:1rem;color:${col};background:${bg};padding:16px;border-radius:12px;line-height:1.5">${text}</div>
     </div>`;
 
     setTimeout(()=>{_quiz.idx++;renderQuiz()},1800);
@@ -3231,65 +3325,46 @@ function showQuizResults(){
     const correct=_quiz.correct;
     const pct=Math.round(correct/total*100);
 
-    // Save result
     const d=ld();
     if(!d._quizDone)d._quizDone={};
     const doneKey=_quiz.childKey+'_'+new Date().toDateString();
     d._quizDone[doneKey]={correct,total,pct,ts:new Date().toISOString()};
-    // Track understanding over time
     if(!d._quizHistory)d._quizHistory=[];
     d._quizHistory.push({childKey:_quiz.childKey,childName:_quiz.childName,correct,total,pct,date:new Date().toDateString()});
     if(d._quizHistory.length>100)d._quizHistory=d._quizHistory.slice(-100);
     sv(d);
 
-    // Categorize results
     const missed=_quiz.results.filter(r=>!r.correct);
-    const moodMissed=missed.filter(r=>r.type==='mood');
-    const placeMissed=missed.filter(r=>r.placeName);
-    const uniquePlaces=[...new Set(placeMissed.map(r=>r.placeName))];
-
-    // Understanding trend
     const history=(d._quizHistory||[]).filter(h=>h.childKey===_quiz.childKey);
     const prevQuiz=history.length>=2?history[history.length-2]:null;
-    const trend=prevQuiz?(pct>prevQuiz.pct?`↑ Upp från ${prevQuiz.pct}%!`:pct<prevQuiz.pct?`↓ Ner från ${prevQuiz.pct}%`:`→ Samma som förra gången`):'';
+    const trend=prevQuiz?(pct>prevQuiz.pct?`↑ Upp från ${prevQuiz.pct}%!`:pct<prevQuiz.pct?`↓ Ner från ${prevQuiz.pct}%`:`→ Samma som sist`):'';
 
     let html=`<div style="padding:20px 0;text-align:center">`;
     html+=`<div style="font-size:1.3rem;margin-bottom:12px">🧩 Resultat</div>`;
     html+=`<div style="font-size:3rem;font-weight:800;color:${pct>=70?'var(--ok)':pct>=40?'var(--w)':'var(--bad)'}">${pct}%</div>`;
     html+=`<div style="font-size:.92rem;color:var(--t2);margin:8px 0">Du matchade ${correct}/${total} av ${esc(_quiz.childName)}s svar</div>`;
-    if(trend)html+=`<div style="font-size:.8rem;color:var(--a);margin-bottom:16px">${trend}</div>`;
+    if(trend)html+=`<div style="font-size:.82rem;color:var(--a);margin-bottom:12px">${trend}</div>`;
 
-    // What you got right
-    if(correct>0){
-        html+=`<div style="text-align:left;background:rgba(0,184,148,.06);border-radius:12px;padding:14px;margin:12px 0;border-left:3px solid var(--ok)">
-            <div style="font-size:.82rem;font-weight:600;color:var(--ok);margin-bottom:6px">💚 Bra koll på</div>
-            <div style="font-size:.8rem;color:var(--t2);line-height:1.5">${_quiz.results.filter(r=>r.correct).slice(0,3).map(r=>esc(r.question)).join('<br>')}</div>
-        </div>`;
-    }
+    if(pct>=70)html+=`<div style="font-size:.88rem;color:var(--ok);margin:8px 0">🌟 Bra koll! Du har stark förståelse för ${esc(_quiz.childName)}.</div>`;
+    else if(pct>=40)html+=`<div style="font-size:.88rem;color:var(--w);margin:8px 0">💛 På god väg! Fortsätt göra quizet — din förståelse växer.</div>`;
+    else html+=`<div style="font-size:.88rem;color:var(--bad);margin:8px 0">💜 Varje quiz hjälper dig förstå ${esc(_quiz.childName)} bättre. Fortsätt!</div>`;
 
-    // What you missed
     if(missed.length){
-        html+=`<div style="text-align:left;background:rgba(225,112,85,.06);border-radius:12px;padding:14px;margin:12px 0;border-left:3px solid var(--bad)">
-            <div style="font-size:.82rem;font-weight:600;color:var(--bad);margin-bottom:6px">💛 Missade</div>`;
-        missed.slice(0,4).forEach(r=>{
-            html+=`<div style="font-size:.8rem;color:var(--t2);line-height:1.5;margin-bottom:6px">${esc(r.question)}<br><span style="color:var(--t2)">Du: ${esc(r.yourAnswer)}</span> → <span style="color:var(--t)"><strong>${esc(r.correctAnswer)}</strong></span></div>`;
+        html+=`<div style="text-align:left;margin:16px 0">
+            <div style="font-size:.78rem;color:var(--t2);margin-bottom:8px;font-weight:600">Det här visste du inte:</div>`;
+        missed.slice(0,5).forEach(r=>{
+            html+=`<div style="background:rgba(225,112,85,.06);border-radius:8px;padding:10px;margin-bottom:6px;font-size:.8rem;text-align:left">
+                <div style="color:var(--t);margin-bottom:4px">${esc(r.question)}</div>
+                <div style="color:var(--t2)">Du: ${esc(r.yourAnswer)}</div>
+                <div style="color:var(--t)">Rätt: <strong>${esc(r.correctAnswer)}</strong></div>
+            </div>`;
         });
         html+=`</div>`;
+        html+=`<div style="background:rgba(108,92,231,.08);border-radius:12px;padding:14px;margin:12px 0;font-size:.82rem;color:var(--t2);line-height:1.5;text-align:left">
+            💡 <strong>Tips:</strong> Prata med ${esc(_quiz.childName)} om svaren du missade. Varje samtal bygger förståelse och stärker er relation!</div>`;
     }
 
-    // Tips
-    if(moodMissed.length){
-        html+=`<div style="background:rgba(108,92,231,.08);border-radius:12px;padding:14px;margin:12px 0;font-size:.82rem;color:var(--t2);line-height:1.5">
-            💡 Du missade hur ${esc(_quiz.childName)} mådde på ${moodMissed.map(r=>esc(r.placeName)).join(' och ')}. Fråga hen om det — det stärker er relation!</div>`;
-    }else if(missed.length){
-        html+=`<div style="background:rgba(108,92,231,.08);border-radius:12px;padding:14px;margin:12px 0;font-size:.82rem;color:var(--t2);line-height:1.5">
-            💡 Prata med ${esc(_quiz.childName)} om svaren du missade. Varje samtal bygger förståelse!</div>`;
-    }else{
-        html+=`<div style="background:rgba(0,184,148,.08);border-radius:12px;padding:14px;margin:12px 0;font-size:.82rem;color:var(--ok);line-height:1.5">
-            🌟 Perfekt resultat! Du har fantastisk koll på ${esc(_quiz.childName)}. Fortsätt så!</div>`;
-    }
-
-    html+=`<button class="btn ba" style="margin-top:16px;padding:12px 24px" onclick="_quiz.active=false;renderMoodis()">Tillbaka till Moodis</button>`;
+    html+=`<button class="btn ba" style="margin-top:16px;padding:12px 24px" onclick="_quiz.active=false;renderMoodis()">Se insikter →</button>`;
     html+=`</div>`;
     el.innerHTML=html;
 }
