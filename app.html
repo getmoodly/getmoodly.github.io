@@ -3193,9 +3193,29 @@ function buyMoodisHat(hatId){
     renderMoodis();
 }
 
-function toggleAddPlace(idx,storageKey){
+let _addPlaceState={};
+function toggleAddPlace(idx){
     const el=document.getElementById('add-place-options-'+idx);
-    if(el)el.style.display=el.style.display==='none'?'flex':'none';
+    if(el)el.style.display=el.style.display==='none'?'block':'none';
+}
+function selectPlaceType(idx,type,defaultName){
+    _addPlaceState[idx]={type,defaultName};
+    const nameEl=document.getElementById('place-name-input-'+idx);
+    const inputEl=document.getElementById('place-name-'+idx);
+    if(nameEl)nameEl.style.display='block';
+    if(inputEl){inputEl.value=defaultName;inputEl.placeholder='Döp platsen, t.ex. '+defaultName;inputEl.focus();inputEl.select()}
+    // Highlight selected type
+    const parent=document.getElementById('add-place-options-'+idx);
+    if(parent)parent.querySelectorAll('.place-type-btn').forEach(b=>{b.style.background=b.textContent.includes(defaultName)?'var(--p)':'';b.style.color=b.textContent.includes(defaultName)?'#fff':''});
+}
+function confirmAddPlace(idx,storageKey){
+    const state=_addPlaceState[idx];
+    if(!state)return;
+    const inputEl=document.getElementById('place-name-'+idx);
+    const name=(inputEl?.value||'').trim()||state.defaultName;
+    addPlaceToChild(storageKey,state.type,name);
+    delete _addPlaceState[idx];
+    renderFamily();
 }
 
 function saveProfile(){
@@ -3296,26 +3316,52 @@ function addChildStep1(){
     const step2=document.getElementById('add-child-step2');
     step2.classList.remove('h');
     step2.innerHTML=`<div class="ct">📍 Lägg till platser för ${esc(name)}</div>
-        <p style="font-size:.78rem;color:var(--t2);margin-bottom:12px">Vilka miljöer ska ${esc(name)} checka in på?</p>
+        <p style="font-size:.78rem;color:var(--t2);margin-bottom:12px">Välj platstyp och döp den</p>
         <div id="step2-places"></div>
-        <div style="display:flex;gap:8px;flex-wrap:wrap;margin-bottom:12px" id="step2-quick">
-            <button class="btn bs" style="padding:8px 14px;font-size:.8rem" onclick="addPlaceToChild('${storageKey}','school','Skola');refreshStep2('${storageKey}','${name}')">+ 🏫 Skola</button>
-            <button class="btn bs" style="padding:8px 14px;font-size:.8rem" onclick="addPlaceToChild('${storageKey}','sport','Idrott');refreshStep2('${storageKey}','${name}')">+ ⚽ Idrott</button>
-            <button class="btn bs" style="padding:8px 14px;font-size:.8rem" onclick="addPlaceToChild('${storageKey}','home','Hem');refreshStep2('${storageKey}','${name}')">+ 🏠 Hem</button>
-            <button class="btn bs" style="padding:8px 14px;font-size:.8rem" onclick="addPlaceToChild('${storageKey}','hobby','Hobby');refreshStep2('${storageKey}','${name}')">+ 🎨 Hobby</button>
+        <div style="display:flex;gap:8px;flex-wrap:wrap;margin-bottom:10px" id="step2-quick">
+            <button class="btn bs place-type-btn" style="padding:8px 14px;font-size:.8rem" onclick="step2SelectType('${esc(storageKey)}','${esc(name)}','school','Skola',this)">🏫 Skola</button>
+            <button class="btn bs place-type-btn" style="padding:8px 14px;font-size:.8rem" onclick="step2SelectType('${esc(storageKey)}','${esc(name)}','sport','Idrott',this)">⚽ Idrott</button>
+            <button class="btn bs place-type-btn" style="padding:8px 14px;font-size:.8rem" onclick="step2SelectType('${esc(storageKey)}','${esc(name)}','home','Hem',this)">🏠 Hem</button>
+            <button class="btn bs place-type-btn" style="padding:8px 14px;font-size:.8rem" onclick="step2SelectType('${esc(storageKey)}','${esc(name)}','afterschool','Fritids',this)">🏫 Fritids</button>
+            <button class="btn bs place-type-btn" style="padding:8px 14px;font-size:.8rem" onclick="step2SelectType('${esc(storageKey)}','${esc(name)}','hobby','Hobby',this)">🎨 Hobby</button>
+            <button class="btn bs place-type-btn" style="padding:8px 14px;font-size:.8rem" onclick="step2SelectType('${esc(storageKey)}','${esc(name)}','other','Annat',this)">📍 Annat</button>
+        </div>
+        <div id="step2-name-input" style="display:none;margin-bottom:12px">
+            <input class="sett-input" id="step2-place-name" placeholder="Döp platsen" style="margin-bottom:8px">
+            <button class="btn ba" style="font-size:.78rem;padding:8px 16px" id="step2-add-btn">Lägg till</button>
         </div>
         <button class="btn ba" onclick="_pendingChild=null;renderFamily()" style="margin-top:4px">✓ Klar</button>`;
+}
+
+let _step2State={};
+function step2SelectType(storageKey,childName,type,defaultName,btnEl){
+    _step2State={storageKey,childName,type,defaultName};
+    const nameInput=document.getElementById('step2-name-input');
+    const inputEl=document.getElementById('step2-place-name');
+    const addBtn=document.getElementById('step2-add-btn');
+    if(nameInput)nameInput.style.display='block';
+    if(inputEl){inputEl.value=defaultName;inputEl.placeholder='T.ex. '+defaultName;inputEl.focus();inputEl.select()}
+    if(addBtn)addBtn.onclick=function(){
+        const name=(inputEl?.value||'').trim()||defaultName;
+        addPlaceToChild(storageKey,type,name);
+        inputEl.value='';
+        nameInput.style.display='none';
+        refreshStep2(storageKey,childName);
+    };
+    // Highlight selected
+    const parent=btnEl?.parentElement;
+    if(parent)parent.querySelectorAll('.place-type-btn').forEach(b=>{b.style.background='';b.style.color=''});
+    if(btnEl){btnEl.style.background='var(--p)';btnEl.style.color='#fff'}
 }
 
 function refreshStep2(storageKey,name){
     const cd=getFullChildData(storageKey);
     const places=cd?.places||[];
-    // Update added places list
     const listEl=document.getElementById('step2-places');
     if(places.length){
         listEl.innerHTML=places.map(p=>{
             const pt=PT[p.type]||PT.other;
-            return`<div style="display:flex;align-items:center;gap:8px;padding:8px 0;border-bottom:1px solid rgba(255,255,255,.04);font-size:.82rem"><span class="fam-place-icon" style="background:${pt.bg}">${pt.icon}</span><span>${p.name}</span><span style="margin-left:auto;color:var(--ok);font-size:.7rem">✓ Tillagd</span></div>`;
+            return`<div style="display:flex;align-items:center;gap:8px;padding:8px 0;border-bottom:1px solid rgba(255,255,255,.04);font-size:.82rem"><span class="fam-place-icon" style="background:${pt.bg}">${pt.icon}</span><span>${esc(p.name)}</span><span style="margin-left:auto;color:var(--ok);font-size:.7rem">✓ Tillagd</span></div>`;
         }).join('');
     }
     // Update quick buttons — hide already added types
@@ -3356,11 +3402,10 @@ function removeChildConfirm(idx,name){
     document.body.appendChild(overlay);
 }
 
-function addPlaceToChild(storageKey,type,defaultName){
+function addPlaceToChild(storageKey,type,customName){
     const cd=getFullChildData(storageKey);
     if(!cd)return;
-    const count=(cd.places||[]).filter(p=>p.type===type).length;
-    const name=count?defaultName+' '+(count+1):defaultName;
+    const name=customName||type;
     const place={id:'p_'+Date.now()+'_'+Math.random().toString(36).slice(2,6),name,type,osmId:'',address:'',lat:null,lng:null};
     cd.places.push(place);
     if(sok)localStorage.setItem(storageKey,JSON.stringify(cd));
@@ -3485,16 +3530,22 @@ function renderFamily(){
                         if(cp.lastComment)html+=`<div class="fam-place-comment">"${esc(cp.lastComment)}"</div>`;
                     });
                 }else{html+=`<p style="font-size:.78rem;color:var(--t2);padding:8px 0;text-align:center">Inga platser — lägg till nedan</p>`}
-                // Add place button with all options
+                // Add place button with naming
                 html+=`<div style="padding:8px 0" id="child-places-${i}">
-                    <button class="btn bs" style="padding:8px 14px;font-size:.78rem;width:100%" onclick="toggleAddPlace(${i},'${esc(fp.storageKey)}')">+ Lägg till plats</button>
-                    <div id="add-place-options-${i}" style="display:none;flex-wrap:wrap;gap:6px;margin-top:8px">
-                        <button class="btn bs" style="padding:6px 10px;font-size:.72rem" onclick="addPlaceToChild('${esc(fp.storageKey)}','school','Skola');renderFamily()">🏫 Skola</button>
-                        <button class="btn bs" style="padding:6px 10px;font-size:.72rem" onclick="addPlaceToChild('${esc(fp.storageKey)}','sport','Idrott');renderFamily()">⚽ Idrott</button>
-                        <button class="btn bs" style="padding:6px 10px;font-size:.72rem" onclick="addPlaceToChild('${esc(fp.storageKey)}','home','Hem');renderFamily()">🏠 Hem</button>
-                        <button class="btn bs" style="padding:6px 10px;font-size:.72rem" onclick="addPlaceToChild('${esc(fp.storageKey)}','afterschool','Fritids');renderFamily()">🏫 Fritids</button>
-                        <button class="btn bs" style="padding:6px 10px;font-size:.72rem" onclick="addPlaceToChild('${esc(fp.storageKey)}','hobby','Hobby');renderFamily()">🎨 Hobby</button>
-                        <button class="btn bs" style="padding:6px 10px;font-size:.72rem" onclick="addPlaceToChild('${esc(fp.storageKey)}','other','Annan plats');renderFamily()">📍 Annat</button>
+                    <button class="btn bs" style="padding:8px 14px;font-size:.78rem;width:100%" onclick="toggleAddPlace(${i})">+ Lägg till plats</button>
+                    <div id="add-place-options-${i}" style="display:none;margin-top:10px">
+                        <div style="display:flex;flex-wrap:wrap;gap:6px;margin-bottom:10px">
+                            <button class="btn bs place-type-btn" style="padding:6px 10px;font-size:.72rem" onclick="selectPlaceType(${i},'school','Skola')">🏫 Skola</button>
+                            <button class="btn bs place-type-btn" style="padding:6px 10px;font-size:.72rem" onclick="selectPlaceType(${i},'sport','Idrott')">⚽ Idrott</button>
+                            <button class="btn bs place-type-btn" style="padding:6px 10px;font-size:.72rem" onclick="selectPlaceType(${i},'home','Hem')">🏠 Hem</button>
+                            <button class="btn bs place-type-btn" style="padding:6px 10px;font-size:.72rem" onclick="selectPlaceType(${i},'afterschool','Fritids')">🏫 Fritids</button>
+                            <button class="btn bs place-type-btn" style="padding:6px 10px;font-size:.72rem" onclick="selectPlaceType(${i},'hobby','Hobby')">🎨 Hobby</button>
+                            <button class="btn bs place-type-btn" style="padding:6px 10px;font-size:.72rem" onclick="selectPlaceType(${i},'other','Annat')">📍 Annat</button>
+                        </div>
+                        <div id="place-name-input-${i}" style="display:none">
+                            <input class="sett-input" id="place-name-${i}" placeholder="T.ex. Vaxholms skola" style="margin-bottom:8px">
+                            <button class="btn ba" style="font-size:.78rem;padding:8px 16px" onclick="confirmAddPlace(${i},'${esc(fp.storageKey)}')">Lägg till</button>
+                        </div>
                     </div>
                 </div>`;
                 html+=`<div style="display:flex;gap:8px;padding-top:8px;border-top:1px solid rgba(255,255,255,.04)">
