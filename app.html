@@ -3355,14 +3355,16 @@ function switchToProfile(storageKey,name){
     document.getElementById('profile-banner').style.display='flex';
     document.getElementById('profile-banner-text').textContent='Visar: '+name;
     document.querySelectorAll('.pg').forEach(pg=>{pg.style.paddingTop='48px'});
-    go('home');
+    buildNav();
+    go('moodis');
 }
 
 function switchToParent(){
     APK=PARENT_KEY;
     document.getElementById('profile-banner').style.display='none';
     document.querySelectorAll('.pg').forEach(pg=>{pg.style.paddingTop='16px'});
-    go('home');
+    buildNav();
+    go('moodis');
 }
 
 function getChildSafeData(storageKey){
@@ -3412,9 +3414,10 @@ function renderFamily(){
 
     // Child profile — simplified view
     if(d.role==='child'||APK!==PARENT_KEY){
-        const avatar=AVATARS[d.selectedAvatar]||AVATARS.default;
+        const avatarObj=AVATARS[d.selectedAvatar]||AVATARS.default;
+        const avatarEmoji=avatarObj.emoji||'😊';
         html+=`<div style="text-align:center;padding:20px 0">
-            <div style="font-size:3rem;margin-bottom:8px">${avatar}</div>
+            <div style="font-size:3rem;margin-bottom:8px">${avatarEmoji}</div>
             <h3 style="font-size:1.1rem;margin-bottom:4px">${esc(d.userName)||'Moodly-användare'}</h3>
             <div style="font-size:.8rem;color:var(--t2)">🔥 ${calcPlaceStreak(d)} dagars streak — 🪙 ${d.points||0} poäng</div>
         </div>`;
