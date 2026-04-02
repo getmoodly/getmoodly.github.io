@@ -2928,30 +2928,48 @@ function checkStreakRewards(d){
 }
 
 function getNextQuestion(d){
+    if(!moodisFlow._askedQuestions)moodisFlow._askedQuestions=new Set();
+    const asked=moodisFlow._askedQuestions;
+
     const todayCheckins=(d.placeCheckins||[]).filter(c=>new Date(c.ts).toDateString()===new Date().toDateString());
     const lastCheckin=todayCheckins.length?todayCheckins[todayCheckins.length-1]:null;
     const lastScore=lastCheckin?.score||3;
     const lastPlace=lastCheckin?d.places.find(p=>p.id===lastCheckin.placeId):null;
     const lastPlaceType=lastPlace?.type||'other';
-    // First 3 questions after all places: prioritize deep reflection questions
-    // After that: alternate deep (every 2nd) and fun
+
     const afterPlaceCount=moodisFlow.questionCount-(d.places?.length*4||0);
     const deepQs=getDeepQuestions(lastPlaceType,lastScore);
-    if(afterPlaceCount<3&&deepQs.length){
-        // First 3: always deep
-        const q=deepQs[moodisFlow.deepIdx%deepQs.length];
-        moodisFlow.deepIdx++;
+    const unaskedDeep=deepQs.filter(q=>!asked.has(q.text));
+    const unaskedFun=FUN_QUESTIONS.filter(q=>!asked.has(q.text));
+
+    // If all questions asked, return null (session complete)
+    if(!unaskedDeep.length&&!unaskedFun.length)return null;
+
+    // First 3 after places: deep priority
+    if(afterPlaceCount<3&&unaskedDeep.length){
+        const q=unaskedDeep[0];
+        asked.add(q.text);
         return{type:'deep',...q};
     }
-    if(moodisFlow.questionCount%2===0&&deepQs.length){
-        // After that: every other question is deep
-        const q=deepQs[moodisFlow.deepIdx%deepQs.length];
-        moodisFlow.deepIdx++;
+    // After that: alternate deep/fun
+    if(moodisFlow.questionCount%2===0&&unaskedDeep.length){
+        const q=unaskedDeep[0];
+        asked.add(q.text);
         return{type:'deep',...q};
     }
-    const q=FUN_QUESTIONS[moodisFlow.funIdx%FUN_QUESTIONS.length];
-    moodisFlow.funIdx++;
-    return{type:'fun',...q,pts:2};
+    // Fun question
+    if(unaskedFun.length){
+        const q=unaskedFun[0];
+        asked.add(q.text);
+        return{type:'fun',...q,pts:2};
+    }
+    // Fallback to any unasked deep
+    if(unaskedDeep.length){
+        const q=unaskedDeep[0];
+        asked.add(q.text);
+        return{type:'deep',...q};
+    }
+    return null;
 }
 
 
@@ -3539,14 +3557,20 @@ function renderMoodis(){
         // Check & show streak rewards
         checkStreakRewards(d);
 
-        // Next question — deep or fun, always available
+        // Next question — never repeats
         const nextQ=getNextQuestion(d);
-        const isDeep=nextQ.type==='deep';
-        html+=`<div class="challenge-card" style="${isDeep?'border:1px solid rgba(108,92,231,.3)':''}">
-            <div style="font-size:.7rem;color:var(--a);margin-bottom:6px;text-transform:uppercase;letter-spacing:.05em">${isDeep?'💜 Reflektionsfråga':'🎮 Bonusfråga'} +${nextQ.pts} 🪙</div>
-            <div class="challenge-text">${esc(nextQ.text)}</div>
-            <div class="challenge-options" style="margin-top:14px">${nextQ.options.map(o=>`<button class="challenge-opt" onclick="moodisAnswer('${esc(o)}',${nextQ.pts},'${nextQ.tag||'fun'}','${esc(nextQ.text)}','${esc(JSON.stringify(nextQ.options))}')" style="padding:10px 18px;font-size:.88rem">${o}</button>`).join('')}</div>
-        </div>`;
+        if(nextQ){
+            const isDeep=nextQ.type==='deep';
+            html+=`<div class="challenge-card" style="${isDeep?'border:1px solid rgba(108,92,231,.3)':''}">
+                <div style="font-size:.7rem;color:var(--a);margin-bottom:6px;text-transform:uppercase;letter-spacing:.05em">${isDeep?'💜 Reflektionsfråga':'🎮 Bonusfråga'} +${nextQ.pts} 🪙</div>
+                <div class="challenge-text">${esc(nextQ.text)}</div>
+                <div class="challenge-options" style="margin-top:14px">${nextQ.options.map(o=>`<button class="challenge-opt" onclick="moodisAnswer('${esc(o)}',${nextQ.pts},'${nextQ.tag||'fun'}','${esc(nextQ.text)}','${esc(JSON.stringify(nextQ.options))}')" style="padding:10px 18px;font-size:.88rem">${o}</button>`).join('')}</div>
+            </div>`;
+        }else{
+            html+=`<div class="challenge-card"><div style="font-size:1.5rem;margin-bottom:8px">🌟</div>
+                <div class="challenge-text">Du har svarat på alla frågor! Moodis är jättenöjd.</div>
+                <div style="font-size:.8rem;color:var(--t2);margin-top:8px">Kom tillbaka senare för nya frågor!</div></div>`;
+        }
 
         // Moodis shop
         html+=`<div class="cd" style="margin-top:20px"><div class="ct">🎨 Moodis-shop <span style="font-size:.75rem;font-weight:400;color:var(--t2)">🪙 ${d.points||0}</span></div>`;
@@ -5552,15 +5576,20 @@ function detectNetworkJoin(){
     try{
         const data=JSON.parse(atob(code));
         localStorage.setItem('moodly_network_join',JSON.stringify(data));
-        // Update auth screen
+        // Update auth screen for network invite
         const badge=document.getElementById('auth-badge');
         if(badge){badge.style.display='inline-flex';badge.className='auth-child-badge';badge.innerHTML='💜 Du har blivit inbjuden!';}
         const titleEl=document.getElementById('auth-title');
         if(titleEl)titleEl.textContent='Gå med i trygghets\u00ADnätverket!';
         const descEl=document.getElementById('auth-desc');
-        if(descEl)descEl.textContent=`${data.adminName||'En förälder'} bjöd in dig att lära känna ${data.childName} bättre genom Moodly.`;
+        if(descEl)descEl.textContent=`${data.adminName||'En förälder'} bjöd in dig att lära känna ${data.childName} bättre genom Moodly. Logga in eller skapa ett konto för att komma igång.`;
         const emojiEl=document.getElementById('auth-emoji');
         if(emojiEl)emojiEl.textContent='💜';
+        // Make sure auth screen is visible and signup tab is active
+        const authScreen=document.getElementById('auth-screen');
+        if(authScreen){authScreen.style.display='';authScreen.classList.remove('h')}
+        // Switch to signup tab
+        if(typeof switchAuthTab==='function')setTimeout(()=>switchAuthTab('signup'),100);
         return true;
     }catch(e){return false}
 }
@@ -5572,6 +5601,22 @@ async function processNetworkJoin(){
     try{
         const data=JSON.parse(raw);
         const d=ld();
+
+        // If user is already a parent/admin, add network connection WITHOUT changing role
+        if(d.role==='parent'&&d.familyProfiles&&d.familyProfiles.length){
+            // Admin joining another child's network — store as additional network connection
+            if(!d.networkConnections)d.networkConnections=[];
+            const existing=d.networkConnections.find(n=>n.childId===data.childId);
+            if(!existing){
+                d.networkConnections.push({childId:data.childId,childName:data.childName,familyId:data.familyId,adminName:data.adminName});
+            }
+            sv(d);
+            localStorage.removeItem('moodly_network_join');
+            toast('Du är nu kopplad till '+data.childName+'s trygghetsnätverk!');
+            return;
+        }
+
+        // New user or non-parent — set as network role
         d.role='network';
         d.firstVisit=false;
         d.onboarded=new Date().toISOString();
