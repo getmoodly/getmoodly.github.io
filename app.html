@@ -650,10 +650,22 @@
     <div class="ob-step" id="ob2">
         <div style="font-size:2.5rem;margin-bottom:10px">👤</div>
         <h1>Om dig</h1>
-        <p>Du som förälder administrerar appen. Dina barn checkar in — du följer med.</p>
+        <p>Berätta lite om dig så Moodis kan anpassa upplevelsen.</p>
         <input type="text" id="user-name-input" placeholder="Ditt namn..." maxlength="30">
+        <div style="width:100%;max-width:320px;margin-bottom:12px">
+            <div style="font-size:.82rem;color:var(--t2);margin-bottom:8px;text-align:center">Vem är du för barnet?</div>
+            <div style="display:flex;flex-wrap:wrap;gap:8px;justify-content:center" id="ob-role-select">
+                <button class="btn bs ob-role-btn" onclick="selectObRole('mamma',this)" style="padding:8px 16px;font-size:.85rem">👩 Mamma</button>
+                <button class="btn bs ob-role-btn" onclick="selectObRole('pappa',this)" style="padding:8px 16px;font-size:.85rem">👨 Pappa</button>
+                <button class="btn bs ob-role-btn" onclick="selectObRole('mormor',this)" style="padding:8px 16px;font-size:.85rem">👵 Mormor</button>
+                <button class="btn bs ob-role-btn" onclick="selectObRole('morfar',this)" style="padding:8px 16px;font-size:.85rem">👴 Morfar</button>
+                <button class="btn bs ob-role-btn" onclick="selectObRole('farmor',this)" style="padding:8px 16px;font-size:.85rem">👵 Farmor</button>
+                <button class="btn bs ob-role-btn" onclick="selectObRole('farfar',this)" style="padding:8px 16px;font-size:.85rem">👴 Farfar</button>
+                <button class="btn bs ob-role-btn" onclick="selectObRole('annan',this)" style="padding:8px 16px;font-size:.85rem">👤 Annan</button>
+            </div>
+        </div>
         <input type="text" id="user-kommun-input" list="kommun-list" placeholder="Hemkommun (t.ex. Täby, Göteborg)" maxlength="50" autocomplete="off">
-        <div id="ob-kommun-hint" style="font-size:.7rem;color:var(--t2);margin-top:-10px;margin-bottom:16px">Välj kommun för att jämföra välmående med andra familjer i ditt område</div>
+        <div id="ob-kommun-hint" style="font-size:.7rem;color:var(--t2);margin-top:-10px;margin-bottom:16px">Hemkommun används för att jämföra välmående i ditt område</div>
         <button class="btn bp" onclick="obValidateAndNext(3)">Nästa</button>
         <button class="btn" onclick="obNext(1)" style="background:none;color:var(--t2);font-size:.78rem;margin-top:6px">Tillbaka</button>
     </div>
@@ -2375,6 +2387,13 @@ function quickAddPlaceFromModal(type,defaultName){
 // ===== ONBOARDING =====
 let obChildren=[];
 let obActiveChild=0;
+let _obSelectedRole='';
+
+function selectObRole(role,btn){
+    _obSelectedRole=role;
+    document.querySelectorAll('.ob-role-btn').forEach(b=>{b.style.background='';b.style.color=''});
+    if(btn){btn.style.background='var(--p)';btn.style.color='#fff'}
+}
 
 function obValidateAndNext(step){
     const nameInput=document.getElementById('user-name-input');
@@ -2531,6 +2550,7 @@ function finishOnboarding(){
     d.firstVisit=false;
     d.userName=userName;
     d.kommun=kommun;
+    d.familyRole=_obSelectedRole||'';
     d.onboarded=new Date().toISOString();
     d.role='parent';
     d.familyId=d.familyId||'fam_'+Date.now();
@@ -3610,6 +3630,7 @@ function confirmAddPlace(idx,storageKey){
 function saveProfile(){
     const d=ld();
     d.userName=document.getElementById('sett-username').value.trim();
+    d.familyRole=document.getElementById('sett-family-role')?.value||d.familyRole||'';
     const rawKommun=(document.getElementById('sett-kommun')?.value||'').trim();
     d.kommun=normalizeKommun(rawKommun);
     // Propagate kommun to children
@@ -4041,8 +4062,12 @@ function renderFamily(){
     }
 
     // Profile settings
+    const FAMILY_ROLES=[{id:'mamma',label:'👩 Mamma'},{id:'pappa',label:'👨 Pappa'},{id:'mormor',label:'👵 Mormor'},{id:'morfar',label:'👴 Morfar'},{id:'farmor',label:'👵 Farmor'},{id:'farfar',label:'👴 Farfar'},{id:'annan',label:'👤 Annan'}];
     html+=`<div class="cd"><div class="ct">👤 Profil</div>
         <div class="sett-row"><span>Ditt namn</span><input class="sett-input" id="sett-username" value="${esc(d.userName||'')}"></div>
+        <div class="sett-row"><span>Roll</span><select id="sett-family-role" class="sett-input">
+            <option value="">Välj...</option>${FAMILY_ROLES.map(r=>`<option value="${r.id}"${d.familyRole===r.id?' selected':''}>${r.label}</option>`).join('')}
+        </select></div>
         <div class="sett-row"><span>Hemkommun</span><input class="sett-input" id="sett-kommun" list="kommun-list" value="${esc(d.kommun||'')}" placeholder="T.ex. Täby" autocomplete="off"></div>
         <button class="btn bp" onclick="saveProfile()" style="margin-top:10px">Spara</button></div>`;
 
