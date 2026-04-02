@@ -751,7 +751,7 @@
             <div id="r-emo" style="font-size:1.1rem;font-weight:700"></div>
         </div>
         <div class="ai-ref"><h3 id="r-ref-title"></h3><p id="r-ref-text"></p></div>
-        <button class="btn bs" onclick="go('home')" style="margin-top:6px">Tillbaka</button>
+        <button class="btn bs" onclick="go('moodis')" style="margin-top:6px">Tillbaka</button>
     </div>
 
     <!-- INSIKTER PAGE -->
@@ -765,12 +765,6 @@
 
 <div class="toast" id="toast"></div>
 <div class="offline-bar" id="offline-bar">Ingen internetanslutning — dina check-ins sparas lokalt</div>
-<div class="install-banner" id="install-banner" style="display:none">
-    <div style="font-size:1.4rem">📲</div>
-    <div class="ib-text"><strong>Lägg till Moodly</strong> på hemskärmen för snabbare åtkomst</div>
-    <button class="ib-btn" id="install-btn">Installera</button>
-    <button class="ib-close" id="install-close">&times;</button>
-</div>
 
 <script>
 // ===================================================================
@@ -2509,79 +2503,6 @@ function obConfirmPlace(){
     toast(PT[child.places[child.places.length-1].type]?.icon+' '+name+' tillagd!');
 }
 
-function renderOb4(){
-    const child=obChildren[obActiveChild];if(!child)return;
-    document.getElementById('ob4-title').textContent='Platser för '+child.name;
-    document.getElementById('ob4-desc').textContent='Välj platstyp och döp den';
-    document.getElementById('ob4-child-tabs').innerHTML=obChildren.map((c,i)=>
-        `<div style="padding:6px 14px;border-radius:16px;font-size:.78rem;font-weight:600;cursor:pointer;${i===obActiveChild?'background:var(--p);color:#fff':'background:rgba(255,255,255,.06);color:var(--t2)'}" onclick="switchObChild(${i})">${esc(c.name)}${c.places.length?' ('+c.places.length+')':''}</div>`
-    ).join('');
-    renderOb4Places();
-    const isLast=obActiveChild>=obChildren.length-1;
-    document.getElementById('ob4-next').textContent=isLast?'Klar':'Nästa barn →';
-    document.getElementById('ob4-skip').innerHTML=child.places.length===0?
-        `<button class="btn" onclick="obNextChild()" style="background:none;color:var(--t2);font-size:.78rem">Hoppa över ${esc(child.name)}</button>`:'';
-}
-
-function renderOb4Places(){
-    const child=obChildren[obActiveChild];if(!child)return;
-    const el=document.getElementById('ob4-places-list');
-    if(!child.places.length){el.innerHTML='<p style="font-size:.78rem;color:var(--t2);text-align:center;margin-bottom:8px">Inga platser tillagda ännu</p>';return}
-    el.innerHTML=child.places.map((p,i)=>`<div style="display:flex;align-items:center;gap:8px;padding:8px 12px;background:var(--c2);border-radius:8px;margin-bottom:6px;font-size:.84rem">
-        <span>${PT[p.type]?.icon||'📍'}</span><span style="flex:1">${esc(p.name)}</span>
-        <button style="background:none;border:none;color:var(--bad);font-size:1rem;cursor:pointer" onclick="obRemovePlace(${i})">×</button></div>`).join('');
-}
-
-function switchObChild(i){
-    obActiveChild=i;_obPlaceType='';
-    document.getElementById('ob-place-name-section').style.display='none';
-    document.querySelectorAll('#ob-place-type-btns .place-type-btn').forEach(b=>{b.style.background='';b.style.color=''});
-    renderOb4();
-}
-
-function updateQuickPlaceButtons(){
-    const child=obChildren[obActiveChild];if(!child)return;
-    document.querySelectorAll('#ob-quick-places .quick-place').forEach(el=>{
-        const type=el.getAttribute('data-type')||el.onclick?.toString().match(/'(\w+)'/)?.[1];
-        const count=type?child.places.filter(p=>p.type===type).length:0;
-        const label=el.querySelector('.qp-label');
-        if(count>0){
-            el.classList.add('added');
-            label.textContent=(PT[type]?.label||type)+' ('+count+')';
-        }else{
-            el.classList.remove('added');
-            label.textContent=PT[type]?.label||type;
-        }
-    });
-}
-
-function obAddPlace(){
-    const name=document.getElementById('ob-place-name').value.trim();
-    if(!name){toast('Ange ett namn');return}
-    const pd=selectedPlace?{...selectedPlace}:null;
-    const child=obChildren[obActiveChild];if(!child)return;
-    child.places.push({name:pd?.name||name,type:selectedPlaceType,osmId:pd?.osmId||'',address:pd?.address||'',lat:pd?.lat||null,lng:pd?.lng||null});
-    selectedPlace=null;
-    document.getElementById('ob-place-name').value='';
-    document.getElementById('ob-place-addr').textContent='';
-    document.getElementById('ac-drop-ob').classList.remove('on');
-    renderOb4Places();renderOb4();updateQuickPlaceButtons();
-}
-
-function obRemovePlace(i){
-    const child=obChildren[obActiveChild];
-    if(child)child.places.splice(i,1);
-    renderOb4Places();renderOb4();
-}
-
-function obNextChild(){
-    if(obActiveChild<obChildren.length-1){
-        obActiveChild++;_obPlaceType='';
-        document.getElementById('ob-place-name-section').style.display='none';
-        renderOb4();
-    }else{obNext(5)}
-}
-
 function finishOnboarding(){
     const userName=document.getElementById('user-name-input').value.trim();
     const kommun=normalizeKommun((document.getElementById('user-kommun-input')?.value||'').trim());
@@ -2601,7 +2522,7 @@ function finishOnboarding(){
         const storageKey='moodly_child_'+id;
         const childPlaces=child.places.map(p=>({id:'p_'+Date.now()+'_'+Math.random().toString(36).slice(2,6),name:p.name,type:p.type,osmId:p.osmId||'',address:p.address||'',lat:p.lat||null,lng:p.lng||null}));
         d.familyProfiles.push({id,name:child.name,ageGroup:child.ageGroup,gender:child.gender||'',storageKey});
-        const childData={places:childPlaces,placeCheckins:[],benchmarks:[],checkins:[],micro:[],xp:0,level:1,points:0,streak:0,firstVisit:false,baseline:null,userName:child.name,aiName:'Luna',personality:'warm',onboarded:new Date().toISOString(),alertsSeen:[],familyId:d.familyId,role:'child',familyProfiles:[],parentKey:PARENT_KEY,unlockedAvatars:['default'],selectedAvatar:'default',dailyRewardClaimed:null,kommun:d.kommun};
+        const childData={places:childPlaces,placeCheckins:[],benchmarks:[],checkins:[],micro:[],xp:0,level:1,points:0,streak:0,firstVisit:false,baseline:null,userName:child.name,onboarded:new Date().toISOString(),alertsSeen:[],familyId:d.familyId,role:'child',familyProfiles:[],parentKey:PARENT_KEY,unlockedAvatars:['default'],selectedAvatar:'default',dailyRewardClaimed:null,kommun:d.kommun,moodis:{stage:'egg',hat:null,color:'purple',ownedHats:[],mood:'neutral',_lastStage:null,totalPts:0},moodisInsights:[]};
         if(sok)localStorage.setItem(storageKey,JSON.stringify(childData));
         childPlaces.forEach(p=>syncPlace(p));
     });
@@ -3742,7 +3663,7 @@ function toggleAddPlace(idx){
     const el=document.getElementById('add-place-options-'+idx);
     if(el)el.style.display=el.style.display==='none'?'block':'none';
 }
-function selectPlaceType(idx,type,defaultName){
+function selectChildPlaceType(idx,type,defaultName){
     _addPlaceState[idx]={type,defaultName};
     const nameEl=document.getElementById('place-name-input-'+idx);
     const inputEl=document.getElementById('place-name-'+idx);
@@ -3783,7 +3704,6 @@ function exportData(){
 }
 
 function confirmDeleteAll(){
-    if(!confirm('Är du säker? All data raderas permanent.'))return;
     if(sok){const d=ld();if(d.familyProfiles)d.familyProfiles.forEach(fp=>localStorage.removeItem(fp.storageKey));localStorage.removeItem(APK)}
     D={places:[],placeCheckins:[],benchmarks:[],checkins:[],micro:[],xp:0,level:1,points:0,streak:0,firstVisit:true,baseline:null,userName:'',onboarded:null,alertsSeen:[],familyId:'',role:'self',familyProfiles:[],parentKey:'',unlockedAvatars:['default'],selectedAvatar:'default',dailyRewardClaimed:null,kommun:'',parentReactions:[],cheersSent:{},_claimedStreakBonuses:{},moodis:{stage:'egg',hat:null,color:'purple',ownedHats:[],mood:'neutral',_lastStage:null,totalPts:0},moodisInsights:[]};
     if(sok)localStorage.setItem(APK,JSON.stringify(D));
@@ -3853,7 +3773,7 @@ function addChildStep1(){
     const id='child_'+Date.now();const storageKey='moodly_child_'+id;
     const d=ld();
     d.familyProfiles.push({id,name,ageGroup,storageKey});sv(d);
-    const childData={places:[],placeCheckins:[],benchmarks:[],checkins:[],micro:[],xp:0,level:1,points:0,streak:0,firstVisit:false,baseline:null,userName:name,aiName:d.aiName||'Luna',personality:'warm',onboarded:new Date().toISOString(),alertsSeen:[],familyId:d.familyId,role:'child',familyProfiles:[],parentKey:PARENT_KEY,unlockedAvatars:['default'],selectedAvatar:'default',dailyRewardClaimed:null,kommun:d.kommun||''};
+    const childData={places:[],placeCheckins:[],benchmarks:[],checkins:[],micro:[],xp:0,level:1,points:0,streak:0,firstVisit:false,baseline:null,userName:name,onboarded:new Date().toISOString(),alertsSeen:[],familyId:d.familyId,role:'child',familyProfiles:[],parentKey:PARENT_KEY,unlockedAvatars:['default'],selectedAvatar:'default',dailyRewardClaimed:null,kommun:d.kommun||'',moodis:{stage:'egg',hat:null,color:'purple',ownedHats:[],mood:'neutral',_lastStage:null,totalPts:0},moodisInsights:[]};
     if(sok)localStorage.setItem(storageKey,JSON.stringify(childData));
     _pendingChild={storageKey,name};
     // Show step 2
@@ -4168,12 +4088,12 @@ function renderFamily(){
                     <button class="btn bs" style="padding:8px 14px;font-size:.78rem;width:100%" onclick="toggleAddPlace(${i})">+ Lägg till plats</button>
                     <div id="add-place-options-${i}" style="display:none;margin-top:10px">
                         <div style="display:flex;flex-wrap:wrap;gap:6px;margin-bottom:10px">
-                            <button class="btn bs place-type-btn" style="padding:6px 10px;font-size:.72rem" onclick="selectPlaceType(${i},'school','Skola')">🏫 Skola</button>
-                            <button class="btn bs place-type-btn" style="padding:6px 10px;font-size:.72rem" onclick="selectPlaceType(${i},'sport','Idrott')">⚽ Idrott</button>
-                            <button class="btn bs place-type-btn" style="padding:6px 10px;font-size:.72rem" onclick="selectPlaceType(${i},'home','Hem')">🏠 Hem</button>
-                            <button class="btn bs place-type-btn" style="padding:6px 10px;font-size:.72rem" onclick="selectPlaceType(${i},'afterschool','Fritids')">🏫 Fritids</button>
-                            <button class="btn bs place-type-btn" style="padding:6px 10px;font-size:.72rem" onclick="selectPlaceType(${i},'hobby','Hobby')">🎨 Hobby</button>
-                            <button class="btn bs place-type-btn" style="padding:6px 10px;font-size:.72rem" onclick="selectPlaceType(${i},'other','Annat')">📍 Annat</button>
+                            <button class="btn bs place-type-btn" style="padding:6px 10px;font-size:.72rem" onclick="selectChildPlaceType(${i},'school','Skola')">🏫 Skola</button>
+                            <button class="btn bs place-type-btn" style="padding:6px 10px;font-size:.72rem" onclick="selectChildPlaceType(${i},'sport','Idrott')">⚽ Idrott</button>
+                            <button class="btn bs place-type-btn" style="padding:6px 10px;font-size:.72rem" onclick="selectChildPlaceType(${i},'home','Hem')">🏠 Hem</button>
+                            <button class="btn bs place-type-btn" style="padding:6px 10px;font-size:.72rem" onclick="selectChildPlaceType(${i},'afterschool','Fritids')">🏫 Fritids</button>
+                            <button class="btn bs place-type-btn" style="padding:6px 10px;font-size:.72rem" onclick="selectChildPlaceType(${i},'hobby','Hobby')">🎨 Hobby</button>
+                            <button class="btn bs place-type-btn" style="padding:6px 10px;font-size:.72rem" onclick="selectChildPlaceType(${i},'other','Annat')">📍 Annat</button>
                         </div>
                         <div id="place-name-input-${i}" style="display:none">
                             <input class="sett-input" id="place-name-${i}" placeholder="T.ex. Vaxholms skola" style="margin-bottom:8px">
@@ -4372,7 +4292,8 @@ async function signOut(){
     if(!sb)return;
     await sb.auth.signOut();
     sbUser=null;
-    localStorage.removeItem(APK);
+    APK=PARENT_KEY;
+    localStorage.removeItem(PARENT_KEY);
     document.getElementById('app').style.display='none';
     document.getElementById('auth-screen').style.display='';
     document.getElementById('auth-screen').classList.remove('h');
@@ -5522,7 +5443,7 @@ function calcTrygghetsgrad(d,childId){
 }
 
 function renderTrygghetsgrad(tg,childName){
-    const trendText=tg.trend==='up'?'↑ Ökande':'↓ Sjunkande';
+    const trendText=tg.trend==='up'?'↑ Ökande':tg.trend==='down'?'↓ Sjunkande':'→ Stabil';
     const trendCol=tg.trend==='up'?'var(--ok)':tg.trend==='down'?'var(--bad)':'var(--t2)';
     let html=`<div style="background:linear-gradient(135deg,rgba(108,92,231,.1),rgba(162,155,254,.06));border-radius:14px;padding:16px;margin-bottom:12px">`;
     // Score gauge
