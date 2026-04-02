@@ -3705,6 +3705,7 @@ function moodisFollowUp(type,answer){
     if(type==='why')moodisFlow.step='who';
     else if(type==='who')moodisFlow.step='body';
     else{moodisFlow.step='mood';moodisFlow.currentScore=null;}
+    scheduleSyncChildData();
     renderMoodis();
 }
 
@@ -3718,6 +3719,7 @@ function moodisAnswer(answer,pts,tag,questionText,optionsJson){
     d.moodisInsights.push({date:today,tag:tag||'fun',answer:clean,rawAnswer:answer,question:questionText||'',options,ts:new Date().toISOString()});
     if(d.moodisInsights.length>300)d.moodisInsights=d.moodisInsights.slice(-300);
     sv(d);
+    scheduleSyncChildData();
     renderMoodis();
 }
 
@@ -5455,6 +5457,44 @@ async function shareChildInvite(){
     }else{
         navigator.clipboard.writeText(msg+' '+url).then(()=>toast('Länk kopierad!')).catch(()=>toast('Kunde inte kopiera'));
     }
+}
+
+// ===== SYNC CHILD DATA FOR NETWORK =====
+async function syncChildDataForNetwork(){
+    if(!sbUser)return;
+    // Find parent data — only parent syncs
+    const d=ld();
+    if(d.role!=='parent'||!d.familyProfiles||!d.familyProfiles.length||!d.familyId)return;
+    for(const fp of d.familyProfiles){
+        const cd=getFullChildData(fp.storageKey);
+        if(!cd)continue;
+        const insights=cd.moodisInsights||[];
+        const checkins=cd.placeCheckins||[];
+        if(!insights.length&&!checkins.length)continue;
+        try{
+            await sb.from('shared_child_data').upsert({
+                family_id:d.familyId,
+                child_id:fp.id,
+                child_name:fp.name,
+                data:{
+                    places:cd.places||[],
+                    placeCheckins:checkins.slice(-100),
+                    moodisInsights:insights.slice(-100),
+                    selectedAvatar:cd.selectedAvatar||'default',
+                    points:cd.points||0,
+                    streak:calcPlaceStreak(cd)
+                },
+                updated_at:new Date().toISOString()
+            },{onConflict:'family_id,child_id'});
+        }catch(e){}
+    }
+}
+
+// Auto-sync after child answers (debounced)
+let _syncTimer=null;
+function scheduleSyncChildData(){
+    if(_syncTimer)clearTimeout(_syncTimer);
+    _syncTimer=setTimeout(syncChildDataForNetwork,5000);
 }
 
 // ===== NETWORK INVITE =====
