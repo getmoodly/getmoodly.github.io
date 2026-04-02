@@ -3305,10 +3305,10 @@ function getQuizQuestions(cd,childName){
     const today=new Date().toDateString();
     const recent=insights.filter(i=>{
         const age=Date.now()-new Date(i.ts).getTime();
-        return age<3*864e5&&i.options&&i.options.length>=2;
+        return age<3*864e5&&i.answer;
     });
     const questions=[];
-    // Mood check-in questions
+    // Mood check-in questions per place
     const todayCheckins=(cd.placeCheckins||[]).filter(c=>new Date(c.ts).toDateString()===today);
     todayCheckins.forEach(ci=>{
         const place=(cd.places||[]).find(p=>p.id===ci.placeId);
@@ -3321,19 +3321,51 @@ function getQuizQuestions(cd,childName){
             type:'mood',
             placeName:place.name
         });
+        // Follow-up questions — regenerate correct options from place type + score
+        const followups=getFollowups(place.type,ci.score);
+        const tags=ci.tags||[];
+        if(tags.length&&followups.why){
+            questions.push({
+                question:`${pt.icon} ${esc(place.name)}: ${followups.why.question}`,
+                options:followups.why.options,
+                answer:tags[0],
+                type:'why',
+                placeName:place.name
+            });
+        }
+        if(ci.who&&followups.who){
+            questions.push({
+                question:`${pt.icon} ${esc(place.name)}: ${followups.who.question}`,
+                options:followups.who.options,
+                answer:ci.who,
+                type:'who',
+                placeName:place.name
+            });
+        }
+        if(ci.body&&followups.body){
+            questions.push({
+                question:`${pt.icon} ${esc(place.name)}: ${followups.body.question}`,
+                options:followups.body.options,
+                answer:ci.body,
+                type:'body',
+                placeName:place.name
+            });
+        }
     });
-    // Insight-based questions
+    // Fun + deep questions from moodisInsights (these have their own options)
     recent.forEach(ins=>{
+        // Skip follow-up types — already handled above from check-in data
+        if(ins.tag==='why'||ins.tag==='who'||ins.tag==='body')return;
         if(!ins.question||!ins.options||ins.options.length<2)return;
-        const ctx=ins.placeName?`${esc(ins.placeName)}: `:'';
         questions.push({
-            question:`${ctx}${esc(ins.question)}`,
+            question:esc(ins.question),
             options:ins.options,
             answer:ins.rawAnswer||ins.answer,
             type:ins.tag||'fun',
             placeName:ins.placeName||''
         });
     });
+    // Shuffle
     for(let i=questions.length-1;i>0;i--){const j=Math.floor(Math.random()*(i+1));[questions[i],questions[j]]=[questions[j],questions[i]]}
     return questions.slice(0,15);
 }
@@ -3381,9 +3413,13 @@ function renderQuiz(){
 
 function quizAnswer(answer){
     const q=_quiz.questions[_quiz.idx];
-    const cleanA=answer.replace(/^[^\s]+\s/,'').trim();
-    const cleanC=(q.answer||'').replace(/^[^\s]+\s/,'').trim();
-    const isCorrect=answer===q.answer||cleanA===cleanC||answer.includes(cleanC)||q.answer.includes(cleanA);
+    const cleanA=answer.replace(/^[^\s]+\s/,'').trim().toLowerCase();
+    const cleanC=(q.answer||'').replace(/^[^\s]+\s/,'').trim().toLowerCase();
+    // Match: exact, cleaned text, or one contains the other
+    const isCorrect=answer===q.answer||cleanA===cleanC||
+        (cleanA.length>2&&cleanC.length>2&&(cleanA.includes(cleanC)||cleanC.includes(cleanA)))||
+        // Also match option that contains the saved answer text
+        answer.toLowerCase().includes(cleanC)||q.answer.toLowerCase().includes(cleanA);
     if(isCorrect)_quiz.correct++;
     _quiz.results.push({question:q.question,yourAnswer:answer,correctAnswer:q.answer,correct:isCorrect,type:q.type,placeName:q.placeName});
 
@@ -3391,9 +3427,11 @@ function quizAnswer(answer){
     const col=isCorrect?'var(--ok)':'var(--bad)';
     const bg=isCorrect?'rgba(0,184,148,.1)':'rgba(225,112,85,.1)';
     const icon=isCorrect?'✅':'❌';
+    // Find the full option text (with emoji) that matches the answer
+    const correctDisplay=q.options.find(o=>o.replace(/^[^\s]+\s/,'').trim().toLowerCase()===cleanC)||q.answer;
     const text=isCorrect?
         pick(['Rätt! Du känner ditt barn bra! 💚','Precis! 🎯','Bra koll! ✨','Du hade rätt! 💚']):
-        `${esc(_quiz.childName)} sa: <strong>${esc(q.answer)}</strong>`;
+        `${esc(_quiz.childName)} sa: <strong>${esc(correctDisplay)}</strong>`;
 
     el.innerHTML=`<div style="padding:40px 16px;text-align:center">
         <div style="font-size:3rem;margin-bottom:16px;animation:fu .3s ease">${icon}</div>
