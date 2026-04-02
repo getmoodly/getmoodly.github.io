@@ -3084,11 +3084,218 @@ function renderMoodisParent(){
         html+=`</div>`;
     });
 
+    // Quiz cards per child
+    d.familyProfiles.forEach(fp=>{
+        const cd=getFullChildData(fp.storageKey);
+        if(!cd)return;
+        const quizQs=getQuizQuestions(cd,fp.name);
+        const quizDone=d._quizDone||{};
+        const doneKey=fp.storageKey+'_'+new Date().toDateString();
+        if(quizQs.length&&!quizDone[doneKey]){
+            html+=`<div class="challenge-card" style="border:1px solid rgba(108,92,231,.3)">
+                <div style="font-size:1.3rem;margin-bottom:8px">🧩</div>
+                <div class="challenge-text">Hur väl känner du ${esc(fp.name)}?</div>
+                <div style="font-size:.8rem;color:var(--t2);margin-bottom:12px">${quizQs.length} frågor att matcha</div>
+                <button class="btn ba" style="padding:10px 24px;font-size:.88rem;width:auto" onclick="startParentQuiz('${esc(fp.storageKey)}','${esc(fp.name)}')">Starta quiz →</button>
+            </div>`;
+        }else if(quizDone[doneKey]){
+            const result=quizDone[doneKey];
+            html+=`<div class="cd" style="text-align:center">
+                <div style="font-size:.7rem;color:var(--a);text-transform:uppercase;letter-spacing:.05em;margin-bottom:6px">🧩 Förståelse-quiz</div>
+                <div style="font-size:1.8rem;font-weight:700;color:${result.pct>=70?'var(--ok)':result.pct>=40?'var(--w)':'var(--bad)'}">${result.pct}%</div>
+                <div style="font-size:.82rem;color:var(--t2);margin:4px 0">Du matchade ${result.correct}/${result.total} av ${esc(fp.name)}s svar</div>
+                ${result.pct<70?`<div style="font-size:.78rem;color:var(--t2);margin-top:8px">💡 Prata med ${esc(fp.name)} om det du missade — det stärker er relation!</div>`:''}
+            </div>`;
+        }
+    });
+
     html+='</div>';
     el.innerHTML=html;
 }
 
+// ===== PARENT QUIZ =====
+let _quiz={active:false,childKey:'',childName:'',questions:[],idx:0,correct:0,results:[]};
+
+function getQuizQuestions(cd,childName){
+    const insights=cd.moodisInsights||[];
+    const today=new Date().toDateString();
+    // Get recent answers (today + last 2 days)
+    const recent=insights.filter(i=>{
+        const d=new Date(i.ts);const age=Date.now()-d.getTime();
+        return age<3*864e5&&i.options&&i.options.length>=2;
+    });
+    // Also add mood check-in questions
+    const questions=[];
+    const todayCheckins=(cd.placeCheckins||[]).filter(c=>new Date(c.ts).toDateString()===today);
+    todayCheckins.forEach(ci=>{
+        const place=(cd.places||[]).find(p=>p.id===ci.placeId);
+        if(!place)return;
+        const pt=PT[place.type]||PT.other;
+        questions.push({
+            question:`Hur tror du ${esc(childName)} mådde på ${pt.icon} ${esc(place.name)}?`,
+            options:MOODS.map(m=>m.emoji),
+            answer:MOODS[ci.score-1].emoji,
+            type:'mood',
+            placeName:place.name
+        });
+    });
+    // Add insight-based questions
+    recent.forEach(ins=>{
+        if(!ins.question||!ins.options||ins.options.length<2)return;
+        const prefix=ins.placeName?`(${esc(ins.placeName)}) `:'';
+        questions.push({
+            question:`${prefix}${esc(ins.question)}`,
+            options:ins.options,
+            answer:ins.rawAnswer||ins.answer,
+            type:ins.tag||'fun',
+            placeName:ins.placeName||''
+        });
+    });
+    // Shuffle and limit
+    for(let i=questions.length-1;i>0;i--){const j=Math.floor(Math.random()*(i+1));[questions[i],questions[j]]=[questions[j],questions[i]]}
+    return questions.slice(0,15);
+}
+
+function startParentQuiz(childKey,childName){
+    const d=ld();
+    const cd=getFullChildData(childKey);
+    if(!cd)return;
+    const questions=getQuizQuestions(cd,childName);
+    if(!questions.length){toast('Inga frågor ännu — vänta tills barnet pratat med Moodis');return}
+    _quiz={active:true,childKey,childName,questions,idx:0,correct:0,results:[]};
+    renderQuiz();
+}
+
+function renderQuiz(){
+    const el=document.getElementById('pg-moodis');
+    const q=_quiz.questions[_quiz.idx];
+    if(!q){showQuizResults();return}
+    const total=_quiz.questions.length;
+    const num=_quiz.idx+1;
+
+    let html=`<div style="padding:16px 0">`;
+    // Progress
+    html+=`<div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:16px">
+        <span style="font-size:.78rem;color:var(--t2)">Fråga ${num}/${total}</span>
+        <span style="font-size:.78rem;color:var(--ok)">${_quiz.correct} rätt</span>
+    </div>`;
+    html+=`<div class="moodis-progress-bar" style="margin-bottom:20px"><div class="moodis-progress-fill" style="width:${Math.round(num/total*100)}%"></div></div>`;
+
+    // Question
+    html+=`<div style="text-align:center;margin-bottom:8px;font-size:.78rem;color:var(--t2)">Vad tror du ${esc(_quiz.childName)} svarade?</div>`;
+    html+=`<div style="text-align:center;font-size:1rem;font-weight:600;margin-bottom:24px;color:var(--t);line-height:1.5">${q.question}</div>`;
+
+    // Options
+    if(q.type==='mood'){
+        html+=`<div style="display:flex;justify-content:center;gap:14px">`;
+        q.options.forEach(o=>{
+            html+=`<button onclick="quizAnswer('${esc(o)}')" style="font-size:2.2rem;width:58px;height:58px;border-radius:50%;border:2px solid rgba(255,255,255,.08);background:rgba(255,255,255,.04);cursor:pointer;transition:all .2s;display:flex;align-items:center;justify-content:center" onpointerdown="this.style.transform='scale(1.2)'" onpointerup="this.style.transform=''">${o}</button>`;
+        });
+        html+=`</div>`;
+    }else{
+        html+=`<div class="challenge-options" style="gap:10px;padding:0 8px">${q.options.map(o=>`<button class="challenge-opt" onclick="quizAnswer('${esc(o)}')" style="padding:10px 18px;font-size:.88rem">${o}</button>`).join('')}</div>`;
+    }
+
+    html+=`</div>`;
+    el.innerHTML=html;
+}
+
+function quizAnswer(answer){
+    const q=_quiz.questions[_quiz.idx];
+    const cleanAnswer=answer.replace(/^[^\s]+\s/,'').trim();
+    const cleanCorrect=(q.answer||'').replace(/^[^\s]+\s/,'').trim();
+    const isCorrect=answer===q.answer||cleanAnswer===cleanCorrect||answer.includes(cleanCorrect)||q.answer.includes(cleanAnswer);
+    if(isCorrect)_quiz.correct++;
+    _quiz.results.push({question:q.question,yourAnswer:answer,correctAnswer:q.answer,correct:isCorrect,type:q.type,placeName:q.placeName});
+
+    // Show feedback
+    const el=document.getElementById('pg-moodis');
+    const feedbackColor=isCorrect?'var(--ok)':'var(--bad)';
+    const feedbackBg=isCorrect?'rgba(0,184,148,.1)':'rgba(225,112,85,.1)';
+    const feedbackIcon=isCorrect?'✅':'❌';
+    const feedbackText=isCorrect?
+        pick(['Rätt! Du känner ditt barn bra! 💚','Precis rätt! 🎯','Du hade koll! ✨']):
+        `Inte riktigt — ${esc(_quiz.childName)} sa: <strong>${esc(q.answer)}</strong>`;
+
+    el.innerHTML=`<div style="padding:40px 16px;text-align:center">
+        <div style="font-size:3rem;margin-bottom:16px;animation:fu .3s ease">${feedbackIcon}</div>
+        <div style="font-size:1rem;color:${feedbackColor};background:${feedbackBg};padding:16px;border-radius:12px;line-height:1.5">${feedbackText}</div>
+    </div>`;
+
+    setTimeout(()=>{_quiz.idx++;renderQuiz()},1800);
+}
+
+function showQuizResults(){
+    const el=document.getElementById('pg-moodis');
+    const total=_quiz.questions.length;
+    const correct=_quiz.correct;
+    const pct=Math.round(correct/total*100);
+
+    // Save result
+    const d=ld();
+    if(!d._quizDone)d._quizDone={};
+    const doneKey=_quiz.childKey+'_'+new Date().toDateString();
+    d._quizDone[doneKey]={correct,total,pct,ts:new Date().toISOString()};
+    // Track understanding over time
+    if(!d._quizHistory)d._quizHistory=[];
+    d._quizHistory.push({childKey:_quiz.childKey,childName:_quiz.childName,correct,total,pct,date:new Date().toDateString()});
+    if(d._quizHistory.length>100)d._quizHistory=d._quizHistory.slice(-100);
+    sv(d);
+
+    // Categorize results
+    const missed=_quiz.results.filter(r=>!r.correct);
+    const moodMissed=missed.filter(r=>r.type==='mood');
+    const placeMissed=missed.filter(r=>r.placeName);
+    const uniquePlaces=[...new Set(placeMissed.map(r=>r.placeName))];
+
+    // Understanding trend
+    const history=(d._quizHistory||[]).filter(h=>h.childKey===_quiz.childKey);
+    const prevQuiz=history.length>=2?history[history.length-2]:null;
+    const trend=prevQuiz?(pct>prevQuiz.pct?`↑ Upp från ${prevQuiz.pct}%!`:pct<prevQuiz.pct?`↓ Ner från ${prevQuiz.pct}%`:`→ Samma som förra gången`):'';
+
+    let html=`<div style="padding:20px 0;text-align:center">`;
+    html+=`<div style="font-size:1.3rem;margin-bottom:12px">🧩 Resultat</div>`;
+    html+=`<div style="font-size:3rem;font-weight:800;color:${pct>=70?'var(--ok)':pct>=40?'var(--w)':'var(--bad)'}">${pct}%</div>`;
+    html+=`<div style="font-size:.92rem;color:var(--t2);margin:8px 0">Du matchade ${correct}/${total} av ${esc(_quiz.childName)}s svar</div>`;
+    if(trend)html+=`<div style="font-size:.8rem;color:var(--a);margin-bottom:16px">${trend}</div>`;
+
+    // What you got right
+    if(correct>0){
+        html+=`<div style="text-align:left;background:rgba(0,184,148,.06);border-radius:12px;padding:14px;margin:12px 0;border-left:3px solid var(--ok)">
+            <div style="font-size:.82rem;font-weight:600;color:var(--ok);margin-bottom:6px">💚 Bra koll på</div>
+            <div style="font-size:.8rem;color:var(--t2);line-height:1.5">${_quiz.results.filter(r=>r.correct).slice(0,3).map(r=>esc(r.question)).join('<br>')}</div>
+        </div>`;
+    }
+
+    // What you missed
+    if(missed.length){
+        html+=`<div style="text-align:left;background:rgba(225,112,85,.06);border-radius:12px;padding:14px;margin:12px 0;border-left:3px solid var(--bad)">
+            <div style="font-size:.82rem;font-weight:600;color:var(--bad);margin-bottom:6px">💛 Missade</div>`;
+        missed.slice(0,4).forEach(r=>{
+            html+=`<div style="font-size:.8rem;color:var(--t2);line-height:1.5;margin-bottom:6px">${esc(r.question)}<br><span style="color:var(--t2)">Du: ${esc(r.yourAnswer)}</span> → <span style="color:var(--t)"><strong>${esc(r.correctAnswer)}</strong></span></div>`;
+        });
+        html+=`</div>`;
+    }
+
+    // Tips
+    if(moodMissed.length){
+        html+=`<div style="background:rgba(108,92,231,.08);border-radius:12px;padding:14px;margin:12px 0;font-size:.82rem;color:var(--t2);line-height:1.5">
+            💡 Du missade hur ${esc(_quiz.childName)} mådde på ${moodMissed.map(r=>esc(r.placeName)).join(' och ')}. Fråga hen om det — det stärker er relation!</div>`;
+    }else if(missed.length){
+        html+=`<div style="background:rgba(108,92,231,.08);border-radius:12px;padding:14px;margin:12px 0;font-size:.82rem;color:var(--t2);line-height:1.5">
+            💡 Prata med ${esc(_quiz.childName)} om svaren du missade. Varje samtal bygger förståelse!</div>`;
+    }else{
+        html+=`<div style="background:rgba(0,184,148,.08);border-radius:12px;padding:14px;margin:12px 0;font-size:.82rem;color:var(--ok);line-height:1.5">
+            🌟 Perfekt resultat! Du har fantastisk koll på ${esc(_quiz.childName)}. Fortsätt så!</div>`;
+    }
+
+    html+=`<button class="btn ba" style="margin-top:16px;padding:12px 24px" onclick="_quiz.active=false;renderMoodis()">Tillbaka till Moodis</button>`;
+    html+=`</div>`;
+    el.innerHTML=html;
+}
+
 function renderMoodis(){
+    if(_quiz.active){renderQuiz();return}
     const d=ld();
     const isParent=d.role==='parent'||(d.familyProfiles&&d.familyProfiles.length>0);
     if(isParent){renderMoodisParent();return}
@@ -3189,7 +3396,7 @@ function renderMoodis(){
         html+=`<div class="challenge-card" style="${isDeep?'border:1px solid rgba(108,92,231,.3)':''}">
             <div style="font-size:.7rem;color:var(--a);margin-bottom:6px;text-transform:uppercase;letter-spacing:.05em">${isDeep?'💜 Reflektionsfråga':'🎮 Bonusfråga'} +${nextQ.pts} 🪙</div>
             <div class="challenge-text">${esc(nextQ.text)}</div>
-            <div class="challenge-options" style="margin-top:14px">${nextQ.options.map(o=>`<button class="challenge-opt" onclick="moodisAnswer('${esc(o)}',${nextQ.pts},'${nextQ.tag||'fun'}')" style="padding:10px 18px;font-size:.88rem">${o}</button>`).join('')}</div>
+            <div class="challenge-options" style="margin-top:14px">${nextQ.options.map(o=>`<button class="challenge-opt" onclick="moodisAnswer('${esc(o)}',${nextQ.pts},'${nextQ.tag||'fun'}','${esc(nextQ.text)}','${esc(JSON.stringify(nextQ.options))}')" style="padding:10px 18px;font-size:.88rem">${o}</button>`).join('')}</div>
         </div>`;
 
         // Moodis shop
@@ -3242,16 +3449,25 @@ function moodisFollowUp(type,answer){
     const pts=type==='body'?2:3;
     const actualPts=addMoodisPts(pts);
 
-    // Save to check-in
+    // Save to check-in + moodisInsights for parent quiz
     const d=ld();const today=new Date().toDateString();
     const recentCheckins=d.placeCheckins.filter(c=>new Date(c.ts).toDateString()===today);
     const lastCheckin=recentCheckins[recentCheckins.length-1];
+    const clean=answer.replace(/^[^\s]+\s/,'').trim();
     if(lastCheckin){
         if(!lastCheckin.tags)lastCheckin.tags=[];
-        const clean=answer.replace(/^[^\s]+\s/,'').trim();
         if(type==='why')lastCheckin.tags.push(clean);
         else if(type==='who')lastCheckin.who=clean;
         else if(type==='body')lastCheckin.body=clean;
+        // Save for parent quiz with context
+        const place=d.places.find(p=>p.id===lastCheckin.placeId);
+        const placeName=place?place.name:'';
+        const placeType=place?.type||'other';
+        const followups=getFollowups(placeType,moodisFlow.currentScore||3);
+        const q=followups[type];
+        if(!d.moodisInsights)d.moodisInsights=[];
+        d.moodisInsights.push({date:today,tag:type,answer:clean,rawAnswer:answer,question:q?.question||'',options:q?.options||[],placeName,placeType,ts:new Date().toISOString()});
+        if(d.moodisInsights.length>300)d.moodisInsights=d.moodisInsights.slice(-300);
         sv(d);
         syncCheckin(lastCheckin.placeId,lastCheckin.score,lastCheckin.comment,lastCheckin.ts,lastCheckin.tags||[]);
     }
@@ -3262,17 +3478,16 @@ function moodisFollowUp(type,answer){
     renderMoodis();
 }
 
-function moodisAnswer(answer,pts,tag){
+function moodisAnswer(answer,pts,tag,questionText,optionsJson){
     const actualPts=addMoodisPts(pts);
-    // Save deep question answers for parent insights
-    if(tag&&tag!=='fun'){
-        const d=ld();const today=new Date().toDateString();
-        if(!d.moodisInsights)d.moodisInsights=[];
-        const clean=answer.replace(/^[^\s]+\s/,'').trim();
-        d.moodisInsights.push({date:today,tag,answer:clean,ts:new Date().toISOString()});
-        if(d.moodisInsights.length>200)d.moodisInsights=d.moodisInsights.slice(-200);
-        sv(d);
-    }
+    const d=ld();const today=new Date().toDateString();
+    if(!d.moodisInsights)d.moodisInsights=[];
+    const clean=answer.replace(/^[^\s]+\s/,'').trim();
+    let options=[];
+    try{options=JSON.parse(optionsJson||'[]')}catch(e){}
+    d.moodisInsights.push({date:today,tag:tag||'fun',answer:clean,rawAnswer:answer,question:questionText||'',options,ts:new Date().toISOString()});
+    if(d.moodisInsights.length>300)d.moodisInsights=d.moodisInsights.slice(-300);
+    sv(d);
     renderMoodis();
 }
 
