@@ -5149,6 +5149,49 @@ function renderInsikter(){
         </div>`;
     });
 
+    // Välmående över tid — SVG linjediagram
+    html+=`<div style="font-size:.78rem;font-weight:600;color:var(--t);margin:18px 0 10px">📈 Välmående över tid</div>`;
+    const weeks=['v.6','v.7','v.8','v.9','v.10','v.11','v.12','v.13'];
+    const trendLines=[
+        {name:'Skola',color:'#6C5CE7',data:[3.6,3.5,3.3,3.2,3.1,3.3,3.4,3.4]},
+        {name:'Idrott',color:'#00CEC9',data:[3.7,3.8,3.9,3.8,4.0,3.9,3.9,3.9]},
+        {name:'Hem',color:'#FDCB6E',data:[4.0,4.1,4.0,4.2,4.1,4.0,4.1,4.1]},
+        {name:'Fritids',color:'#FD79A8',data:[3.8,3.7,3.6,3.5,3.4,3.5,3.6,3.6]}
+    ];
+    const svgW=320,svgH=140,padL=28,padR=8,padT=10,padB=24;
+    const chartW=svgW-padL-padR,chartH=svgH-padT-padB;
+    const minY=2.5,maxY=4.5;
+    function tx(i){return padL+(i/(weeks.length-1))*chartW}
+    function ty(v){return padT+chartH-(((v-minY)/(maxY-minY))*chartH)}
+
+    let svg=`<svg viewBox="0 0 ${svgW} ${svgH}" style="width:100%;max-width:400px;margin:0 auto;display:block">`;
+    // Grid lines
+    [2.5,3.0,3.5,4.0,4.5].forEach(v=>{
+        const y=ty(v);
+        svg+=`<line x1="${padL}" y1="${y}" x2="${svgW-padR}" y2="${y}" stroke="rgba(255,255,255,.06)" stroke-width="1"/>`;
+        svg+=`<text x="${padL-4}" y="${y+3}" font-size="8" fill="rgba(255,255,255,.3)" text-anchor="end">${v}</text>`;
+    });
+    // X labels
+    weeks.forEach((w,i)=>{
+        svg+=`<text x="${tx(i)}" y="${svgH-4}" font-size="7" fill="rgba(255,255,255,.3)" text-anchor="middle">${w}</text>`;
+    });
+    // Lines
+    trendLines.forEach(line=>{
+        const points=line.data.map((v,i)=>`${tx(i)},${ty(v)}`).join(' ');
+        svg+=`<polyline points="${points}" fill="none" stroke="${line.color}" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>`;
+        // Dots on last point
+        const lastI=line.data.length-1;
+        svg+=`<circle cx="${tx(lastI)}" cy="${ty(line.data[lastI])}" r="3" fill="${line.color}"/>`;
+    });
+    svg+=`</svg>`;
+    html+=svg;
+    // Legend
+    html+=`<div style="display:flex;gap:12px;justify-content:center;margin-top:8px;flex-wrap:wrap">`;
+    trendLines.forEach(l=>{
+        html+=`<span style="display:flex;align-items:center;gap:4px;font-size:.68rem;color:var(--t2)"><span style="width:10px;height:3px;background:${l.color};border-radius:2px;display:inline-block"></span>${l.name}</span>`;
+    });
+    html+=`</div>`;
+
     // Mönster som Moodly upptäckt
     html+=`<div style="font-size:.78rem;font-weight:600;color:var(--t);margin:18px 0 10px">🧠 Mönster som Moodly upptäckt</div>`;
     const demoPatterns=[
