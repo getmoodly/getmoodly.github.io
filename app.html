@@ -3027,6 +3027,18 @@ function renderMoodisParent(){
                 <button style="background:none;border:none;color:var(--pl);font-size:.75rem;cursor:pointer;margin-top:6px" onclick="showQuizHistory('${esc(fp.storageKey)}','${esc(fp.name)}')">Visa detaljer →</button>
             </div>`;
 
+            // === Z-SCORE ALERTS (if enough data) ===
+            const zAlerts=getZScoreAlerts(cd,fp.name);
+            if(zAlerts.length){
+                html+=`<div style="font-size:.72rem;color:var(--a);text-transform:uppercase;letter-spacing:.05em;margin:16px 0 8px;font-weight:600">📊 Avvikelser från baseline</div>`;
+                zAlerts.forEach(a=>{
+                    const bg=a.type==='bad'?'rgba(225,112,85,.08)':a.type==='warn'?'rgba(253,203,110,.08)':'rgba(0,184,148,.08)';
+                    const border=a.type==='bad'?'var(--bad)':a.type==='warn'?'var(--w)':'var(--ok)';
+                    html+=`<div style="display:flex;gap:8px;align-items:flex-start;padding:10px;background:${bg};border-left:3px solid ${border};border-radius:0 10px 10px 0;margin-bottom:6px;font-size:.8rem;color:var(--t);line-height:1.4">
+                        <span>${a.icon}</span><span>${a.text}</span></div>`;
+                });
+            }
+
             // === INSIGHTS — PLACE-FOCUSED ===
             html+=`<div style="font-size:.72rem;color:var(--a);text-transform:uppercase;letter-spacing:.05em;margin:16px 0 10px;font-weight:600">💡 Så känner ${esc(fp.name)} för sina platser</div>`;
 
@@ -4707,6 +4719,49 @@ async function submitFeedback(){
     localStorage.setItem('moodly_feedback_given','1');
     closeFeedback();
     toast('Tack för din feedback! 🙏');
+}
+
+// ===== Z-SCORE BASELINE SYSTEM =====
+// Each child's mood per place compared against their own historical baseline
+// Activates at 7+ check-ins per place (enough for meaningful stats)
+
+function calcBaseline(checkins,placeId){
+    const pc=checkins.filter(c=>c.placeId===placeId);
+    if(pc.length<7)return null;
+    const scores=pc.map(c=>c.score);
+    const mean=scores.reduce((a,b)=>a+b,0)/scores.length;
+    const variance=scores.reduce((a,b)=>a+Math.pow(b-mean,2),0)/scores.length;
+    return{mean:Math.round(mean*100)/100,stdDev:Math.max(Math.sqrt(variance),0.3),count:scores.length};
+}
+
+function calcZScore(avg,baseline){
+    return baseline?Math.round(((avg-baseline.mean)/baseline.stdDev)*100)/100:null;
+}
+
+function getChildZScores(cd,days){
+    if(!cd?.places?.length||!cd.placeCheckins?.length)return[];
+    const cutoff=Date.now()-days*864e5;
+    return cd.places.map(p=>{
+        const all=cd.placeCheckins.filter(c=>c.placeId===p.id);
+        const bl=calcBaseline(all,p.id);
+        if(!bl)return null;
+        const recent=all.filter(c=>new Date(c.ts).getTime()>cutoff);
+        if(!recent.length)return null;
+        const avg=Math.round(recent.reduce((a,c)=>a+c.score,0)/recent.length*10)/10;
+        const z=calcZScore(avg,bl);
+        const pt=PT[p.type]||PT.other;
+        return{placeName:p.name,placeType:p.type,icon:pt.icon,avg,baseline:bl.mean,z,n:bl.count,
+            status:z<-1?'alert':z<-0.5?'warning':z>0.5?'improving':'stable'};
+    }).filter(Boolean).sort((a,b)=>a.z-b.z);
+}
+
+function getZScoreAlerts(cd,childName){
+    return getChildZScores(cd,7).map(s=>{
+        if(s.status==='alert')return{type:'bad',icon:'📉',text:`${esc(childName)} mår sämre än vanligt på ${s.icon} ${esc(s.placeName)} (${s.avg} vs normalt ${s.baseline})`};
+        if(s.status==='warning')return{type:'warn',icon:'⚠️',text:`${esc(childName)}s mående på ${s.icon} ${esc(s.placeName)} har sjunkit något`};
+        if(s.status==='improving')return{type:'good',icon:'📈',text:`${esc(childName)} mår bättre än vanligt på ${s.icon} ${esc(s.placeName)}!`};
+        return null;
+    }).filter(Boolean);
 }
 
 function renderInsikter(){
