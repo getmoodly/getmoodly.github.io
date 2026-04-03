@@ -5192,18 +5192,127 @@ function renderInsikter(){
         html+=`</div>`;
     }
 
-    // === KOMMUN AGGREGATION (future — shows what's possible) ===
-    if(d.kommun){
-        html+=`<div class="cd"><div class="ct">📍 ${esc(d.kommun)} — Aggregerad data</div>
-            <p style="font-size:.78rem;color:var(--t2);line-height:1.5;margin-bottom:10px">När fler familjer i ${esc(d.kommun)} använder Moodly kommer aggregerad statistik att visas här — per platstyp, åldersgrupp och kön. Helt anonymiserat.</p>
-            <div style="display:flex;gap:8px;flex-wrap:wrap">
-                <span style="font-size:.7rem;padding:4px 10px;background:rgba(108,92,231,.1);border-radius:10px;color:var(--pl)">Per skola</span>
-                <span style="font-size:.7rem;padding:4px 10px;background:rgba(0,184,148,.1);border-radius:10px;color:var(--ok)">Per ålder</span>
-                <span style="font-size:.7rem;padding:4px 10px;background:rgba(253,203,110,.15);border-radius:10px;color:var(--w)">Per kön</span>
-                <span style="font-size:.7rem;padding:4px 10px;background:rgba(162,155,254,.1);border-radius:10px;color:var(--pl)">Per platstyp</span>
+    // === AGGREGERAD KOMMUN-DATA (demo tills riktig data finns) ===
+    const kommun=d.kommun||'din hemkommun';
+    const demoFamilies=47;
+    const demoChildren=68;
+
+    html+=`<div class="cd"><div class="ct">📍 Aggregerad data — ${esc(kommun)}</div>
+        <div style="display:flex;align-items:center;gap:6px;margin-bottom:14px">
+            <span style="font-size:.7rem;padding:3px 10px;background:rgba(108,92,231,.15);border-radius:10px;color:var(--pl);font-weight:600">Demo</span>
+            <span style="font-size:.72rem;color:var(--t2)">${demoFamilies} familjer · ${demoChildren} barn</span>
+        </div>
+        <p style="font-size:.75rem;color:var(--t2);margin-bottom:16px;line-height:1.4;font-style:italic">Baserat på simulerad data — ersätts med riktig data när tillräckligt många familjer ansluter</p>`;
+
+    // Välmående per platstyp
+    html+=`<div style="font-size:.78rem;font-weight:600;color:var(--t);margin-bottom:10px">Välmående per platstyp</div>`;
+    const demoPlaceData=[
+        {icon:'🏫',name:'Skola',avg:3.4,col:'var(--w)'},
+        {icon:'⚽',name:'Idrott',avg:3.9,col:'var(--ok)'},
+        {icon:'🏠',name:'Hem',avg:4.1,col:'var(--ok)'},
+        {icon:'🏫',name:'Fritids',avg:3.6,col:'var(--w)'},
+        {icon:'🎨',name:'Hobby',avg:4.3,col:'var(--ok)'}
+    ];
+    demoPlaceData.forEach(p=>{
+        const pct=Math.round((p.avg/5)*100);
+        html+=`<div style="display:flex;align-items:center;gap:10px;margin-bottom:6px">
+            <span style="width:24px;text-align:center">${p.icon}</span>
+            <span style="width:50px;font-size:.75rem;color:var(--t2)">${p.name}</span>
+            <div style="flex:1;height:8px;background:rgba(255,255,255,.08);border-radius:4px;overflow:hidden">
+                <div style="height:100%;width:${pct}%;background:${p.col};border-radius:4px"></div>
             </div>
+            <span style="font-size:.8rem;font-weight:700;color:${p.col};width:30px;text-align:right">${p.avg}</span>
         </div>`;
-    }
+    });
+
+    // Per kön
+    html+=`<div style="font-size:.78rem;font-weight:600;color:var(--t);margin:18px 0 10px">Mående per kön (skola)</div>`;
+    html+=`<div style="display:flex;gap:16px;margin-bottom:14px">
+        <div style="flex:1;background:rgba(255,255,255,.03);border-radius:10px;padding:12px;text-align:center">
+            <div style="font-size:1.1rem">👧</div>
+            <div style="font-size:.72rem;color:var(--t2);margin:4px 0">Flickor</div>
+            <div style="font-size:1.2rem;font-weight:800;color:var(--w)">3.2</div>
+        </div>
+        <div style="flex:1;background:rgba(255,255,255,.03);border-radius:10px;padding:12px;text-align:center">
+            <div style="font-size:1.1rem">👦</div>
+            <div style="font-size:.72rem;color:var(--t2);margin:4px 0">Pojkar</div>
+            <div style="font-size:1.2rem;font-weight:800;color:var(--ok)">3.7</div>
+        </div>
+    </div>`;
+
+    // Per åldersgrupp
+    html+=`<div style="font-size:.78rem;font-weight:600;color:var(--t);margin-bottom:10px">Mående per åldersgrupp</div>`;
+    const demoAgeData=[
+        {age:'6-9 år',avg:4.0,col:'var(--ok)',n:22},
+        {age:'10-13 år',avg:3.4,col:'var(--w)',n:28},
+        {age:'14-17 år',avg:3.1,col:'var(--bad)',n:18}
+    ];
+    demoAgeData.forEach(a=>{
+        const pct=Math.round((a.avg/5)*100);
+        html+=`<div style="display:flex;align-items:center;gap:10px;margin-bottom:6px">
+            <span style="width:65px;font-size:.75rem;color:var(--t2)">${a.age}</span>
+            <div style="flex:1;height:8px;background:rgba(255,255,255,.08);border-radius:4px;overflow:hidden">
+                <div style="height:100%;width:${pct}%;background:${a.col};border-radius:4px"></div>
+            </div>
+            <span style="font-size:.8rem;font-weight:700;color:${a.col};width:30px;text-align:right">${a.avg}</span>
+            <span style="font-size:.65rem;color:var(--t2);width:35px">(${a.n} barn)</span>
+        </div>`;
+    });
+
+    // Vanligaste orsakerna till lågt mående
+    html+=`<div style="font-size:.78rem;font-weight:600;color:var(--t);margin:18px 0 10px">Vanligaste orsakerna till lågt mående</div>`;
+    const demoReasons=[
+        {reason:'Stressad',pct:34,icon:'😰'},
+        {reason:'Problem med kompisar',pct:28,icon:'😔'},
+        {reason:'Trött',pct:24,icon:'😴'},
+        {reason:'Tråkiga lektioner',pct:18,icon:'😒'},
+        {reason:'Kände mig ensam',pct:15,icon:'😶'}
+    ];
+    demoReasons.forEach(r=>{
+        html+=`<div style="display:flex;align-items:center;gap:8px;margin-bottom:6px">
+            <span style="font-size:.85rem">${r.icon}</span>
+            <span style="flex:1;font-size:.78rem;color:var(--t2)">${r.reason}</span>
+            <div style="width:80px;height:6px;background:rgba(255,255,255,.08);border-radius:3px;overflow:hidden">
+                <div style="height:100%;width:${r.pct}%;background:var(--bad);border-radius:3px"></div>
+            </div>
+            <span style="font-size:.72rem;color:var(--bad);width:28px;text-align:right">${r.pct}%</span>
+        </div>`;
+    });
+
+    // Mönster som Moodly upptäckt
+    html+=`<div style="font-size:.78rem;font-weight:600;color:var(--t);margin:18px 0 10px">🧠 Mönster som Moodly upptäckt</div>`;
+    const demoPatterns=[
+        {icon:'📉',text:'Flickor 10-13 mår 22% sämre på idrotten än pojkar i samma ålder',color:'var(--bad)'},
+        {icon:'📈',text:'Barn med 3+ aktiva vuxna i nätverket rapporterar 35% högre välmående',color:'var(--ok)'},
+        {icon:'⚠️',text:'Välmåendet på fritids har sjunkit 12% senaste månaden bland 6-9-åringar',color:'var(--w)'},
+        {icon:'🌟',text:'Barn som checkar in dagligen har 28% stabilare mående över tid',color:'var(--ok)'},
+        {icon:'📊',text:'Måndagar har lägst mående i skolan — fredagar högst',color:'var(--pl)'}
+    ];
+    demoPatterns.forEach(p=>{
+        html+=`<div style="display:flex;gap:8px;align-items:flex-start;padding:10px;background:rgba(255,255,255,.03);border-radius:10px;margin-bottom:6px;border-left:3px solid ${p.color}">
+            <span style="font-size:.9rem;flex-shrink:0">${p.icon}</span>
+            <span style="font-size:.78rem;color:var(--t);line-height:1.5">${p.text}</span>
+        </div>`;
+    });
+
+    // Trygghetsnätverk aggregerat
+    html+=`<div style="font-size:.78rem;font-weight:600;color:var(--t);margin:18px 0 10px">💜 Trygghetsnätverk i ${esc(kommun)}</div>`;
+    html+=`<div style="display:flex;gap:12px;margin-bottom:12px">
+        <div style="flex:1;background:rgba(108,92,231,.08);border-radius:10px;padding:12px;text-align:center">
+            <div style="font-size:1.3rem;font-weight:800;color:var(--pl)">2.4</div>
+            <div style="font-size:.68rem;color:var(--t2)">Vuxna per barn (snitt)</div>
+        </div>
+        <div style="flex:1;background:rgba(0,184,148,.08);border-radius:10px;padding:12px;text-align:center">
+            <div style="font-size:1.3rem;font-weight:800;color:var(--ok)">67%</div>
+            <div style="font-size:.68rem;color:var(--t2)">Gör quiz varje vecka</div>
+        </div>
+        <div style="flex:1;background:rgba(253,203,110,.1);border-radius:10px;padding:12px;text-align:center">
+            <div style="font-size:1.3rem;font-weight:800;color:var(--w)">58</div>
+            <div style="font-size:.68rem;color:var(--t2)">Snitt trygghetsgrad</div>
+        </div>
+    </div>`;
+
+    html+=`</div>`;
 
     el.innerHTML=html;
 
