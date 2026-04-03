@@ -296,75 +296,6 @@
 
         /* INSIKTER TAB */
         .insikter-demo-badge{display:inline-block;padding:4px 12px;border-radius:20px;font-size:.68rem;font-weight:600;background:rgba(253,203,110,.15);color:var(--w);margin-bottom:12px}
-        .ikt-section{margin-bottom:18px}
-        .ikt-section .ct{font-size:.88rem;font-weight:700;margin-bottom:10px;display:flex;align-items:center;gap:6px}
-        .bar-chart{display:flex;align-items:flex-end;justify-content:center;gap:16px;height:160px;padding:16px 8px 0}
-        .bar-col{display:flex;flex-direction:column;align-items:center;flex:1;max-width:72px}
-        .bar-fill{width:100%;border-radius:8px 8px 0 0;transition:height .8s cubic-bezier(.23,1,.32,1);min-height:4px;position:relative}
-        .bar-val{font-size:.72rem;font-weight:700;margin-bottom:4px}
-        .bar-icon{font-size:1.1rem;margin-top:8px}
-        .bar-label{font-size:.62rem;color:var(--t2);margin-top:2px}
-        .trend-chart-wrap{width:100%;height:180px;position:relative;overflow:hidden}
-        .trend-chart-wrap svg{width:100%;height:100%}
-        .compare-chart{display:flex;justify-content:space-around;gap:8px;padding:12px 0}
-        .compare-group{display:flex;flex-direction:column;align-items:center;flex:1}
-        .compare-bars{display:flex;align-items:flex-end;gap:4px;height:110px}
-        .compare-bar{width:22px;border-radius:6px 6px 0 0;transition:height .8s cubic-bezier(.23,1,.32,1)}
-        .compare-bar.family{background:var(--pl)}
-        .compare-bar.kommun{background:var(--a)}
-        .compare-diff{font-size:.68rem;font-weight:700;margin-top:6px}
-        .compare-diff.pos{color:var(--ok)}
-        .compare-diff.neg{color:var(--bad)}
-        .compare-diff.neu{color:var(--t2)}
-        .compare-icon{font-size:1rem;margin-top:4px}
-        .compare-lbl{font-size:.6rem;color:var(--t2);margin-top:1px}
-        .compare-legend{display:flex;gap:16px;justify-content:center;margin-top:10px;font-size:.72rem;color:var(--t2)}
-        .compare-legend span{display:flex;align-items:center;gap:4px}
-        .compare-legend .dot{width:8px;height:8px;border-radius:3px;display:inline-block}
-        .zscore-card{display:flex;align-items:center;gap:10px;padding:10px 12px;background:rgba(255,255,255,.03);border-radius:var(--rs);margin-bottom:6px}
-        .zscore-dot{width:10px;height:10px;border-radius:50%;flex-shrink:0}
-        .zscore-dot.hi{background:var(--ok)}
-        .zscore-dot.mid{background:var(--w)}
-        .zscore-dot.lo{background:var(--bad)}
-        .zscore-text{font-size:.78rem;color:var(--t2);flex:1}
-        .zscore-text strong{color:var(--t)}
-        .zscore-val{font-weight:700;font-size:.8rem;white-space:nowrap}
-        .ikt-note{font-size:.68rem;color:var(--t2);text-align:center;font-style:italic;margin-top:8px}
-        .ikt-cta{text-align:center;padding:16px;margin-top:8px;background:rgba(108,92,231,.06);border:1px solid rgba(108,92,231,.1);border-radius:var(--r)}
-        .ikt-cta p{font-size:.78rem;color:var(--t2);margin-bottom:8px}
-        /* HEATMAP */
-        .heatmap-wrap{overflow-x:auto;-webkit-overflow-scrolling:touch;margin:0 -4px}
-        .heatmap{display:grid;gap:3px;min-width:fit-content;padding:4px}
-        .hm-corner{font-size:.6rem;color:var(--t2)}
-        .hm-day{font-size:.58rem;color:var(--t2);text-align:center;font-weight:600}
-        .hm-place{font-size:.62rem;color:var(--t2);white-space:nowrap;overflow:hidden;text-overflow:ellipsis;display:flex;align-items:center;gap:4px}
-        .hm-cell{border-radius:4px;aspect-ratio:1;min-width:28px;min-height:28px;display:flex;align-items:center;justify-content:center;font-size:.6rem;font-weight:700;color:rgba(255,255,255,.9);transition:transform .15s}
-        .hm-cell:hover{transform:scale(1.15)}
-        .hm-cell.empty{background:rgba(255,255,255,.04);color:var(--t2)}
-        .hm-child-label{font-size:.76rem;font-weight:600;color:var(--t);margin:14px 0 6px;display:flex;align-items:center;gap:6px}
-        .hm-legend{display:flex;align-items:center;gap:4px;justify-content:center;margin-top:10px;font-size:.6rem;color:var(--t2)}
-        .hm-legend-cell{width:14px;height:14px;border-radius:3px}
-        /* PATTERN CARDS */
-        .pattern-card{display:flex;align-items:flex-start;gap:10px;padding:12px;background:rgba(255,255,255,.03);border-radius:var(--rs);margin-bottom:8px;border-left:3px solid var(--t2)}
-        .pattern-card.warning{border-left-color:var(--bad);background:rgba(255,107,107,.05)}
-        .pattern-card.positive{border-left-color:var(--ok);background:rgba(0,206,201,.05)}
-        .pattern-card.neutral{border-left-color:var(--w);background:rgba(253,203,110,.05)}
-        .pattern-icon{font-size:1.1rem;flex-shrink:0;margin-top:1px}
-        .pattern-text{font-size:.78rem;color:var(--t2);line-height:1.45}
-        .pattern-text strong{color:var(--t)}
-        /* TAG IMPACT */
-        .tag-impact-list{display:flex;flex-direction:column;gap:6px}
-        .tag-impact-row{display:flex;align-items:center;gap:8px}
-        .tag-impact-name{font-size:.72rem;color:var(--t2);width:80px;text-align:right;flex-shrink:0;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
-        .tag-impact-bar-wrap{flex:1;height:16px;background:rgba(255,255,255,.04);border-radius:8px;position:relative;overflow:hidden}
-        .tag-impact-bar{height:100%;border-radius:8px;transition:width .8s cubic-bezier(.23,1,.32,1);min-width:2px}
-        .tag-impact-bar.neg{background:linear-gradient(90deg,var(--bad),rgba(255,107,107,.5))}
-        .tag-impact-bar.pos{background:linear-gradient(90deg,rgba(0,206,201,.5),var(--ok))}
-        .tag-impact-val{font-size:.64rem;font-weight:700;width:36px;flex-shrink:0}
-        .tag-impact-val.neg{color:var(--bad)}
-        .tag-impact-val.pos{color:var(--ok)}
-        .tag-child-label{font-size:.74rem;font-weight:600;color:var(--t);margin:12px 0 6px;display:flex;align-items:center;gap:6px}
-
         .toast{position:fixed;bottom:100px;left:50%;transform:translateX(-50%) translateY(8px);background:rgba(20,19,42,.95);backdrop-filter:blur(16px);-webkit-backdrop-filter:blur(16px);border:1px solid rgba(255,255,255,.1);color:var(--t);padding:12px 24px;border-radius:24px;font-size:.8rem;font-weight:600;z-index:150;opacity:0;transition:all .3s;pointer-events:none;box-shadow:0 8px 24px rgba(0,0,0,.4)}
         .toast.show{transform:translateX(-50%) translateY(0)}
         .toast.show{opacity:1}
@@ -2499,7 +2430,6 @@ function obRemovePlace(i){
     if(child){child.places.splice(i,1);renderOb3()}
 }
 
-function obRemoveChild(i){obChildren.splice(i,1);if(obActiveChild>=obChildren.length)obActiveChild=Math.max(0,obChildren.length-1);_ob3Phase='info';renderOb3()}
 
 let _obPlaceType='';
 function obSelectPlaceType(type,defaultName,btn){
@@ -2850,7 +2780,6 @@ function getMoodisStage(d){
     return stage;
 }
 
-function getScoreRange(score){return score>=4?'high':score<=2?'low':'mid'}
 
 function isDailyBonusActive(d){
     const today=new Date().toDateString();
@@ -3938,10 +3867,6 @@ function refreshStep2(storageKey,name){
     if(!types.has('hobby'))quickEl.innerHTML+=`<button class="btn bs" style="padding:8px 14px;font-size:.8rem" onclick="addPlaceToChild('${esc(storageKey)}','hobby','Hobby');refreshStep2('${esc(storageKey)}','${esc(name)}')">+ 🎨 Hobby</button>`;
 }
 
-function addChild(){
-    // Legacy fallback
-    addChildStep1();
-}
 
 function removeChild(idx){
     const d=ld();if(!d.familyProfiles[idx])return;
@@ -4054,46 +3979,6 @@ function switchToParent(){
 }
 
 function childEmoji(fp){return fp?.gender==='pojke'?'👦':fp?.gender==='flicka'?'👧':'🧒'}
-
-function getChildSafeData(storageKey){
-    if(!sok)return null;
-    try{
-        const raw=localStorage.getItem(storageKey);if(!raw)return null;
-        const d=JSON.parse(raw);
-        const checks=d.placeCheckins||[];
-        const scores=checks.map(c=>c.score);
-        const avg=scores.length?Math.round(scores.reduce((a,b)=>a+b,0)/scores.length*10)/10:0;
-        const recent=checks.slice(-3).map(c=>c.score);
-        let trend='→';
-        if(recent.length>=2){const diff=recent[recent.length-1]-recent[0];trend=diff>0.5?'↑':diff<-0.5?'↓':'→'}
-        return{avg,lastTs:checks.length?checks[checks.length-1].ts:null,trend,count:checks.length};
-    }catch(e){return null}
-}
-
-function showFamilyDashboard(){
-    const d=ld();
-    const overlay=document.getElementById('fam-overlay');
-    overlay.style.display='block';
-    let html='<div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:16px"><h2 style="font-size:1.15rem">📊 Familje-dashboard</h2><button class="btn bs" style="width:auto;padding:8px 16px" onclick="closeFamilyDashboard()">Stäng</button></div>';
-
-    if(!d.familyProfiles||!d.familyProfiles.length){
-        html+='<p style="color:var(--t2);text-align:center;padding:20px">Inga barn tillagda.</p>';
-    }else{
-        d.familyProfiles.forEach(fp=>{
-            const safe=getChildSafeData(fp.storageKey);
-            if(!safe){
-                html+=`<div class="fam-member"><div class="fam-avatar">${childEmoji(fp)}</div><div class="fam-info"><div class="fam-name">${esc(fp.name)}</div><div class="fam-stat">${esc(fp.ageGroup)} — Ingen data</div></div></div>`;
-                return;
-            }
-            const col=safe.avg>=4?'var(--ok)':safe.avg>=3?'var(--w)':'var(--bad)';
-            const tCol=safe.trend==='↑'?'color:var(--ok)':safe.trend==='↓'?'color:var(--bad)':'color:var(--t2)';
-            html+=`<div class="fam-member"><div class="fam-avatar">${childEmoji(fp)}</div><div class="fam-info"><div class="fam-name">${esc(fp.name)}</div><div class="fam-stat">${esc(fp.ageGroup)} — ${safe.count} checkins</div></div><div class="fam-score"><div class="v" style="color:${col}">${safe.avg||'—'}</div><div class="trend" style="${tCol}">${safe.trend}</div></div></div>`;
-        });
-    }
-    document.getElementById('fam-overlay-content').innerHTML=html;
-}
-
-function closeFamilyDashboard(){document.getElementById('fam-overlay').style.display='none'}
 
 // ===== RENDER FAMILY PAGE =====
 function renderFamily(){
@@ -4824,297 +4709,6 @@ async function submitFeedback(){
     toast('Tack för din feedback! 🙏');
 }
 
-// ===== INSIKTER — BASELINE, Z-SCORES, KOMMUN AGGREGATION =====
-
-function computeBaseline(checkins,placeId){
-    const scores=checkins.filter(c=>c.placeId===placeId).map(c=>c.score);
-    if(scores.length<7)return null; // need at least 7 days
-    const mean=scores.reduce((a,b)=>a+b,0)/scores.length;
-    const variance=scores.reduce((a,s)=>a+(s-mean)**2,0)/scores.length;
-    let stddev=Math.sqrt(variance);
-    if(stddev<0.1)stddev=0.5; // avoid division by zero
-    return{mean:Math.round(mean*100)/100,stddev:Math.round(stddev*100)/100,n:scores.length,computedAt:new Date().toISOString()};
-}
-
-function computeZScore(score,baseline){
-    if(!baseline)return 0;
-    return Math.round(((score-baseline.mean)/baseline.stddev)*100)/100;
-}
-
-function computeAllBaselines(){
-    const d=ld();
-    if(d.role!=='parent'||!d.familyProfiles)return{};
-    const baselines={};
-    d.familyProfiles.forEach(fp=>{
-        if(fp.storageKey&&fp.storageKey.startsWith('_demo_'))return;
-        const cd=getFullChildData(fp.storageKey);
-        if(!cd||!cd.places||!cd.placeCheckins)return;
-        cd.places.forEach(p=>{
-            const bl=computeBaseline(cd.placeCheckins,p.id);
-            if(bl)baselines[fp.storageKey+'_'+p.id]={...bl,placeType:p.type,placeName:p.name,childName:fp.name};
-        });
-    });
-    try{localStorage.setItem('moodly_baselines',JSON.stringify(baselines))}catch(e){}
-    return baselines;
-}
-
-function getRecentZScores(days){
-    const d=ld();
-    if(d.role!=='parent'||!d.familyProfiles)return[];
-    const baselines=computeAllBaselines();
-    const cutoff=Date.now()-days*864e5;
-    const results=[];
-    d.familyProfiles.forEach(fp=>{
-        if(fp.storageKey&&fp.storageKey.startsWith('_demo_'))return;
-        const cd=getFullChildData(fp.storageKey);
-        if(!cd||!cd.places||!cd.placeCheckins)return;
-        cd.places.forEach(p=>{
-            const bl=baselines[fp.storageKey+'_'+p.id];
-            if(!bl)return;
-            const recent=cd.placeCheckins.filter(c=>c.placeId===p.id&&new Date(c.ts).getTime()>cutoff);
-            if(!recent.length)return;
-            const avgScore=recent.reduce((a,c)=>a+c.score,0)/recent.length;
-            const z=computeZScore(avgScore,bl);
-            results.push({childName:fp.name,placeName:p.name,placeType:p.type,avgScore:Math.round(avgScore*10)/10,z,baseline:bl.mean,n:recent.length});
-        });
-    });
-    return results;
-}
-
-function aggregateByPlaceType(zScores){
-    const groups={};
-    zScores.forEach(r=>{
-        if(!groups[r.placeType])groups[r.placeType]={scores:[],zScores:[],type:r.placeType};
-        groups[r.placeType].scores.push(r.avgScore);
-        groups[r.placeType].zScores.push(r.z);
-    });
-    const result={};
-    Object.keys(groups).forEach(type=>{
-        const g=groups[type];
-        result[type]={
-            avg:Math.round(g.scores.reduce((a,b)=>a+b,0)/g.scores.length*10)/10,
-            avgZ:Math.round(g.zScores.reduce((a,b)=>a+b,0)/g.zScores.length*100)/100,
-            count:g.scores.length,
-            type
-        };
-    });
-    return result;
-}
-
-function getFamilyAvgByType(d){
-    const result={};
-    if(!d.familyProfiles)return result;
-    const cutoff=Date.now()-30*864e5;
-    d.familyProfiles.forEach(fp=>{
-        if(fp.storageKey&&fp.storageKey.startsWith('_demo_'))return;
-        const cd=getFullChildData(fp.storageKey);
-        if(!cd||!cd.places||!cd.placeCheckins)return;
-        cd.places.forEach(p=>{
-            const recent=cd.placeCheckins.filter(c=>c.placeId===p.id&&new Date(c.ts).getTime()>cutoff);
-            if(!recent.length)return;
-            if(!result[p.type])result[p.type]={total:0,count:0};
-            result[p.type].total+=recent.reduce((a,c)=>a+c.score,0);
-            result[p.type].count+=recent.length;
-        });
-    });
-    Object.keys(result).forEach(t=>{result[t].avg=Math.round(result[t].total/result[t].count*10)/10});
-    return result;
-}
-
-function hasEnoughInsikterData(d){
-    const baselines=JSON.parse(localStorage.getItem('moodly_baselines')||'{}');
-    return Object.keys(baselines).length>=2;
-}
-
-function generateInsikterDemoData(kommun){
-    const k=kommun||'Din kommun';
-    const weeks=['v.49','v.50','v.51','v.52','v.1','v.2','v.3','v.4'];
-    return{
-        kommun:k,
-        isDemo:true,
-        placeTypes:{
-            school:{avg:3.4,label:'Skola',icon:'🏫',color:'var(--bad)',trend:[3.2,3.3,3.5,3.4,3.6,3.3,3.2,3.4]},
-            sport:{avg:4.2,label:'Idrott',icon:'⚽',color:'var(--ok)',trend:[4.0,4.1,4.0,4.2,4.3,4.1,4.2,4.2]},
-            home:{avg:4.0,label:'Hem',icon:'🏠',color:'var(--ok)',trend:[3.8,3.9,4.0,3.9,4.0,4.1,4.0,4.0]},
-            hobby:{avg:4.4,label:'Hobby',icon:'🎨',color:'var(--ok)',trend:[4.2,4.3,4.3,4.4,4.5,4.4,4.3,4.4]}
-        },
-        familyAvgs:{school:3.9,sport:4.5,home:4.2,hobby:4.6},
-        weeks,
-        userCount:47,
-        childCount:83,
-        zScores:[
-            {childName:'Lisa',placeName:'Ekbackens skola',placeType:'school',avgScore:2.4,z:-1.4,baseline:3.6},
-            {childName:'Lisa',placeName:'IFK Fotboll',placeType:'sport',avgScore:4.6,z:0.8,baseline:4.0},
-            {childName:'Lisa',placeName:'Hem',placeType:'home',avgScore:3.8,z:0.1,baseline:3.7},
-            {childName:'Erik',placeName:'Tallskolan',placeType:'school',avgScore:4.1,z:0.2,baseline:3.9},
-            {childName:'Erik',placeName:'Simklubben',placeType:'sport',avgScore:3.8,z:-0.3,baseline:4.0},
-            {childName:'Erik',placeName:'Hem',placeType:'home',avgScore:4.7,z:1.1,baseline:4.0}
-        ],
-        heatmap:[
-            {childName:'Lisa',places:[
-                {name:'Ekbackens skola',icon:'🏫',days:[3,2,4,3,2,null,null]},
-                {name:'IFK Fotboll',icon:'⚽',days:[null,5,null,4,null,4,null]},
-                {name:'Hem',icon:'🏠',days:[4,3,4,4,3,5,4]}
-            ]},
-            {childName:'Erik',places:[
-                {name:'Tallskolan',icon:'🏫',days:[4,4,3,5,4,null,null]},
-                {name:'Simklubben',icon:'⚽',days:[null,null,4,null,3,4,null]},
-                {name:'Hem',icon:'🏠',days:[5,4,5,4,5,5,5]}
-            ]}
-        ],
-        patterns:[
-            {type:'warning',icon:'⚠️',text:'<strong>Lisa</strong> mår konsekvent sämre på <strong>måndagar</strong> och <strong>fredagar</strong> i skolan (snitt 2.5 vs 3.4)'},
-            {type:'warning',icon:'📉',text:'<strong>Lisa</strong> har sjunkit under sin baseline på <strong>Ekbackens skola</strong> 4 av senaste 5 dagarna'},
-            {type:'positive',icon:'🌟',text:'<strong>Erik</strong> trivs bäst <strong>hemma</strong> — stabilt högt mående (4.7) i 3 veckor'},
-            {type:'positive',icon:'📈',text:'<strong>Eriks</strong> mående på <strong>Simklubben</strong> har förbättrats stadigt senaste 2 veckorna'},
-            {type:'neutral',icon:'🔁',text:'<strong>"Kompisar"</strong> dyker upp ofta som orsak när Lisa mår dåligt i skolan (6 av 10 dagar)'},
-            {type:'neutral',icon:'💤',text:'<strong>"Trött"</strong> är den vanligaste taggen på måndagar för båda barnen'}
-        ],
-        tagImpact:[
-            {childName:'Lisa',tags:[
-                {tag:'Kompisar',impact:-1.2,count:8},
-                {tag:'Prov/läxor',impact:-0.8,count:5},
-                {tag:'Trött',impact:-0.6,count:7},
-                {tag:'Ensam',impact:-1.5,count:3},
-                {tag:'Rolig lektion',impact:+1.1,count:4},
-                {tag:'Bra träning',impact:+1.4,count:6},
-                {tag:'Familj',impact:+0.9,count:5}
-            ]},
-            {childName:'Erik',tags:[
-                {tag:'Kompisar',impact:+0.4,count:6},
-                {tag:'Tränaren',impact:-0.7,count:4},
-                {tag:'Förlorade',impact:-1.1,count:3},
-                {tag:'Familj',impact:+1.3,count:7},
-                {tag:'Rolig lektion',impact:+0.8,count:5},
-                {tag:'Mys',impact:+1.0,count:4}
-            ]}
-        ]
-    };
-}
-
-function buildHeatmapData(d){
-    if(!d.familyProfiles)return[];
-    const dayNames=['Mån','Tis','Ons','Tor','Fre','Lör','Sön'];
-    const result=[];
-    const now=new Date();
-    d.familyProfiles.forEach(fp=>{
-        if(fp.storageKey&&fp.storageKey.startsWith('_demo_'))return;
-        const cd=getFullChildData(fp.storageKey);
-        if(!cd||!cd.places||!cd.placeCheckins)return;
-        const places=[];
-        cd.places.forEach(p=>{
-            const days=[null,null,null,null,null,null,null];
-            const counts=[0,0,0,0,0,0,0];
-            const totals=[0,0,0,0,0,0,0];
-            const cutoff=Date.now()-28*864e5;
-            cd.placeCheckins.filter(c=>c.placeId===p.id&&new Date(c.ts).getTime()>cutoff).forEach(c=>{
-                let dow=(new Date(c.ts).getDay()+6)%7; // 0=mån
-                totals[dow]+=c.score;counts[dow]++;
-            });
-            for(let i=0;i<7;i++){if(counts[i])days[i]=Math.round(totals[i]/counts[i]*10)/10}
-            places.push({name:p.name,icon:PT[p.type]?.icon||'📍',days});
-        });
-        if(places.length)result.push({childName:fp.name,places});
-    });
-    return result;
-}
-
-function detectPatterns(d){
-    if(!d.familyProfiles)return[];
-    const patterns=[];
-    const dayNames=['måndagar','tisdagar','onsdagar','torsdagar','fredagar','lördagar','söndagar'];
-    d.familyProfiles.forEach(fp=>{
-        if(fp.storageKey&&fp.storageKey.startsWith('_demo_'))return;
-        const cd=getFullChildData(fp.storageKey);
-        if(!cd||!cd.places||!cd.placeCheckins)return;
-        const cutoff14=Date.now()-14*864e5;
-        const cutoff7=Date.now()-7*864e5;
-        cd.places.forEach(p=>{
-            const recent14=cd.placeCheckins.filter(c=>c.placeId===p.id&&new Date(c.ts).getTime()>cutoff14);
-            const recent7=cd.placeCheckins.filter(c=>c.placeId===p.id&&new Date(c.ts).getTime()>cutoff7);
-            if(recent14.length<3)return;
-            const avg14=recent14.reduce((a,c)=>a+c.score,0)/recent14.length;
-            // Worst weekday detection
-            const dayScores={};
-            recent14.forEach(c=>{
-                const dow=(new Date(c.ts).getDay()+6)%7;
-                if(!dayScores[dow])dayScores[dow]={total:0,count:0};
-                dayScores[dow].total+=c.score;dayScores[dow].count++;
-            });
-            let worstDay=-1,worstAvg=5,bestDay=-1,bestAvg=0;
-            Object.entries(dayScores).forEach(([day,s])=>{
-                if(s.count<2)return;
-                const avg=s.total/s.count;
-                if(avg<worstAvg){worstAvg=avg;worstDay=+day}
-                if(avg>bestAvg){bestAvg=avg;bestDay=+day}
-            });
-            if(worstDay>=0&&worstAvg<avg14-0.5){
-                patterns.push({type:'warning',icon:'⚠️',text:`<strong>${esc(fp.name)}</strong> mår konsekvent sämre på <strong>${dayNames[worstDay]}</strong> på ${esc(p.name)} (snitt ${worstAvg.toFixed(1)} vs ${avg14.toFixed(1)})`});
-            }
-            // Trend down (7d vs 14d)
-            if(recent7.length>=2){
-                const avg7=recent7.reduce((a,c)=>a+c.score,0)/recent7.length;
-                const prev7=recent14.filter(c=>new Date(c.ts).getTime()<=cutoff7);
-                if(prev7.length>=2){
-                    const avgPrev=prev7.reduce((a,c)=>a+c.score,0)/prev7.length;
-                    if(avg7<avgPrev-0.6){
-                        patterns.push({type:'warning',icon:'📉',text:`<strong>${esc(fp.name)}</strong> har tappat i mående på <strong>${esc(p.name)}</strong> senaste veckan (${avg7.toFixed(1)} → från ${avgPrev.toFixed(1)})`});
-                    }else if(avg7>avgPrev+0.5){
-                        patterns.push({type:'positive',icon:'📈',text:`<strong>${esc(fp.name)}</strong>s mående på <strong>${esc(p.name)}</strong> har förbättrats senaste veckan`});
-                    }
-                }
-            }
-            // Stable high
-            if(recent7.length>=5){
-                const avg7=recent7.reduce((a,c)=>a+c.score,0)/recent7.length;
-                if(avg7>=4.2)patterns.push({type:'positive',icon:'🌟',text:`<strong>${esc(fp.name)}</strong> trivs bra på <strong>${esc(p.name)}</strong> — stabilt högt mående (${avg7.toFixed(1)})`});
-            }
-            // Recurring tag
-            const tagCount={};
-            recent7.forEach(c=>(c.tags||[]).forEach(t=>{tagCount[t]=(tagCount[t]||0)+1}));
-            Object.entries(tagCount).forEach(([tag,count])=>{
-                if(count>=3){
-                    const tagCheckins=recent7.filter(c=>(c.tags||[]).includes(tag));
-                    const tagAvg=tagCheckins.reduce((a,c)=>a+c.score,0)/tagCheckins.length;
-                    if(tagAvg<=2.5){
-                        patterns.push({type:'neutral',icon:'🔁',text:`<strong>"${esc(tag)}"</strong> dyker upp ofta när ${esc(fp.name)} mår dåligt på ${esc(p.name)} (${count} av ${recent7.length} dagar)`});
-                    }
-                }
-            });
-        });
-    });
-    // Limit to most relevant
-    patterns.sort((a,b)=>{const o={warning:0,neutral:1,positive:2};return(o[a.type]||1)-(o[b.type]||1)});
-    return patterns.slice(0,6);
-}
-
-function buildTagImpact(d){
-    if(!d.familyProfiles)return[];
-    const result=[];
-    d.familyProfiles.forEach(fp=>{
-        if(fp.storageKey&&fp.storageKey.startsWith('_demo_'))return;
-        const cd=getFullChildData(fp.storageKey);
-        if(!cd||!cd.places||!cd.placeCheckins)return;
-        const cutoff=Date.now()-30*864e5;
-        const recent=cd.placeCheckins.filter(c=>new Date(c.ts).getTime()>cutoff);
-        if(recent.length<5)return;
-        const overallAvg=recent.reduce((a,c)=>a+c.score,0)/recent.length;
-        const tagStats={};
-        recent.forEach(c=>{
-            (c.tags||[]).forEach(tag=>{
-                if(!tagStats[tag])tagStats[tag]={total:0,count:0};
-                tagStats[tag].total+=c.score;tagStats[tag].count++;
-            });
-        });
-        const tags=Object.entries(tagStats).filter(([,s])=>s.count>=2).map(([tag,s])=>{
-            const avg=s.total/s.count;
-            return{tag,impact:Math.round((avg-overallAvg)*10)/10,count:s.count};
-        }).sort((a,b)=>a.impact-b.impact);
-        if(tags.length)result.push({childName:fp.name,tags});
-    });
-    return result;
-}
-
 function renderInsikter(){
     const el=document.getElementById('insikter-content');
     if(!el)return;
@@ -5299,53 +4893,6 @@ function renderInsikter(){
 
     el.innerHTML=html;
 
-}
-
-function renderTrendSVG(weeks,data,color,label){
-    if(!data||!data.length)return'';
-    const W=320,H=140,padL=30,padR=10,padT=15,padB=25;
-    const chartW=W-padL-padR,chartH=H-padT-padB;
-    const minY=Math.min(...data)-0.3,maxY=Math.max(...data)+0.3;
-    const rangeY=maxY-minY||1;
-    const points=data.map((v,i)=>{
-        const x=padL+(i/(data.length-1))*chartW;
-        const y=padT+chartH-(((v-minY)/rangeY)*chartH);
-        return{x,y,v};
-    });
-    const line=points.map((p,i)=>(i===0?'M':'L')+p.x.toFixed(1)+','+p.y.toFixed(1)).join(' ');
-    const area=line+' L'+points[points.length-1].x.toFixed(1)+','+(padT+chartH)+' L'+points[0].x.toFixed(1)+','+(padT+chartH)+' Z';
-
-    // Grid lines
-    let gridLines='';
-    const gridSteps=[1,2,3,4,5].filter(v=>v>=Math.floor(minY)&&v<=Math.ceil(maxY));
-    gridSteps.forEach(v=>{
-        const y=padT+chartH-(((v-minY)/rangeY)*chartH);
-        gridLines+=`<line x1="${padL}" y1="${y.toFixed(1)}" x2="${W-padR}" y2="${y.toFixed(1)}" stroke="rgba(255,255,255,.06)" stroke-width="1"/>`;
-        gridLines+=`<text x="${padL-6}" y="${(y+3).toFixed(1)}" fill="var(--t2)" font-size="8" text-anchor="end">${v}</text>`;
-    });
-
-    // Week labels
-    let weekLabels='';
-    points.forEach((p,i)=>{
-        if(weeks[i])weekLabels+=`<text x="${p.x.toFixed(1)}" y="${(H-5).toFixed(1)}" fill="var(--t2)" font-size="7" text-anchor="middle">${weeks[i]}</text>`;
-    });
-
-    // Dots
-    let dots=points.map(p=>`<circle cx="${p.x.toFixed(1)}" cy="${p.y.toFixed(1)}" r="3" fill="${color}" stroke="var(--c1)" stroke-width="1.5"/>`).join('');
-
-    return`<div class="trend-chart-wrap"><svg viewBox="0 0 ${W} ${H}" preserveAspectRatio="xMidYMid meet">
-        ${gridLines}${weekLabels}
-        <path d="${area}" fill="${color}" opacity="0.12"/>
-        <path d="${line}" fill="none" stroke="${color}" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>
-        ${dots}
-    </svg></div>`;
-}
-
-function getWeekNumber(d){
-    const date=new Date(d);date.setHours(0,0,0,0);
-    date.setDate(date.getDate()+3-(date.getDay()+6)%7);
-    const week1=new Date(date.getFullYear(),0,4);
-    return 1+Math.round(((date-week1)/864e5-3+(week1.getDay()+6)%7)/7);
 }
 
 // ===== PARENT DAILY SUMMARY NOTIFICATION =====
@@ -5788,10 +5335,6 @@ function renderMoodisNetwork(){
     el.innerHTML=html;
 }
 
-function setNetworkRole(role){
-    const d=ld();d.familyRole=role;sv(d);
-    renderMoodis();
-}
 
 let _networkRoleSelected='';
 function selectNetworkRoleBtn(role,btn){
@@ -5874,23 +5417,6 @@ window.addEventListener('online',updateOnlineStatus);
 window.addEventListener('offline',updateOnlineStatus);
 updateOnlineStatus();
 
-// PWA install prompt
-let deferredInstallPrompt=null;
-window.addEventListener('beforeinstallprompt',e=>{
-    e.preventDefault();deferredInstallPrompt=e;
-    // Don't show if already dismissed or in standalone mode
-    if(localStorage.getItem('moodly_install_dismissed')||window.matchMedia('(display-mode:standalone)').matches)return;
-    setTimeout(()=>{document.getElementById('install-banner').style.display=''},3000);
-});
-document.getElementById('install-btn')?.addEventListener('click',()=>{
-    if(!deferredInstallPrompt)return;
-    deferredInstallPrompt.prompt();
-    deferredInstallPrompt.userChoice.then(()=>{deferredInstallPrompt=null;document.getElementById('install-banner').style.display='none'});
-});
-document.getElementById('install-close')?.addEventListener('click',()=>{
-    document.getElementById('install-banner').style.display='none';
-    localStorage.setItem('moodly_install_dismissed','1');
-});
 
 // iOS Safari install guide (no beforeinstallprompt support)
 (function(){
