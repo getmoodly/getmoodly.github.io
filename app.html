@@ -2775,21 +2775,48 @@ function getDeepQuestions(placeType,score){
 }
 
 // Fun questions for engagement
+// freq: 'daily' = can repeat every day, 'once' = ask only once ever, 'weekly' = once per week
 const FUN_QUESTIONS=[
-    {text:'Om din dag var en färg?',options:['🔴 Röd','🔵 Blå','🟡 Gul','🟢 Grön','🟣 Lila','🟠 Orange']},
-    {text:'Om du hade en superkraft?',options:['🦸 Flyga','👻 Osynlig','⚡ Supersnabb','💪 Superstark','🧠 Läsa tankar','⏰ Tidsresa']},
-    {text:'Vilken emoji är du just nu?',options:['😄','😊','😎','🤩','😴','🥳','💪','🤔']},
-    {text:'Om du var ett djur?',options:['🐶 Hund','🐱 Katt','🦊 Räv','🐬 Delfin','🦅 Örn','🐉 Drake']},
-    {text:'Vilken årstid passar dig bäst?',options:['🌸 Vår','☀️ Sommar','🍂 Höst','❄️ Vinter']},
-    {text:'Vad gör dig gladast?',options:['👨‍👩‍👧 Familj','👫 Kompisar','⚽ Idrott','🎮 Spel','🐶 Djur','🎵 Musik']},
-    {text:'Vad vill du göra i helgen?',options:['😴 Sova','👫 Kompisar','🎮 Spela','⚽ Idrott','🎬 Film','🌳 Vara ute']},
-    {text:'Vad är bäst med dig?',options:['😊 Snäll','😂 Rolig','💪 Stark','🧠 Smart','🎨 Kreativ','❤️ Omtänksam']},
-    {text:'Om du fick bestämma middagen?',options:['🍕 Pizza','🌮 Tacos','🍝 Pasta','🍔 Burgare','🍣 Sushi','🥞 Pannkakor']},
-    {text:'Hur mycket energi har du?',options:['🔋 100%','🔋 75%','🔋 50%','🔋 25%','🪫 Nästan slut']},
-    {text:'Vad ser du fram emot mest?',options:['🏖️ Lov','🎂 Födelsedag','👫 Helgen','⚽ Nästa match','🎮 Speltid','🎄 Jul']},
-    {text:'Vad drömde du om inatt?',options:['🤔 Minns inte','😊 Nåt bra','😱 Nåt läskigt','🤪 Nåt konstigt','😴 Sov för gott']},
-    {text:'Ge en kompis en komplimang! 💬',options:['👍 Ska göra det!','✅ Redan gjort!','🤔 Ska tänka på det']},
-    {text:'Le stort just nu! 😁',options:['😁 Haha klart!','😊 Gjort!','🤗 Mår bättre nu!']}
+    // === DAILY — can repeat, answers change ===
+    {text:'Vilken emoji är du just nu?',options:['😄','😊','😎','🤩','😴','🥳','💪','🤔'],freq:'daily'},
+    {text:'Hur mycket energi har du?',options:['🔋 100%','🔋 75%','🔋 50%','🔋 25%','🪫 Nästan slut'],freq:'daily'},
+    {text:'Om din dag var en färg?',options:['🔴 Röd','🔵 Blå','🟡 Gul','🟢 Grön','🟣 Lila','🟠 Orange'],freq:'daily'},
+    {text:'Vad var bäst med dagen?',options:['👫 Kompisar','🎮 Spelat','📚 Lärt mig nåt','⚽ Rört på mig','😌 Vilat','🎵 Musik'],freq:'daily'},
+    {text:'Vad vill du göra nu?',options:['🎮 Spela','📺 Titta på nåt','👫 Träffa kompisar','😴 Vila','🌳 Vara ute','🎨 Skapa nåt'],freq:'daily'},
+    {text:'Le stort just nu! 😁',options:['😁 Haha klart!','😊 Gjort!','🤗 Mår bättre nu!'],freq:'daily'},
+    {text:'Ge en kompis en komplimang!',options:['👍 Ska göra det!','✅ Redan gjort!','🤔 Ska tänka på det'],freq:'daily'},
+    {text:'Vad drömde du om inatt?',options:['🤔 Minns inte','😊 Nåt bra','😱 Nåt läskigt','🤪 Nåt konstigt','😴 Sov för gott'],freq:'daily'},
+    {text:'Har du gjort något snällt idag?',options:['😊 Ja!','🤔 Ska göra det','😐 Inte ännu'],freq:'daily'},
+    {text:'Vad fick dig att le senast?',options:['👫 En kompis','📺 Nåt roligt','🐶 Djur','👨‍👩‍👧 Familj','🤪 Nåt konstigt','🤔 Minns inte'],freq:'daily'},
+    {text:'Vad skulle göra resten av dagen bra?',options:['👫 Kompisar','🎮 Speltid','🍕 God mat','😴 Vila','🌳 Vara ute','🤗 En kram'],freq:'daily'},
+    {text:'Hur lugn känner du dig just nu?',options:['😌 Jättelugn','🙂 Ganska lugn','😐 Mittemellan','😰 Lite stressad','😤 Inte lugn alls'],freq:'daily'},
+    {text:'Vad tänker du på just nu?',options:['👫 Kompisar','📚 Skolan','🎮 Nåt kul','🤔 Inget speciellt','😴 Att sova','👨‍👩‍👧 Familj'],freq:'daily'},
+    {text:'Hur var maten idag?',options:['🤤 Jättegod','😊 Bra','😐 Okej','😕 Inte bra','🤢 Dålig'],freq:'daily'},
+
+    // === WEEKLY — ask max once per week ===
+    {text:'Vad vill du göra i helgen?',options:['😴 Sova','👫 Kompisar','🎮 Spela','⚽ Idrott','🎬 Film','🌳 Vara ute'],freq:'weekly'},
+    {text:'Vad ser du fram emot mest?',options:['🏖️ Lov','🎂 Födelsedag','👫 Helgen','⚽ Nästa match','🎮 Speltid','🎄 Jul'],freq:'weekly'},
+    {text:'Vad gör dig gladast?',options:['👨‍👩‍👧 Familj','👫 Kompisar','⚽ Idrott','🎮 Spel','🐶 Djur','🎵 Musik'],freq:'weekly'},
+    {text:'Vad är du stolt över den här veckan?',options:['📚 Nåt i skolan','⚽ Nåt på idrotten','❤️ Var snäll','💪 Kämpade','🎨 Skapade nåt','🤔 Vet inte'],freq:'weekly'},
+    {text:'Hur har veckan varit?',options:['🌟 Jättebra','😊 Bra','😐 Okej','😕 Inte bra','😢 Dålig'],freq:'weekly'},
+    {text:'Vem vill du tacka den här veckan?',options:['👨‍👩‍👧 Förälder','👫 Kompis','👩‍🏫 Lärare','🧒 Syskon','🤔 Ingen speciell','❤️ Mig själv'],freq:'weekly'},
+    {text:'Vad vill du bli bättre på?',options:['📚 Skolämne','⚽ Sport','🎨 Kreativt','👫 Vara en bra kompis','😌 Hantera stress','💪 Bli starkare'],freq:'weekly'},
+    {text:'Om du fick en hel dag fri — vad gör du?',options:['🎮 Spelar hela dagen','👫 Med kompisar','🌳 Vara i naturen','🎨 Skapa nåt','😴 Sova och mysa','📺 Titta på serier'],freq:'weekly'},
+
+    // === ONCE — ask once, never again (personality/favorites) ===
+    {text:'Om du var ett djur?',options:['🐶 Hund','🐱 Katt','🦊 Räv','🐬 Delfin','🦅 Örn','🐉 Drake'],freq:'once'},
+    {text:'Om du hade en superkraft?',options:['🦸 Flyga','👻 Osynlig','⚡ Supersnabb','💪 Superstark','🧠 Läsa tankar','⏰ Tidsresa'],freq:'once'},
+    {text:'Vilken årstid passar dig bäst?',options:['🌸 Vår','☀️ Sommar','🍂 Höst','❄️ Vinter'],freq:'once'},
+    {text:'Om du fick bestämma middagen?',options:['🍕 Pizza','🌮 Tacos','🍝 Pasta','🍔 Burgare','🍣 Sushi','🥞 Pannkakor'],freq:'once'},
+    {text:'Vad är bäst med dig?',options:['😊 Snäll','😂 Rolig','💪 Stark','🧠 Smart','🎨 Kreativ','❤️ Omtänksam'],freq:'once'},
+    {text:'Vad vill du bli när du blir stor?',options:['👩‍⚕️ Hjälpa människor','🎮 Jobba med spel','⚽ Proffs','🎨 Konstnär','🧑‍🔬 Forskare','🤔 Vet inte ännu'],freq:'once'},
+    {text:'Vilken är din favoritplats i hela världen?',options:['🏠 Hemma','🏖️ Stranden','🏔️ Bergen','🌳 Skogen','👨‍👩‍👧 Hos morföräldrar','🎢 Nöjespark'],freq:'once'},
+    {text:'Om du fick resa vart som helst?',options:['🗼 Paris','🗽 New York','🏝️ Tropisk ö','🏔️ Japan','🦁 Safari','🚀 Rymden'],freq:'once'},
+    {text:'Vad är din favoritmusik?',options:['🎵 Pop','🎸 Rock','🎤 Hip hop','🎹 Lugnt','🎮 Spelmusik','🤷 Blandat'],freq:'once'},
+    {text:'Vad är du mest rädd för?',options:['🕷️ Spindlar','👻 Mörker','📝 Prov','😶 Vara ensam','🤔 Inget','😱 Höjder'],freq:'once'},
+    {text:'Vilken sport gillar du mest?',options:['⚽ Fotboll','🏀 Basket','🏊 Simning','🎿 Vintersport','🤸 Gymnastik','🎮 E-sport'],freq:'once'},
+    {text:'Hur gillar du att lära dig?',options:['📖 Läsa','🎥 Titta på video','🤝 Med kompisar','✍️ Skriva','🔬 Experimentera','🎮 Genom spel'],freq:'once'},
+    {text:'Vilket väder gillar du mest?',options:['☀️ Sol','🌧️ Regn','❄️ Snö','🌤️ Molnigt','⛈️ Åska','🌈 Regnbåge'],freq:'once'}
 ];
 
 // State
@@ -2936,6 +2963,14 @@ function getNextQuestion(d){
     if(!moodisFlow._askedQuestions)moodisFlow._askedQuestions=new Set();
     const asked=moodisFlow._askedQuestions;
 
+    // Load permanently answered 'once' questions from storage
+    if(!d._answeredOnce)d._answeredOnce=[];
+    const answeredOnce=new Set(d._answeredOnce);
+    // Load weekly answered questions
+    const weekKey='week_'+Math.floor(Date.now()/(7*864e5));
+    if(!d._answeredWeekly)d._answeredWeekly={};
+    const answeredWeekly=new Set(d._answeredWeekly[weekKey]||[]);
+
     const todayCheckins=(d.placeCheckins||[]).filter(c=>new Date(c.ts).toDateString()===new Date().toDateString());
     const lastCheckin=todayCheckins.length?todayCheckins[todayCheckins.length-1]:null;
     const lastScore=lastCheckin?.score||3;
@@ -2945,7 +2980,13 @@ function getNextQuestion(d){
     const afterPlaceCount=moodisFlow.questionCount-(d.places?.length*4||0);
     const deepQs=getDeepQuestions(lastPlaceType,lastScore);
     const unaskedDeep=deepQs.filter(q=>!asked.has(q.text));
-    const unaskedFun=FUN_QUESTIONS.filter(q=>!asked.has(q.text));
+    // Filter fun questions by frequency rules
+    const unaskedFun=FUN_QUESTIONS.filter(q=>{
+        if(asked.has(q.text))return false; // already asked this session
+        if(q.freq==='once'&&answeredOnce.has(q.text))return false; // answered permanently
+        if(q.freq==='weekly'&&answeredWeekly.has(q.text))return false; // answered this week
+        return true;
+    });
 
     // If all questions asked, return null (session complete)
     if(!unaskedDeep.length&&!unaskedFun.length)return null;
@@ -3666,6 +3707,20 @@ function moodisAnswer(answer,pts,tag,questionText,optionsJson){
     try{options=JSON.parse(optionsJson||'[]')}catch(e){}
     d.moodisInsights.push({date:today,tag:tag||'fun',answer:clean,rawAnswer:answer,question:questionText||'',options,ts:new Date().toISOString()});
     if(d.moodisInsights.length>300)d.moodisInsights=d.moodisInsights.slice(-300);
+    // Track frequency: save once/weekly status
+    const matchedQ=FUN_QUESTIONS.find(q=>q.text===questionText);
+    if(matchedQ){
+        if(matchedQ.freq==='once'){
+            if(!d._answeredOnce)d._answeredOnce=[];
+            if(!d._answeredOnce.includes(questionText))d._answeredOnce.push(questionText);
+        }
+        if(matchedQ.freq==='weekly'){
+            if(!d._answeredWeekly)d._answeredWeekly={};
+            const wk='week_'+Math.floor(Date.now()/(7*864e5));
+            if(!d._answeredWeekly[wk])d._answeredWeekly[wk]=[];
+            if(!d._answeredWeekly[wk].includes(questionText))d._answeredWeekly[wk].push(questionText);
+        }
+    }
     sv(d);
     scheduleSyncChildData();
     renderMoodis();
