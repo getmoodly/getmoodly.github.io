@@ -5039,16 +5039,167 @@ function renderInsikter(){
     if(!el)return;
     const d=ld();
 
-    // Child view — show simple message
+    // Only parents see statistics
     if(d.role!=='parent'){
-        el.innerHTML=`<div class="greeting-area"><h1>Insikter</h1></div>
-            <div class="cd" style="text-align:center;padding:24px">
-                <div style="font-size:2rem;margin-bottom:8px">📊</div>
-                <p style="font-size:.84rem;color:var(--t2)">Insikter visas för din förälder. Fortsätt checka in varje dag!</p>
-            </div>`;
+        el.innerHTML=`<div style="text-align:center;padding:40px 16px">
+            <div style="font-size:2rem;margin-bottom:8px">📊</div>
+            <p style="font-size:.84rem;color:var(--t2)">Statistik visas för föräldrar.</p></div>`;
         return;
     }
 
+    let html='';
+    html+=`<div class="greeting-area"><h1 style="background:linear-gradient(135deg,var(--t),var(--pl));-webkit-background-clip:text;-webkit-text-fill-color:transparent;background-clip:text">Statistik</h1></div>`;
+
+    // === AGGREGATED OVERVIEW PER CHILD ===
+    if(d.familyProfiles&&d.familyProfiles.length){
+        d.familyProfiles.forEach(fp=>{
+            const cd=getFullChildData(fp.storageKey);
+            if(!cd)return;
+            const places=cd.places||[];
+            const allCheckins=cd.placeCheckins||[];
+            const insights=cd.moodisInsights||[];
+            if(!allCheckins.length)return;
+
+            const emoji=childEmoji(fp);
+            html+=`<div class="cd" style="margin-bottom:16px">`;
+            html+=`<div style="display:flex;align-items:center;gap:10px;margin-bottom:14px">
+                <span style="font-size:1.3rem">${emoji}</span>
+                <div><div style="font-weight:700;font-size:.95rem">${esc(fp.name)}</div>
+                <div style="font-size:.7rem;color:var(--t2)">${esc(fp.ageGroup||'')} ${fp.gender?'· '+esc(fp.gender):''} · ${allCheckins.length} check-ins</div></div>
+            </div>`;
+
+            // Per place type averages with bar chart
+            const byType={};
+            places.forEach(p=>{
+                const checks=allCheckins.filter(c=>c.placeId===p.id);
+                if(!checks.length)return;
+                const type=p.type||'other';
+                if(!byType[type])byType[type]={scores:[],name:p.name};
+                checks.forEach(c=>byType[type].scores.push(c.score));
+            });
+
+            html+=`<div style="margin-bottom:14px">`;
+            Object.entries(byType).forEach(([type,data])=>{
+                const pt=PT[type]||PT.other;
+                const avg=Math.round(data.scores.reduce((a,b)=>a+b,0)/data.scores.length*10)/10;
+                const pct=Math.round((avg/5)*100);
+                const col=avg>=4?'var(--ok)':avg>=3?'var(--w)':'var(--bad)';
+                html+=`<div style="display:flex;align-items:center;gap:10px;margin-bottom:8px">
+                    <span style="width:24px;text-align:center">${pt.icon}</span>
+                    <span style="width:60px;font-size:.78rem;color:var(--t2)">${esc(data.name)}</span>
+                    <div style="flex:1;height:8px;background:rgba(255,255,255,.08);border-radius:4px;overflow:hidden">
+                        <div style="height:100%;width:${pct}%;background:${col};border-radius:4px"></div>
+                    </div>
+                    <span style="font-size:.82rem;font-weight:700;color:${col};width:30px;text-align:right">${avg}</span>
+                </div>`;
+            });
+            html+=`</div>`;
+
+            // Top reasons (from tags)
+            const tagCounts={};
+            allCheckins.forEach(c=>(c.tags||[]).forEach(t=>{tagCounts[t]=(tagCounts[t]||0)+1}));
+            const topTags=Object.entries(tagCounts).sort((a,b)=>b[1]-a[1]).slice(0,5);
+            if(topTags.length){
+                html+=`<div style="font-size:.72rem;color:var(--t2);margin-bottom:6px">Vanligaste orsakerna:</div>
+                    <div style="display:flex;gap:4px;flex-wrap:wrap;margin-bottom:12px">${topTags.map(([t,c])=>`<span style="font-size:.7rem;padding:3px 8px;background:rgba(255,255,255,.06);border-radius:10px;color:var(--t2)">${esc(t)} (${c})</span>`).join('')}</div>`;
+            }
+
+            // Feelings distribution
+            const feelings={};
+            allCheckins.forEach(c=>{if(c.body){feelings[c.body]=(feelings[c.body]||0)+1}});
+            const topFeelings=Object.entries(feelings).sort((a,b)=>b[1]-a[1]).slice(0,4);
+            if(topFeelings.length){
+                html+=`<div style="font-size:.72rem;color:var(--t2);margin-bottom:6px">Vanligaste känslorna:</div>
+                    <div style="display:flex;gap:4px;flex-wrap:wrap;margin-bottom:12px">${topFeelings.map(([f,c])=>`<span style="font-size:.7rem;padding:3px 8px;background:rgba(108,92,231,.1);border-radius:10px;color:var(--pl)">${esc(f)} (${c})</span>`).join('')}</div>`;
+            }
+
+            // Social context
+            const social={};
+            allCheckins.forEach(c=>{if(c.who){social[c.who]=(social[c.who]||0)+1}});
+            const topSocial=Object.entries(social).sort((a,b)=>b[1]-a[1]).slice(0,3);
+            if(topSocial.length){
+                html+=`<div style="font-size:.72rem;color:var(--t2);margin-bottom:6px">Oftast med:</div>
+                    <div style="display:flex;gap:4px;flex-wrap:wrap;margin-bottom:12px">${topSocial.map(([s,c])=>`<span style="font-size:.7rem;padding:3px 8px;background:rgba(0,184,148,.1);border-radius:10px;color:var(--ok)">${esc(s)} (${c})</span>`).join('')}</div>`;
+            }
+
+            // Deep insights summary
+            const deepTags={duration:[],wish:[],support:[],strength:[],sleep:[],joy:[]};
+            insights.forEach(i=>{if(deepTags[i.tag])deepTags[i.tag].push(i.answer)});
+            const importantInsights=[];
+            if(deepTags.support.length){
+                const noSupport=deepTags.support.filter(a=>a==='Ingen'||a.includes('Ingen')).length;
+                if(noSupport)importantInsights.push({icon:'⚠️',text:`${esc(fp.name)} sa ${noSupport} gång(er) att hen inte har någon att prata med`,color:'var(--bad)'});
+            }
+            if(deepTags.duration.length){
+                const longTerm=deepTags.duration.filter(a=>a.includes('vecka')||a.includes('Länge')||a.includes('länge')).length;
+                if(longTerm)importantInsights.push({icon:'⏳',text:`${esc(fp.name)} uppgav ${longTerm} gång(er) att det dåliga måendet pågått länge`,color:'var(--bad)'});
+            }
+            if(deepTags.strength.length){
+                const topStrength=deepTags.strength.reduce((a,b)=>(a[b]=(a[b]||0)+1,a),{});
+                const best=Object.entries(topStrength).sort((a,b)=>b[1]-a[1])[0];
+                if(best)importantInsights.push({icon:'⭐',text:`Det som gör platser bra: "${esc(best[0])}"`,color:'var(--ok)'});
+            }
+            if(importantInsights.length){
+                html+=`<div style="font-size:.72rem;color:var(--a);text-transform:uppercase;letter-spacing:.05em;margin:8px 0 6px;font-weight:600">Viktiga signaler</div>`;
+                importantInsights.forEach(ins=>{
+                    html+=`<div style="display:flex;gap:8px;align-items:flex-start;padding:8px;background:rgba(255,255,255,.03);border-radius:8px;margin-bottom:4px;font-size:.78rem">
+                        <span>${ins.icon}</span><span style="color:${ins.color}">${ins.text}</span></div>`;
+                });
+            }
+
+            html+=`</div>`;
+        });
+    }
+
+    // === TRYGGHETSGRAD PER BARN ===
+    if(d.familyProfiles&&d.familyProfiles.length){
+        html+=`<div class="cd"><div class="ct">💜 Trygghetsnätverk — översikt</div>`;
+        d.familyProfiles.forEach(fp=>{
+            const tg=calcTrygghetsgrad(d,fp.id);
+            const emoji=childEmoji(fp);
+            html+=`<div style="margin-bottom:12px">
+                <div style="display:flex;align-items:center;gap:8px;margin-bottom:8px">
+                    <span>${emoji}</span><span style="font-weight:600;font-size:.85rem">${esc(fp.name)}</span>
+                </div>`;
+            html+=renderTrygghetsgrad(tg,fp.name);
+            html+=`</div>`;
+        });
+        html+=`</div>`;
+    }
+
+    // === QUIZ HISTORY ===
+    const quizHistory=d._quizHistory||[];
+    if(quizHistory.length){
+        html+=`<div class="cd"><div class="ct">🧩 Quiz-historik</div>`;
+        quizHistory.slice(-10).reverse().forEach(h=>{
+            const col=h.pct>=70?'var(--ok)':h.pct>=40?'var(--w)':'var(--bad)';
+            html+=`<div style="display:flex;justify-content:space-between;padding:8px 0;border-bottom:1px solid rgba(255,255,255,.04);font-size:.82rem">
+                <span>${esc(h.childName)} <span style="color:var(--t2);font-size:.72rem">${h.date}</span></span>
+                <span style="font-weight:700;color:${col}">${h.pct}% (${h.correct}/${h.total})</span>
+            </div>`;
+        });
+        html+=`</div>`;
+    }
+
+    // === KOMMUN AGGREGATION (future — shows what's possible) ===
+    if(d.kommun){
+        html+=`<div class="cd"><div class="ct">📍 ${esc(d.kommun)} — Aggregerad data</div>
+            <p style="font-size:.78rem;color:var(--t2);line-height:1.5;margin-bottom:10px">När fler familjer i ${esc(d.kommun)} använder Moodly kommer aggregerad statistik att visas här — per platstyp, åldersgrupp och kön. Helt anonymiserat.</p>
+            <div style="display:flex;gap:8px;flex-wrap:wrap">
+                <span style="font-size:.7rem;padding:4px 10px;background:rgba(108,92,231,.1);border-radius:10px;color:var(--pl)">Per skola</span>
+                <span style="font-size:.7rem;padding:4px 10px;background:rgba(0,184,148,.1);border-radius:10px;color:var(--ok)">Per ålder</span>
+                <span style="font-size:.7rem;padding:4px 10px;background:rgba(253,203,110,.15);border-radius:10px;color:var(--w)">Per kön</span>
+                <span style="font-size:.7rem;padding:4px 10px;background:rgba(162,155,254,.1);border-radius:10px;color:var(--pl)">Per platstyp</span>
+            </div>
+        </div>`;
+    }
+
+    el.innerHTML=html;
+
+    // Skip old insikter code if we rendered the new view
+    return;
+
+    // === LEGACY CODE BELOW — kept for reference ===
     const hasData=hasEnoughInsikterData(d);
     const demo=hasData?null:generateInsikterDemoData(d.kommun);
     const isDemo=!!demo;
