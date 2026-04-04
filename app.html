@@ -2563,209 +2563,83 @@ const STREAK_REWARDS=[
     {streak:30,id:'streak_rainbow',emoji:'🌈',label:'Regnbåge',type:'hat'}
 ];
 
-// Place-specific, mood-adaptive follow-up system
-// Every question is tied to BOTH place type AND mood score
-function getFollowups(placeType,score){
-    const range=score>=4?'high':score<=2?'low':'mid';
-    const pt=placeType||'_default';
-    const Q={
-        school:{
-            why:{
-                question:score>=4?'Vad var bäst i skolan?':score<=2?'Vad var det som hände i skolan?':'Hur var det i skolan?',
-                high:['😊 Bra kompisar på rasten','📚 Rolig lektion','⭐ Lyckades på prov','🎉 Kul aktivitet','👩‍🏫 Bra lärare','🎨 Skapande/pyssel'],
-                mid:['📖 Vanlig skoldag','👫 Kompisar','📝 Hade prov/läxor','🕐 Lång dag','😌 Lugna lektioner'],
-                low:['😔 Problem med klasskompis','😰 Stressad av skolan','📝 Svårt prov','😴 Orkade inte i skolan','😒 Tråkiga lektioner','😢 Bråk i klassen','😶 Kände mig ensam på rasten']
-            },
-            who:{
-                question:score>=4?'Vilka var du med i skolan?':score<=2?'Var du med någon i skolan?':'Vilka umgicks du med i skolan?',
-                high:['👫 Mina bästa kompisar','👥 Hela klassen','👩‍🏫 En lärare jag gillar','😊 Nya kompisar'],
-                mid:['👫 Kompisar','👥 Klassen','👤 Mest själv','👩‍🏫 Lärare'],
-                low:['👤 Var mest ensam','👫 Några kompisar','👩‍🏫 Bara lärare','😶 Ingen ville vara med mig']
-            },
-            body:{
-                question:score>=4?'Hur känner du dig efter skolan?':score<=2?'Hur känner du dig efter skolan?':'Hur känner du dig?',
-                high:['😊 Glad','⚡ Full av energi','😌 Lugn och trygg','🤗 Nöjd','💪 Stark'],
-                mid:['😐 Helt okej','😴 Lite trött','😌 Lugn','🤷 Vet inte riktigt'],
-                low:['😔 Ledsen','😰 Orolig','😴 Jättetrött','😶 Tom','😤 Irriterad']
-            }
-        },
-        sport:{
-            why:{
-                question:score>=4?'Vad var bäst på träningen?':score<=2?'Vad var det som hände på träningen?':'Hur var träningen?',
-                high:['🏆 Vi vann matchen','💪 Riktigt bra träning','😊 Kul med laget','⭐ Lärde mig nåt nytt','🎯 Gjorde mål/poäng','🎉 Alla hade kul'],
-                mid:['🏃 Vanlig träning','👫 Bra stämning','⚽ Okej match','😌 Det var lugnt','🏋️ Tuff men bra'],
-                low:['😞 Vi förlorade','🤕 Slog mig/fick ont','😴 Orkade inte hänga med','👨‍🏫 Tränaren var sur','😔 Ingen passade till mig','😶 Fick sitta på bänken']
-            },
-            who:{
-                question:score>=4?'Vilka tränade du med?':score<=2?'Hur var det med de andra på träningen?':'Vilka var du med på träningen?',
-                high:['👫 Mina kompisar i laget','👥 Hela laget','😊 Bästa kompisen','👨‍🏫 Tränaren var bra'],
-                mid:['👫 Laget','👥 De vanliga','👨‍🏫 Tränaren','👤 Kände inte alla'],
-                low:['👤 Kände mig utanför','😔 De andra var elaka','👨‍🏫 Tränaren brydde sig inte','👫 Bara några jag känner']
-            },
-            body:{
-                question:score>=4?'Hur känner du dig efter träningen?':score<=2?'Hur känner du dig efter träningen?':'Hur känner du dig?',
-                high:['💪 Stark','😊 Glad','⚡ Peppad','😌 Nöjd och trött','🤗 Stolt'],
-                mid:['😐 Helt okej','😴 Trött men okej','😌 Lugn','🤷 Vanligt'],
-                low:['😔 Besviken','😴 Helt slut','😤 Arg','😰 Orolig','😶 Vill inte mer']
-            }
-        },
-        home:{
-            why:{
-                question:score>=4?'Vad var bäst hemma?':score<=2?'Vad hände hemma?':'Hur var det hemma?',
-                high:['👨‍👩‍👧 Mys med familjen','🎮 Spelade/lekte','🍕 Riktigt god mat','😌 Lugnt och skönt','🐶 Var med husdjuret','📺 Såg nåt bra'],
-                mid:['😌 Lugnt hemma','📝 Gjorde läxor','📱 Var på telefonen','😐 Inget speciellt','👨‍👩‍👧 Var med familjen'],
-                low:['😢 Bråk med familjen','😶 Kände mig ensam hemma','😴 Jättetrött','📝 Stressad av läxor','😔 Bråk med syskon','😢 Var ledsen hemma']
-            },
-            who:{
-                question:score>=4?'Vilka var du med hemma?':score<=2?'Var du med någon hemma?':'Vilka var hemma?',
-                high:['👨‍👩‍👧 Hela familjen','🧒 Syskon','👫 Kompis var på besök','🐶 Husdjuret'],
-                mid:['👨‍👩‍👧 Familjen','🧒 Syskon','👤 Mest själv','👫 Kompis'],
-                low:['👤 Var ensam hemma','👨‍👩‍👧 Familjen men det var dålig stämning','🧒 Syskon som bråkade','😶 Ingen brydde sig']
-            },
-            body:{
-                question:score>=4?'Hur känner du dig hemma?':score<=2?'Hur känner du dig hemma?':'Hur känner du dig?',
-                high:['😌 Avslappnad','😊 Glad','🤗 Trygg','⚡ Pigg','🥰 Älskar att vara hemma'],
-                mid:['😐 Helt okej','😴 Lite trött','😌 Lugn','🤷 Vanligt'],
-                low:['😔 Ledsen','😶 Ensam','😴 Jättetrött','😤 Irriterad','😰 Orolig']
-            }
-        },
-        afterschool:{
-            why:{
-                question:score>=4?'Vad var bäst på fritids?':score<=2?'Vad hände på fritids?':'Hur var det på fritids?',
-                high:['😊 Lekte med kompisar','🎨 Rolig aktivitet','🎉 Alla hade kul','⭐ Fick göra nåt roligt','🏃 Lekte ute'],
-                mid:['😌 Det var lugnt','👫 Var med kompisar','🎨 Pysslade lite','😐 Vanlig dag','🕐 Väntade på att bli hämtad'],
-                low:['😔 Problem med kompisar','😶 Kände mig ensam','😴 Trött och uttråkad','😢 Bråk','👩‍🏫 Problem med personalen','😒 Det var tråkigt']
-            },
-            who:{
-                question:score>=4?'Vilka lekte du med på fritids?':score<=2?'Var du med någon på fritids?':'Vilka var du med på fritids?',
-                high:['👫 Mina kompisar','👥 Många','😊 Nya kompisar','👩‍🏫 Snäll personal'],
-                mid:['👫 Kompisar','👥 Några','👤 Mest själv','👩‍🏫 Personalen'],
-                low:['👤 Var mest ensam','😔 Ingen ville leka','👫 Bara några','😶 De andra var elaka']
-            },
-            body:{
-                question:score>=4?'Hur känner du dig efter fritids?':score<=2?'Hur känner du dig efter fritids?':'Hur känner du dig?',
-                high:['😊 Glad','⚡ Pigg','😌 Nöjd','🤗 Hade kul'],
-                mid:['😐 Okej','😴 Lite trött','😌 Lugn','🤷 Vanligt'],
-                low:['😔 Ledsen','😶 Ensam','😴 Trött','😤 Sur']
-            }
-        },
-        hobby:{
-            why:{
-                question:score>=4?'Vad var bäst med hobbyn?':score<=2?'Vad hände?':'Hur gick det?',
-                high:['⭐ Lyckades bra','🎉 Jätteroligt','😊 Bra stämning','💪 Lärde mig nåt','🎨 Fick skapa fritt'],
-                mid:['😌 Det var okej','📅 Vanlig gång','👫 Var med andra','🤷 Inget speciellt'],
-                low:['😞 Gick dåligt','😴 Orkade inte','😔 Var inte roligt','😶 Kände mig utanför','😰 Blev stressad']
-            },
-            who:{
-                question:score>=4?'Vilka var du med?':score<=2?'Var du med någon?':'Vilka var du med?',
-                high:['👫 Kompisar','👥 Hela gruppen','👩‍🏫 Bra ledare','😊 Nya vänner'],
-                mid:['👫 De vanliga','👩‍🏫 Ledaren','👤 Mest själv','👥 Några'],
-                low:['👤 Var ensam','😔 Ingen att prata med','👫 Några men det var jobbigt','👩‍🏫 Ledaren brydde sig inte']
-            },
-            body:{
-                question:score>=4?'Hur känner du dig?':score<=2?'Hur känner du dig?':'Hur känner du dig?',
-                high:['😊 Glad','💪 Stark','😌 Lugn','⚡ Energisk'],
-                mid:['😐 Okej','😴 Lite trött','😌 Lugn','🤷 Vet inte'],
-                low:['😔 Ledsen','😴 Trött','😰 Orolig','😶 Tom']
-            }
-        }
-    };
-    // Fallback for unknown place types
-    const _default={
-        why:{question:score>=4?'Vad var bäst?':score<=2?'Vad hände?':'Hur var det?',
-            high:['😊 Bra stämning','🎉 Riktigt kul','⭐ Lyckades','😌 Skönt','💪 Kände mig stark'],
-            mid:['😌 Det var okej','👫 Var med andra','📅 Vanlig dag','🤷 Inget speciellt'],
-            low:['😴 Jättetrött','😰 Stressad','😶 Ensam','😢 Ledsen','😒 Tråkigt','😟 Orolig']},
-        who:{question:score>=4?'Vilka var du med?':score<=2?'Var du med någon?':'Vilka var du med?',
-            high:['👫 Kompisar','👨‍👩‍👧 Familj','👥 Många','😊 Bra människor'],
-            mid:['👫 Kompisar','👨‍👩‍👧 Familj','👤 Mest själv','👩‍🏫 Vuxna'],
-            low:['👤 Var ensam','👫 Några','👨‍👩‍👧 Familj','😶 Ingen']},
-        body:{question:score>=4?'Hur känner du dig?':score<=2?'Hur känner du dig?':'Hur känner du dig?',
-            high:['⚡ Energisk','💪 Stark','😌 Avslappnad','😊 Bra'],
-            mid:['😐 Okej','😴 Lite trött','😌 Lugn','🤷 Vanligt'],
-            low:['😴 Jättetrött','🤕 Ont','😵 Slut','😰 Spänd','😶 Tomt']}
-    };
-    const placeQ=Q[pt]||_default;
-    return{
-        why:{question:placeQ.why.question,options:placeQ.why[range],pts:3},
-        who:{question:placeQ.who.question,options:placeQ.who[range],pts:3},
-        body:{question:placeQ.body.question,options:placeQ.body[range],pts:2}
-    };
+
+// ===== FEELINGS-BASED QUESTION SYSTEM =====
+// All answers are FEELINGS — consistent across all places and moods
+// Child always answers HOW they feel, never situational details
+
+const FEELING_OPTIONS={
+    high:['😊 Glad','😌 Lugn','💪 Stark','🤗 Trygg','⭐ Stolt','🥰 Älskad','⚡ Peppad'],
+    mid:['😐 Helt okej','😌 Lugn','🤷 Vet inte','😴 Lite trött','🙂 Ganska bra'],
+    low:['😔 Ledsen','😰 Orolig','😤 Arg','😶 Ensam','😴 Trött','😢 Rädd','😣 Stressad']
+};
+
+function getFeelingsForScore(score){
+    return score>=4?FEELING_OPTIONS.high:score<=2?FEELING_OPTIONS.low:FEELING_OPTIONS.mid;
 }
 
-// Deep reflection questions — place-specific and mood-specific
+function getFeelingQuestion(placeName){
+    return`Hur känner du dig efter ${esc(placeName)}?`;
+}
+
+// Deep questions — all feeling-based
 function getDeepQuestions(placeType,score){
     const pt=placeType||'other';
     const ptLabel=PT[pt]?.label||'platsen';
     const questions=[];
     if(score<=2){
-        questions.push({text:`Har det känts så på ${ptLabel.toLowerCase()} länge?`,options:['📅 Bara just nu','📆 Några dagar','📅 Mer än en vecka','📅 Ganska länge'],pts:5,tag:'duration'});
-        if(pt==='school')questions.push({text:'Vad skulle göra skolan bättre?',options:['👫 Snällare kompisar','📚 Roligare lektioner','😌 Mindre stress','👩‍🏫 Bättre lärare','🕐 Kortare dagar','🤷 Vet inte'],pts:5,tag:'wish'});
-        else if(pt==='sport')questions.push({text:'Vad skulle göra träningen bättre?',options:['👫 Bättre stämning i laget','👨‍🏫 Bättre tränare','⚽ Få spela mer','🤕 Slippa ha ont','😌 Mindre press','🤷 Vet inte'],pts:5,tag:'wish'});
-        else if(pt==='home')questions.push({text:'Vad skulle göra det bättre hemma?',options:['❤️ Mindre bråk','👨‍👩‍👧 Mer tid med familjen','😌 Mer lugn och ro','🧒 Bättre med syskon','🤷 Vet inte'],pts:5,tag:'wish'});
-        else if(pt==='afterschool')questions.push({text:'Vad skulle göra fritids bättre?',options:['👫 Snällare kompisar','🎨 Roligare aktiviteter','👩‍🏫 Bättre personal','😌 Lugnare','🤷 Vet inte'],pts:5,tag:'wish'});
-        else questions.push({text:'Vad skulle göra det bättre?',options:['👫 Bättre kompisar','😌 Mindre stress','❤️ Snällare vuxna','🎉 Roligare','🤷 Vet inte'],pts:5,tag:'wish'});
-        questions.push({text:'Vem kan du prata med om det?',options:['👨‍👩‍👧 Mamma eller pappa','👫 En kompis','👩‍🏫 En vuxen jag litar på','🤷 Ingen'],pts:5,tag:'support'});
+        questions.push({text:`Har du känt dig så på ${ptLabel.toLowerCase()} länge?`,options:['📅 Bara just nu','📆 Några dagar','📅 Mer än en vecka','📅 Ganska länge'],pts:5,tag:'duration'});
+        questions.push({text:'Vad skulle få dig att känna dig bättre?',options:['👫 Snällare kompisar','😌 Mindre stress','❤️ Snällare vuxna','🎉 Roligare','🤗 Mer stöd','🤷 Vet inte'],pts:5,tag:'wish'});
+        questions.push({text:'Vem kan du prata med när du mår dåligt?',options:['👨‍👩‍👧 Mamma eller pappa','👫 En kompis','👩‍🏫 En vuxen jag litar på','🤷 Ingen'],pts:5,tag:'support'});
     }
     if(score>=4){
-        if(pt==='school')questions.push({text:'Vad gör skolan bra?',options:['👫 Bra klasskamrater','😊 Trygg stämning','📚 Intressanta lektioner','👩‍🏫 Bra lärare','🎉 Roliga raster','😌 Jag kan vara mig själv'],pts:5,tag:'strength'});
-        else if(pt==='sport')questions.push({text:'Vad gör träningen bra?',options:['👫 Bra lagkompisar','👨‍🏫 Bra tränare','💪 Jag blir bättre','🎉 Det är kul','🏆 Vi lyckas tillsammans','😌 Jag känner mig trygg'],pts:5,tag:'strength'});
-        else if(pt==='home')questions.push({text:'Vad gör hemma bra?',options:['👨‍👩‍👧 Familjen','😌 Lugnt och tryggt','🎮 Mina grejer','🐶 Husdjuret','🍕 Bra mat','❤️ Jag kan vara mig själv'],pts:5,tag:'strength'});
-        else questions.push({text:'Vad gör den platsen bra?',options:['👫 Bra kompisar','😊 Trygg stämning','🎯 Jag lyckas','🎉 Det är kul','😌 Jag kan vara mig själv'],pts:5,tag:'strength'});
+        questions.push({text:`Vad gör att du trivs på ${ptLabel.toLowerCase()}?`,options:['👫 Bra kompisar','😊 Trygg stämning','🎯 Jag lyckas','🎉 Det är kul','😌 Jag kan vara mig själv'],pts:5,tag:'strength'});
     }
-    // General wellness questions (always relevant)
-    questions.push({text:'Hur sov du inatt?',options:['😴 Jättebra','🙂 Okej','😕 Lite dåligt','😢 Dåligt'],pts:3,tag:'sleep'});
+    questions.push({text:'Hur sov du senast?',options:['😴 Jättebra','🙂 Okej','😕 Lite dåligt','😢 Dåligt'],pts:3,tag:'sleep'});
     questions.push({text:'Har du skrattat mycket på sistone?',options:['😂 Ja massor!','😊 Lite','😐 Inte riktigt','😢 Nej'],pts:3,tag:'joy'});
     return questions;
 }
 
-// Fun questions for engagement
-// freq: 'daily' = can repeat every day, 'once' = ask only once ever, 'weekly' = once per week
+// Fun questions with frequency control
 const FUN_QUESTIONS=[
-    // === DAILY — can repeat, answers change ===
-    {text:'Vilken emoji är du just nu?',options:['😄','😊','😎','🤩','😴','🥳','💪','🤔'],freq:'daily'},
-    {text:'Hur mycket energi har du?',options:['🔋 100%','🔋 75%','🔋 50%','🔋 25%','🪫 Nästan slut'],freq:'daily'},
-    {text:'Om din dag var en färg?',options:['🔴 Röd','🔵 Blå','🟡 Gul','🟢 Grön','🟣 Lila','🟠 Orange'],freq:'daily'},
-    {text:'Vad var bäst med dagen?',options:['👫 Kompisar','🎮 Spelat','📚 Lärt mig nåt','⚽ Rört på mig','😌 Vilat','🎵 Musik'],freq:'daily'},
-    {text:'Vad vill du göra nu?',options:['🎮 Spela','📺 Titta på nåt','👫 Träffa kompisar','😴 Vila','🌳 Vara ute','🎨 Skapa nåt'],freq:'daily'},
+    // DAILY — mood/energy changes daily
+    {text:'Vilken emoji är du just nu?',options:['😊 Glad','😎 Cool','😴 Trött','💪 Stark','🤩 Exalterad','😌 Lugn','🤔 Fundersam'],freq:'daily'},
+    {text:'Hur mycket energi har du?',options:['🔋 Fullt','🔋 Mycket','🔋 Lagom','🔋 Lite','🪫 Tom'],freq:'daily'},
+    {text:'Vad vill du göra just nu?',options:['🎮 Spela','👫 Vara med kompisar','😴 Vila','🌳 Vara ute','🎨 Skapa nåt','📺 Titta på nåt'],freq:'daily'},
+    {text:'Hur lugn känner du dig?',options:['😌 Jättelugn','🙂 Ganska lugn','😐 Mittemellan','😰 Lite stressad','😤 Inte lugn alls'],freq:'daily'},
+    {text:'Vad fick dig att le senast?',options:['👫 En kompis','👨‍👩‍👧 Familjen','🐶 Ett djur','📺 Nåt roligt','🤪 Nåt konstigt','🤔 Minns inte'],freq:'daily'},
+    {text:'Hur känns magen just nu?',options:['😊 Bra','🤷 Vet inte','😐 Okej','😰 Lite pirrig','🤢 Inte bra'],freq:'daily'},
+    {text:'Har du gjort något snällt?',options:['😊 Ja!','🤔 Ska göra det','😐 Inte ännu'],freq:'daily'},
+    {text:'Vad skulle göra dig glad just nu?',options:['👫 Kompisar','🤗 En kram','🎮 Speltid','🍕 God mat','😴 Vila','🌳 Vara ute'],freq:'daily'},
     {text:'Le stort just nu! 😁',options:['😁 Haha klart!','😊 Gjort!','🤗 Mår bättre nu!'],freq:'daily'},
+    {text:'Hur känner du dig i kroppen?',options:['⚡ Full av energi','💪 Stark','😌 Avslappnad','😴 Trött','🤕 Har ont'],freq:'daily'},
+    {text:'Vad tänker du på?',options:['👫 Kompisar','📚 Skolan','🎮 Nåt kul','🤔 Inget speciellt','👨‍👩‍👧 Familj','😴 Att sova'],freq:'daily'},
     {text:'Ge en kompis en komplimang!',options:['👍 Ska göra det!','✅ Redan gjort!','🤔 Ska tänka på det'],freq:'daily'},
-    {text:'Vad drömde du om inatt?',options:['🤔 Minns inte','😊 Nåt bra','😱 Nåt läskigt','🤪 Nåt konstigt','😴 Sov för gott'],freq:'daily'},
-    {text:'Har du gjort något snällt idag?',options:['😊 Ja!','🤔 Ska göra det','😐 Inte ännu'],freq:'daily'},
-    {text:'Vad fick dig att le senast?',options:['👫 En kompis','📺 Nåt roligt','🐶 Djur','👨‍👩‍👧 Familj','🤪 Nåt konstigt','🤔 Minns inte'],freq:'daily'},
-    {text:'Vad skulle göra resten av dagen bra?',options:['👫 Kompisar','🎮 Speltid','🍕 God mat','😴 Vila','🌳 Vara ute','🤗 En kram'],freq:'daily'},
-    {text:'Hur lugn känner du dig just nu?',options:['😌 Jättelugn','🙂 Ganska lugn','😐 Mittemellan','😰 Lite stressad','😤 Inte lugn alls'],freq:'daily'},
-    {text:'Vad tänker du på just nu?',options:['👫 Kompisar','📚 Skolan','🎮 Nåt kul','🤔 Inget speciellt','😴 Att sova','👨‍👩‍👧 Familj'],freq:'daily'},
-    {text:'Hur var maten idag?',options:['🤤 Jättegod','😊 Bra','😐 Okej','😕 Inte bra','🤢 Dålig'],freq:'daily'},
 
-    // === WEEKLY — ask max once per week ===
-    {text:'Vad vill du göra i helgen?',options:['😴 Sova','👫 Kompisar','🎮 Spela','⚽ Idrott','🎬 Film','🌳 Vara ute'],freq:'weekly'},
-    {text:'Vad ser du fram emot mest?',options:['🏖️ Lov','🎂 Födelsedag','👫 Helgen','⚽ Nästa match','🎮 Speltid','🎄 Jul'],freq:'weekly'},
-    {text:'Vad gör dig gladast?',options:['👨‍👩‍👧 Familj','👫 Kompisar','⚽ Idrott','🎮 Spel','🐶 Djur','🎵 Musik'],freq:'weekly'},
+    // WEEKLY — reflection
+    {text:'Hur har veckan varit?',options:['😊 Glad','😌 Lugn','😐 Okej','😕 Jobbig','😔 Tuff'],freq:'weekly'},
     {text:'Vad är du stolt över den här veckan?',options:['📚 Nåt i skolan','⚽ Nåt på idrotten','❤️ Var snäll','💪 Kämpade','🎨 Skapade nåt','🤔 Vet inte'],freq:'weekly'},
-    {text:'Hur har veckan varit?',options:['🌟 Jättebra','😊 Bra','😐 Okej','😕 Inte bra','😢 Dålig'],freq:'weekly'},
-    {text:'Vem vill du tacka den här veckan?',options:['👨‍👩‍👧 Förälder','👫 Kompis','👩‍🏫 Lärare','🧒 Syskon','🤔 Ingen speciell','❤️ Mig själv'],freq:'weekly'},
-    {text:'Vad vill du bli bättre på?',options:['📚 Skolämne','⚽ Sport','🎨 Kreativt','👫 Vara en bra kompis','😌 Hantera stress','💪 Bli starkare'],freq:'weekly'},
-    {text:'Om du fick en hel dag fri — vad gör du?',options:['🎮 Spelar hela dagen','👫 Med kompisar','🌳 Vara i naturen','🎨 Skapa nåt','😴 Sova och mysa','📺 Titta på serier'],freq:'weekly'},
+    {text:'Vem vill du tacka den här veckan?',options:['👨‍👩‍👧 Förälder','👫 Kompis','👩‍🏫 Lärare','❤️ Mig själv','🤔 Ingen speciell'],freq:'weekly'},
+    {text:'Vad vill du bli bättre på?',options:['📚 Skolämne','⚽ Sport','🎨 Kreativt','👫 Vara en bra kompis','😌 Hantera stress'],freq:'weekly'},
+    {text:'Om du fick en hel dag fri?',options:['🎮 Spela','👫 Kompisar','🌳 Naturen','🎨 Skapa nåt','😴 Mysa','📺 Serier'],freq:'weekly'},
+    {text:'Vad ser du fram emot?',options:['🏖️ Lov','🎂 Födelsedag','👫 Helgen','⚽ Nästa match','🎮 Speltid'],freq:'weekly'},
 
-    // === ONCE — ask once, never again (personality/favorites) ===
+    // ONCE — personality (never repeat)
     {text:'Om du var ett djur?',options:['🐶 Hund','🐱 Katt','🦊 Räv','🐬 Delfin','🦅 Örn','🐉 Drake'],freq:'once'},
     {text:'Om du hade en superkraft?',options:['🦸 Flyga','👻 Osynlig','⚡ Supersnabb','💪 Superstark','🧠 Läsa tankar','⏰ Tidsresa'],freq:'once'},
-    {text:'Vilken årstid passar dig bäst?',options:['🌸 Vår','☀️ Sommar','🍂 Höst','❄️ Vinter'],freq:'once'},
-    {text:'Om du fick bestämma middagen?',options:['🍕 Pizza','🌮 Tacos','🍝 Pasta','🍔 Burgare','🍣 Sushi','🥞 Pannkakor'],freq:'once'},
+    {text:'Vilken årstid gillar du mest?',options:['🌸 Vår','☀️ Sommar','🍂 Höst','❄️ Vinter'],freq:'once'},
+    {text:'Favoritmat?',options:['🍕 Pizza','🌮 Tacos','🍝 Pasta','🍔 Burgare','🍣 Sushi','🥞 Pannkakor'],freq:'once'},
     {text:'Vad är bäst med dig?',options:['😊 Snäll','😂 Rolig','💪 Stark','🧠 Smart','🎨 Kreativ','❤️ Omtänksam'],freq:'once'},
-    {text:'Vad vill du bli när du blir stor?',options:['👩‍⚕️ Hjälpa människor','🎮 Jobba med spel','⚽ Proffs','🎨 Konstnär','🧑‍🔬 Forskare','🤔 Vet inte ännu'],freq:'once'},
-    {text:'Vilken är din favoritplats i hela världen?',options:['🏠 Hemma','🏖️ Stranden','🏔️ Bergen','🌳 Skogen','👨‍👩‍👧 Hos morföräldrar','🎢 Nöjespark'],freq:'once'},
-    {text:'Om du fick resa vart som helst?',options:['🗼 Paris','🗽 New York','🏝️ Tropisk ö','🏔️ Japan','🦁 Safari','🚀 Rymden'],freq:'once'},
-    {text:'Vad är din favoritmusik?',options:['🎵 Pop','🎸 Rock','🎤 Hip hop','🎹 Lugnt','🎮 Spelmusik','🤷 Blandat'],freq:'once'},
-    {text:'Vad är du mest rädd för?',options:['🕷️ Spindlar','👻 Mörker','📝 Prov','😶 Vara ensam','🤔 Inget','😱 Höjder'],freq:'once'},
-    {text:'Vilken sport gillar du mest?',options:['⚽ Fotboll','🏀 Basket','🏊 Simning','🎿 Vintersport','🤸 Gymnastik','🎮 E-sport'],freq:'once'},
-    {text:'Hur gillar du att lära dig?',options:['📖 Läsa','🎥 Titta på video','🤝 Med kompisar','✍️ Skriva','🔬 Experimentera','🎮 Genom spel'],freq:'once'},
-    {text:'Vilket väder gillar du mest?',options:['☀️ Sol','🌧️ Regn','❄️ Snö','🌤️ Molnigt','⛈️ Åska','🌈 Regnbåge'],freq:'once'}
+    {text:'Vad vill du bli när du blir stor?',options:['👩‍⚕️ Hjälpa folk','🎮 Jobba med spel','⚽ Proffs','🎨 Konstnär','🧑‍🔬 Forskare','🤔 Vet inte ännu'],freq:'once'},
+    {text:'Var i världen vill du resa?',options:['🗼 Paris','🗽 New York','🏝️ Tropisk ö','🏔️ Japan','🦁 Safari','🚀 Rymden'],freq:'once'},
+    {text:'Vilken musik gillar du?',options:['🎵 Pop','🎸 Rock','🎤 Hip hop','🎹 Lugnt','🎮 Spelmusik','🤷 Blandat'],freq:'once'},
+    {text:'Vilken sport är roligast?',options:['⚽ Fotboll','🏀 Basket','🏊 Simning','🎿 Vintersport','🤸 Gymnastik','🎮 E-sport'],freq:'once'},
+    {text:'Vilket väder gillar du?',options:['☀️ Sol','🌧️ Regn','❄️ Snö','⛈️ Åska','🌈 Regnbåge'],freq:'once'}
 ];
 
 // State
 let moodisFlow={placeIdx:0,step:'mood',currentScore:null,currentPlaceId:null,funIdx:0,deepIdx:0,todayPts:0,_date:null,questionCount:0};
+
 
 function getMoodisData(d){
     if(!d.moodis)d.moodis={stage:'egg',hat:null,color:'purple',ownedHats:[],mood:'neutral',_lastStage:null,totalPts:0};
@@ -3267,12 +3141,13 @@ function getQuizQuestions(cd,childName){
         return age<3*864e5&&i.answer;
     });
     const questions=[];
-    // Mood check-in questions per place
-    const todayCheckins=(cd.placeCheckins||[]).filter(c=>new Date(c.ts).toDateString()===today);
+    // Mood + feeling questions per place
+    const todayCheckins=(cd.placeCheckins||[]).filter(c=>new Date(c.ts).toDateString()===today&&!c.skipped);
     todayCheckins.forEach(ci=>{
         const place=(cd.places||[]).find(p=>p.id===ci.placeId);
-        if(!place)return;
+        if(!place||ci.score===0)return;
         const pt=PT[place.type]||PT.other;
+        // Mood question
         questions.push({
             question:`Hur mådde ${esc(childName)} på ${pt.icon} ${esc(place.name)}?`,
             options:MOODS.map(m=>m.emoji),
@@ -3280,33 +3155,13 @@ function getQuizQuestions(cd,childName){
             type:'mood',
             placeName:place.name
         });
-        // Follow-up questions — regenerate correct options from place type + score
-        const followups=getFollowups(place.type,ci.score);
-        const tags=ci.tags||[];
-        if(tags.length&&followups.why){
+        // Feeling question — always same format
+        if(ci.feeling){
             questions.push({
-                question:`${pt.icon} ${esc(place.name)}: ${followups.why.question}`,
-                options:followups.why.options,
-                answer:tags[0],
-                type:'why',
-                placeName:place.name
-            });
-        }
-        if(ci.who&&followups.who){
-            questions.push({
-                question:`${pt.icon} ${esc(place.name)}: ${followups.who.question}`,
-                options:followups.who.options,
-                answer:ci.who,
-                type:'who',
-                placeName:place.name
-            });
-        }
-        if(ci.body&&followups.body){
-            questions.push({
-                question:`${pt.icon} ${esc(place.name)}: ${followups.body.question}`,
-                options:followups.body.options,
-                answer:ci.body,
-                type:'body',
+                question:`Hur kände sig ${esc(childName)} efter ${pt.icon} ${esc(place.name)}?`,
+                options:getFeelingsForScore(ci.score),
+                answer:ci.feeling,
+                type:'feeling',
                 placeName:place.name
             });
         }
@@ -3532,19 +3387,13 @@ function renderMoodis(){
             });
             html+=`</div>`;
             html+=`<div style="display:flex;justify-content:space-between;padding:0 16px;font-size:.68rem;color:var(--t2)"><span>Dåligt</span><span>Jättebra</span></div>`;
-        } else if(step==='why'||step==='who'||step==='body'){
-            const followups=getFollowups(place.type,score);
-            const q=followups[step];
-
-            if(step==='why'){
-                html+=`<div style="text-align:center;font-size:.95rem;margin:12px 0 6px;color:var(--t)">${moodisReact(score)}</div>`;
-            }
-            html+=`<div style="text-align:center;font-size:1rem;margin:14px 0 18px;color:var(--t);font-weight:600">${q.question}</div>`;
-            html+=`<div class="challenge-options" style="gap:10px;padding:0 8px">${q.options.map(o=>`<button class="challenge-opt" onclick="moodisFollowUp('${step}','${esc(o)}')" style="padding:10px 18px;font-size:.88rem">${o}</button>`).join('')}</div>`;
-            html+=`<div style="text-align:center;margin-top:14px"><button style="background:none;border:none;color:var(--t2);font-size:.78rem;cursor:pointer;padding:8px" onclick="moodisFollowUp('${step}','skip')">Hoppa över →</button></div>`;
-        } else if(step==='next_place'){
-            html+=`<div style="text-align:center;font-size:1rem;margin:20px 0;color:var(--t)">✨</div>`;
-            setTimeout(()=>{moodisFlow.step='mood';moodisFlow.currentScore=null;renderMoodis()},600);
+            html+=`<div style="text-align:center;margin-top:12px"><button style="background:none;border:none;color:var(--t2);font-size:.75rem;cursor:pointer;padding:8px" onclick="moodisSkipPlace('${place.id}')">Var inte där →</button></div>`;
+        } else if(step==='feeling'){
+            // Single feeling question — consistent options based on mood score
+            const feelings=getFeelingsForScore(score);
+            html+=`<div style="text-align:center;font-size:.95rem;margin:12px 0 6px;color:var(--t)">${moodisReact(score)}</div>`;
+            html+=`<div style="text-align:center;font-size:1rem;margin:14px 0 18px;color:var(--t);font-weight:600">${getFeelingQuestion(place.name)}</div>`;
+            html+=`<div class="challenge-options" style="gap:10px;padding:0 8px">${feelings.map(o=>`<button class="challenge-opt" onclick="moodisFeeling('${esc(o)}')" style="padding:10px 18px;font-size:.88rem">${o}</button>`).join('')}</div>`;
         }
 
         // Place dots
@@ -3618,52 +3467,59 @@ function moodisCheckIn(placeId,score){
     checkInPlace(placeId,score);
     moodisFlow.currentScore=score;
     moodisFlow.currentPlaceId=placeId;
-    moodisFlow.step='why';
+    moodisFlow.step='feeling';
     moodisFlow.todayPts+=5;
     moodisFlow.questionCount++;
     renderMoodis();
     setTimeout(()=>moodisAnimate(5,oldStage,isDailyBonusActive(ld())),50);
 }
 
-function moodisFollowUp(type,answer){
-    if(answer==='skip'){
-        if(type==='why')moodisFlow.step='who';
-        else if(type==='who')moodisFlow.step='body';
-        else{moodisFlow.step='mood';moodisFlow.currentScore=null;}
-        renderMoodis();return;
-    }
-    const pts=type==='body'?2:3;
-    const actualPts=addMoodisPts(pts);
-
-    // Save to check-in + moodisInsights for parent quiz
+function moodisSkipPlace(placeId){
+    // Mark place as "not visited" — skip to next place
     const d=ld();const today=new Date().toDateString();
-    const recentCheckins=d.placeCheckins.filter(c=>new Date(c.ts).toDateString()===today);
+    const idx=d.placeCheckins.findIndex(c=>c.placeId===placeId&&new Date(c.ts).toDateString()===today);
+    if(idx<0){
+        d.placeCheckins.push({ts:new Date().toISOString(),placeId,score:0,comment:'',tags:['Var inte där'],skipped:true});
+        sv(d);
+    }
+    renderMoodis();
+}
+
+function moodisFeeling(answer){
+    const pts=3;
+    const d0=ld();const oldStage=getMoodisStage(d0).id;
+    addMoodisPts(pts);
+    // Save feeling to check-in
+    const d=ld();const today=new Date().toDateString();
+    const recentCheckins=d.placeCheckins.filter(c=>new Date(c.ts).toDateString()===today&&!c.skipped);
     const lastCheckin=recentCheckins[recentCheckins.length-1];
     const clean=answer.replace(/^[^\s]+\s/,'').trim();
     if(lastCheckin){
+        lastCheckin.feeling=clean;
         if(!lastCheckin.tags)lastCheckin.tags=[];
-        if(type==='why')lastCheckin.tags.push(clean);
-        else if(type==='who')lastCheckin.who=clean;
-        else if(type==='body')lastCheckin.body=clean;
-        // Save for parent quiz with context
+        lastCheckin.tags.push(clean);
+        // Save for parent quiz
         const place=d.places.find(p=>p.id===lastCheckin.placeId);
-        const placeName=place?place.name:'';
-        const placeType=place?.type||'other';
-        const followups=getFollowups(placeType,moodisFlow.currentScore||3);
-        const q=followups[type];
         if(!d.moodisInsights)d.moodisInsights=[];
-        d.moodisInsights.push({date:today,tag:type,answer:clean,rawAnswer:answer,question:q?.question||'',options:q?.options||[],placeName,placeType,ts:new Date().toISOString()});
+        d.moodisInsights.push({
+            date:today,tag:'feeling',answer:clean,rawAnswer:answer,
+            question:getFeelingQuestion(place?.name||''),
+            options:getFeelingsForScore(moodisFlow.currentScore||3),
+            placeName:place?.name||'',placeType:place?.type||'',
+            ts:new Date().toISOString()
+        });
         if(d.moodisInsights.length>300)d.moodisInsights=d.moodisInsights.slice(-300);
         sv(d);
         syncCheckin(lastCheckin.placeId,lastCheckin.score,lastCheckin.comment,lastCheckin.ts,lastCheckin.tags||[]);
     }
-
-    if(type==='why')moodisFlow.step='who';
-    else if(type==='who')moodisFlow.step='body';
-    else{moodisFlow.step='mood';moodisFlow.currentScore=null;}
+    // Move to next place
+    moodisFlow.step='mood';
+    moodisFlow.currentScore=null;
     scheduleSyncChildData();
     renderMoodis();
+    setTimeout(()=>moodisAnimate(pts,oldStage),50);
 }
+
 
 function moodisAnswer(answer,pts,tag,questionText,optionsJson){
     const actualPts=addMoodisPts(pts);
