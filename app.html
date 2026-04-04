@@ -2795,7 +2795,7 @@ function getNextQuestion(d){
     const lastPlace=lastCheckin?d.places.find(p=>p.id===lastCheckin.placeId):null;
     const lastPlaceType=lastPlace?.type||'other';
 
-    const afterPlaceCount=moodisFlow.questionCount-(d.places?.length*4||0);
+    const afterPlaceCount=moodisFlow.questionCount-(d.places?.length||0);
     const deepQs=getDeepQuestions(lastPlaceType,lastScore);
     const unaskedDeep=deepQs.filter(q=>!asked.has(q.text));
     // Filter fun questions by frequency rules
@@ -3388,12 +3388,10 @@ function renderMoodis(){
             html+=`</div>`;
             html+=`<div style="display:flex;justify-content:space-between;padding:0 16px;font-size:.68rem;color:var(--t2)"><span>Dåligt</span><span>Jättebra</span></div>`;
             html+=`<div style="text-align:center;margin-top:12px"><button style="background:none;border:none;color:var(--t2);font-size:.75rem;cursor:pointer;padding:8px" onclick="moodisSkipPlace('${place.id}')">Var inte där →</button></div>`;
-        } else if(step==='feeling'){
-            // Single feeling question — consistent options based on mood score
-            const feelings=getFeelingsForScore(score);
-            html+=`<div style="text-align:center;font-size:.95rem;margin:12px 0 6px;color:var(--t)">${moodisReact(score)}</div>`;
-            html+=`<div style="text-align:center;font-size:1rem;margin:14px 0 18px;color:var(--t);font-weight:600">${getFeelingQuestion(place.name)}</div>`;
-            html+=`<div class="challenge-options" style="gap:10px;padding:0 8px">${feelings.map(o=>`<button class="challenge-opt" onclick="moodisFeeling('${esc(o)}')" style="padding:10px 18px;font-size:.88rem">${o}</button>`).join('')}</div>`;
+        } else if(step==='react'){
+            // Brief Moodis reaction before next place
+            html+=`<div style="text-align:center;font-size:1rem;margin:16px 0;color:var(--t)">${moodisReact(score)}</div>`;
+            setTimeout(()=>{moodisFlow.step='mood';moodisFlow.currentScore=null;renderMoodis()},1200);
         }
 
         // Place dots
@@ -3467,7 +3465,7 @@ function moodisCheckIn(placeId,score){
     checkInPlace(placeId,score);
     moodisFlow.currentScore=score;
     moodisFlow.currentPlaceId=placeId;
-    moodisFlow.step='feeling';
+    moodisFlow.step='react';
     moodisFlow.todayPts+=5;
     moodisFlow.questionCount++;
     renderMoodis();
