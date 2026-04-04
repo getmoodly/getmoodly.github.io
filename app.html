@@ -2582,21 +2582,18 @@ function getFeelingQuestion(placeName){
     return`Hur känner du dig efter ${esc(placeName)}?`;
 }
 
-// Deep questions — all feeling-based
+// Deep questions — general wellbeing, not place-specific
 function getDeepQuestions(placeType,score){
-    const pt=placeType||'other';
-    const ptLabel=PT[pt]?.label||'platsen';
     const questions=[];
-    if(score<=2){
-        questions.push({text:`Har du känt dig så på ${ptLabel.toLowerCase()} länge?`,options:['📅 Bara just nu','📆 Några dagar','📅 Mer än en vecka','📅 Ganska länge'],pts:5,tag:'duration'});
-        questions.push({text:'Vad skulle få dig att känna dig bättre?',options:['👫 Snällare kompisar','😌 Mindre stress','❤️ Snällare vuxna','🎉 Roligare','🤗 Mer stöd','🤷 Vet inte'],pts:5,tag:'wish'});
-        questions.push({text:'Vem kan du prata med när du mår dåligt?',options:['👨‍👩‍👧 Mamma eller pappa','👫 En kompis','👩‍🏫 En vuxen jag litar på','🤷 Ingen'],pts:5,tag:'support'});
-    }
-    if(score>=4){
-        questions.push({text:`Vad gör att du trivs på ${ptLabel.toLowerCase()}?`,options:['👫 Bra kompisar','😊 Trygg stämning','🎯 Jag lyckas','🎉 Det är kul','😌 Jag kan vara mig själv'],pts:5,tag:'strength'});
-    }
+    // Always ask these — they're about the child, not a specific place
+    questions.push({text:'Hur mår du just nu — på riktigt?',options:['😊 Bra','😌 Helt okej','😕 Inte så bra','😔 Dåligt','🤷 Vet inte'],pts:5,tag:'overall'});
     questions.push({text:'Hur sov du senast?',options:['😴 Jättebra','🙂 Okej','😕 Lite dåligt','😢 Dåligt'],pts:3,tag:'sleep'});
     questions.push({text:'Har du skrattat mycket på sistone?',options:['😂 Ja massor!','😊 Lite','😐 Inte riktigt','😢 Nej'],pts:3,tag:'joy'});
+    questions.push({text:'Känner du dig trygg?',options:['🤗 Ja alltid','😊 Mestadels','😐 Ibland','😕 Inte alltid','😢 Sällan'],pts:5,tag:'safety'});
+    questions.push({text:'Har du någon att prata med när det är jobbigt?',options:['👨‍👩‍👧 Mamma eller pappa','👫 En kompis','👩‍🏫 En vuxen jag litar på','🤷 Ingen'],pts:5,tag:'support'});
+    questions.push({text:'Vad skulle göra dig gladare?',options:['👫 Mer tid med kompisar','😌 Mindre stress','🤗 Mer kramar','🎮 Mer fritid','🎉 Roligare i skolan','🤷 Vet inte'],pts:5,tag:'wish'});
+    questions.push({text:'Känner du att vuxna lyssnar på dig?',options:['😊 Ja','😐 Ibland','😕 Inte alltid','😢 Sällan'],pts:5,tag:'heard'});
+    questions.push({text:'Hur känns det i magen just nu?',options:['😊 Bra','😐 Okej','😰 Lite pirrig','🤢 Inte bra'],pts:3,tag:'stomach'});
     return questions;
 }
 
