@@ -4026,7 +4026,7 @@ function renderFamily(){
                     <span style="font-weight:600;font-size:.88rem;flex:1">${esc(fp.name)}s nätverk</span>
                 </div>
                 <div id="network-members-${esc(fp.id)}" style="margin-bottom:10px">
-                    <div style="font-size:.75rem;color:var(--t2);text-align:center">Laddar...</div>
+                    <div style="font-size:.75rem;color:var(--t2);text-align:center;padding:4px 0">Ingen har gått med ännu</div>
                 </div>
                 <button class="btn ba" onclick="shareNetworkInvite('${esc(fp.id)}','${esc(fp.name)}')" style="width:100%;font-size:.82rem;padding:10px">Bjud in till ${esc(fp.name)}s nätverk</button>
             </div>`;
@@ -4097,7 +4097,7 @@ function renderFamily(){
     if(sbUser&&d.familyId)loadRemoteFamilyMembers();
     if(sbUser&&d.familyId)loadInviteCode();
     // Load network members AFTER HTML is in DOM
-    if(sbUser&&d.familyId)loadNetworkMembers(d);
+    if(d.familyId)loadNetworkMembers(d);
 }
 
 async function loadInviteCode(){
@@ -5129,9 +5129,14 @@ function scheduleSyncChildData(){
 
 // ===== NETWORK INVITE =====
 async function loadNetworkMembers(d){
-    if(!sb||!sbUser||!d.familyId)return;
+    if(!d.familyId)return;
     try{
-        const{data}=await sb.from('network_members').select('*').eq('family_id',d.familyId);
+        // Use direct fetch with anon key — works without auth session
+        const res=await fetch(SUPABASE_URL+'/rest/v1/network_members?select=*&family_id=eq.'+encodeURIComponent(d.familyId),{
+            headers:{'apikey':SUPABASE_ANON}
+        });
+        const data=await res.json();
+        if(!Array.isArray(data))return;
         const roleEmoji=r=>r==='mamma'?'👩':r==='pappa'?'👨':r==='mormor'||r==='farmor'?'👵':r==='morfar'||r==='farfar'?'👴':'👤';
         (d.familyProfiles||[]).forEach(fp=>{
             const el=document.getElementById('network-members-'+fp.id);
