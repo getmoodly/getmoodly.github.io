@@ -4032,8 +4032,6 @@ function renderFamily(){
             </div>`;
         });
         html+=`</div>`;
-        // Load network members async
-        if(sbUser)loadNetworkMembers(d);
     }
 
     // Share with other parents
@@ -4097,8 +4095,9 @@ function renderFamily(){
 
     // Load remote family data async
     if(sbUser&&d.familyId)loadRemoteFamilyMembers();
-    // Load invite code
     if(sbUser&&d.familyId)loadInviteCode();
+    // Load network members AFTER HTML is in DOM
+    if(sbUser&&d.familyId)loadNetworkMembers(d);
 }
 
 async function loadInviteCode(){
