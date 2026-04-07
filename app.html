@@ -3272,9 +3272,14 @@ function getQuizQuestions(cd,childName){
             placeName:ins.placeName||''
         });
     });
-    // Shuffle and limit to 8 questions (keeps quiz short and focused)
-    for(let i=questions.length-1;i>0;i--){const j=Math.floor(Math.random()*(i+1));[questions[i],questions[j]]=[questions[j],questions[i]]}
-    return questions.slice(0,8);
+    // Ensure ALL place mood questions are included, then fill with others
+    const moodQs=questions.filter(q=>q.type==='mood');
+    const otherQs=questions.filter(q=>q.type!=='mood');
+    // Shuffle only the non-mood questions
+    for(let i=otherQs.length-1;i>0;i--){const j=Math.floor(Math.random()*(i+1));[otherQs[i],otherQs[j]]=[otherQs[j],otherQs[i]]}
+    // All mood questions first, then fill remaining slots
+    const maxTotal=Math.max(8,moodQs.length+2);
+    return[...moodQs,...otherQs.slice(0,maxTotal-moodQs.length)];
 }
 
 function startParentQuiz(childKey,childName){
