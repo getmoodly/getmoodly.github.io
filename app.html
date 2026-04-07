@@ -2836,6 +2836,8 @@ function getNextQuestion(d){
 
 function renderMoodisParent(){
     const d=ld();
+    // Sync child data to Supabase every time parent opens Moodis
+    syncChildDataForNetwork();
     const el=document.getElementById('pg-moodis');
     let html='<div style="padding:12px 0">';
 
