@@ -2848,6 +2848,34 @@ function renderMoodisParent(){
         el.innerHTML=html+'</div>';return;
     }
 
+    // === CHILD CHECK-IN BUTTONS (prominent, top of page) ===
+    html+=`<div style="margin-bottom:16px">`;
+    d.familyProfiles.forEach(fp=>{
+        const cd=getFullChildData(fp.storageKey);
+        const emoji=childEmoji(fp);
+        const today=new Date().toDateString();
+        const checked=cd?(cd.placeCheckins||[]).filter(c=>new Date(c.ts).toDateString()===today&&!c.skipped).length:0;
+        const total=cd?(cd.places||[]).length:0;
+        const allDone=total>0&&checked>=total;
+
+        if(allDone){
+            html+=`<div style="display:flex;align-items:center;gap:10px;padding:10px 14px;background:rgba(0,184,148,.08);border-radius:12px;margin-bottom:8px">
+                <span style="font-size:1.3rem">${emoji}</span>
+                <span style="flex:1;font-size:.85rem;color:var(--ok)">✅ ${esc(fp.name)} har pratat med Moodis</span>
+            </div>`;
+        }else{
+            html+=`<button onclick="switchToProfile('${esc(fp.storageKey)}','${esc(fp.name)}')" style="display:flex;align-items:center;gap:10px;width:100%;padding:14px;background:linear-gradient(135deg,rgba(108,92,231,.15),rgba(162,155,254,.1));border:1px solid rgba(108,92,231,.25);border-radius:12px;margin-bottom:8px;cursor:pointer;border:1px solid rgba(108,92,231,.2)">
+                <span style="font-size:1.5rem">${emoji}</span>
+                <div style="flex:1;text-align:left">
+                    <div style="font-size:.9rem;font-weight:700;color:var(--t)">Låt ${esc(fp.name)} prata med Moodis</div>
+                    <div style="font-size:.72rem;color:var(--t2)">${total>0?checked+'/'+total+' platser':'Inga platser ännu'}</div>
+                </div>
+                <span style="font-size:1.1rem;color:var(--pl)">→</span>
+            </button>`;
+        }
+    });
+    html+=`</div>`;
+
     // Per child: quiz first, then insights
     d.familyProfiles.forEach(fp=>{
         const cd=getFullChildData(fp.storageKey);
