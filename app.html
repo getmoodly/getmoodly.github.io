@@ -2848,6 +2848,32 @@ function renderMoodisParent(){
         el.innerHTML=html+'</div>';return;
     }
 
+    // First-time parent guide — show once
+    if(!d._seenParentGuide){
+        html+=`<div style="background:linear-gradient(135deg,rgba(108,92,231,.1),rgba(0,206,201,.06));border:1px solid rgba(108,92,231,.15);border-radius:16px;padding:20px;margin-bottom:16px">
+            <div style="font-size:1rem;font-weight:700;text-align:center;margin-bottom:14px">💜 Du är nyckeln</div>
+            <div style="font-size:.82rem;color:var(--t2);line-height:1.7;margin-bottom:14px">
+                Moodly fungerar som bäst när du som förälder tar en aktiv roll. Forskning visar att barn som vet att vuxna bryr sig om deras vardag vågar vara mer öppna med sina känslor.
+            </div>
+            <div style="display:flex;flex-direction:column;gap:10px;margin-bottom:14px">
+                <div style="display:flex;gap:10px;align-items:flex-start">
+                    <span style="font-size:1rem;flex-shrink:0">🧒</span>
+                    <div style="font-size:.8rem;color:var(--t);line-height:1.5"><strong>Låt ditt barn prata med Moodis</strong> — gör det till en rutin, t.ex. efter skolan eller före läggdags. Det tar under en minut.</div>
+                </div>
+                <div style="display:flex;gap:10px;align-items:flex-start">
+                    <span style="font-size:1rem;flex-shrink:0">🧩</span>
+                    <div style="font-size:.8rem;color:var(--t);line-height:1.5"><strong>Gör quizet varje dag</strong> — det stärker din förståelse och visar ditt barn att du bryr dig om hur hen mår.</div>
+                </div>
+                <div style="display:flex;gap:10px;align-items:flex-start">
+                    <span style="font-size:1rem;flex-shrink:0">💬</span>
+                    <div style="font-size:.8rem;color:var(--t);line-height:1.5"><strong>Berätta att du gör quizet</strong> — barn som vet att vuxna aktivt lyssnar blir mer ärliga. Det är det som gör Moodly kraftfullt.</div>
+                </div>
+            </div>
+            <button onclick="dismissParentGuide()" style="width:100%;padding:12px;background:var(--p);color:#fff;border:none;border-radius:10px;font-size:.85rem;font-weight:600;cursor:pointer">Jag förstår — visa Moodis</button>
+        </div>`;
+        el.innerHTML=html+'</div>';return;
+    }
+
     // Research-backed motivation for parents
     const parentTips=[
         '🔬 Forskning visar att barn som vet att vuxna aktivt lyssnar vågar vara mer ärliga om sina känslor.',
@@ -3615,6 +3641,11 @@ function moodisFeeling(answer){
     setTimeout(()=>moodisAnimate(pts,oldStage),50);
 }
 
+
+function dismissParentGuide(){
+    const d=ld();d._seenParentGuide=true;sv(d);
+    renderMoodis();
+}
 
 async function submitQuickFeedback(rating){
     const d=ld();
