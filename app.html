@@ -3683,6 +3683,9 @@ function confirmAddPlace(idx,storageKey){
 }
 
 function saveProfile(){
+    // Always save to parent profile, regardless of current APK
+    const prevAPK=APK;
+    APK=PARENT_KEY;
     const d=ld();
     d.userName=document.getElementById('sett-username').value.trim();
     d.familyRole=document.getElementById('sett-family-role')?.value||d.familyRole||'';
@@ -3694,7 +3697,9 @@ function saveProfile(){
         if(cd){cd.kommun=d.kommun;if(sok)localStorage.setItem(fp.storageKey,JSON.stringify(cd))}
     });
     d.profileUpdatedAt=new Date().toISOString();
-    sv(d);syncProfile(d);flushPendingChanges();toast('Sparat!');renderHome();
+    sv(d);syncProfile(d);flushPendingChanges();
+    APK=prevAPK;
+    toast('Sparat!');
 }
 
 function exportData(){
