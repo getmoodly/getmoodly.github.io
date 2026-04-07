@@ -3132,15 +3132,22 @@ let _quiz={active:false,childKey:'',childName:'',questions:[],idx:0,correct:0,re
 
 function getQuizQuestions(cd,childName){
     const insights=cd.moodisInsights||[];
-    const today=new Date().toDateString();
     const recent=insights.filter(i=>{
         const age=Date.now()-new Date(i.ts).getTime();
         return age<3*864e5&&i.answer;
     });
     const questions=[];
-    // Mood + feeling questions per place
-    const todayCheckins=(cd.placeCheckins||[]).filter(c=>new Date(c.ts).toDateString()===today&&!c.skipped);
-    todayCheckins.forEach(ci=>{
+    // Get LATEST check-ins per place (not just today — handles sync delays)
+    const allCheckins=(cd.placeCheckins||[]).filter(c=>!c.skipped&&c.score>0);
+    const latestPerPlace={};
+    allCheckins.forEach(c=>{
+        if(!latestPerPlace[c.placeId]||new Date(c.ts)>new Date(latestPerPlace[c.placeId].ts)){
+            latestPerPlace[c.placeId]=c;
+        }
+    });
+    // Only use check-ins from last 3 days
+    const recentCheckins=Object.values(latestPerPlace).filter(c=>Date.now()-new Date(c.ts).getTime()<3*864e5);
+    recentCheckins.forEach(ci=>{
         const place=(cd.places||[]).find(p=>p.id===ci.placeId);
         if(!place||ci.score===0)return;
         const pt=PT[place.type]||PT.other;
@@ -3470,11 +3477,12 @@ function moodisCheckIn(placeId,score){
     checkInPlace(placeId,score);
     moodisFlow.currentScore=score;
     moodisFlow.currentPlaceId=placeId;
-    moodisFlow.step='mood'; // Stay on mood — next unchecked place will show
+    moodisFlow.step='mood';
     moodisFlow.todayPts+=5;
     moodisFlow.questionCount++;
-    // Show Moodis reaction as toast
     toast(moodisReact(score));
+    // Sync child data to Supabase for network quiz access
+    scheduleSyncChildData();
     renderMoodis();
     setTimeout(()=>moodisAnimate(5,oldStage,isDailyBonusActive(ld())),50);
 }
