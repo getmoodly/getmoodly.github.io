@@ -4844,6 +4844,57 @@ function renderInsikter(){
 
     html+=`</div>`;
 
+    // === TRYGGHETSLIGAN (demo) ===
+    html+=`<div class="cd"><div class="ct">🏆 Trygghetsligan — ${esc(kommun)}</div>
+        <div style="display:flex;align-items:center;gap:6px;margin-bottom:14px">
+            <span style="font-size:.7rem;padding:3px 10px;background:rgba(108,92,231,.15);border-radius:10px;color:var(--pl);font-weight:600">Demo</span>
+            <span style="font-size:.72rem;color:var(--t2)">Anonym ranking baserad på engagemang</span>
+        </div>
+        <p style="font-size:.75rem;color:var(--t2);margin-bottom:14px;line-height:1.4;font-style:italic">Familjer rankas på engagemang — hur ofta vuxna gör quiz och hur stort trygghetsnätverket är. Aldrig barnens mående.</p>`;
+
+    const demoLeague=[
+        {rank:1,score:94,members:5,quizWeek:6,streak:12},
+        {rank:2,score:88,members:4,quizWeek:5,streak:8},
+        {rank:3,score:82,members:3,quizWeek:4,streak:14},
+        {rank:4,score:76,members:3,quizWeek:3,streak:6},
+        {rank:5,score:71,members:2,quizWeek:4,streak:5},
+        {rank:6,score:65,members:2,quizWeek:2,streak:3},
+        {rank:7,score:58,members:2,quizWeek:2,streak:0},
+        {rank:8,score:44,members:1,quizWeek:1,streak:0}
+    ];
+    const medals=['🥇','🥈','🥉'];
+    demoLeague.forEach((f,i)=>{
+        const isYou=i===4;
+        const medal=i<3?medals[i]:`#${f.rank}`;
+        const bg=isYou?'rgba(108,92,231,.12)':'rgba(255,255,255,.02)';
+        const border=isYou?'border:1px solid rgba(108,92,231,.25)':'';
+        const col=f.score>=75?'var(--ok)':f.score>=50?'var(--w)':'var(--bad)';
+        html+=`<div style="display:flex;align-items:center;gap:10px;padding:10px 12px;background:${bg};${border};border-radius:10px;margin-bottom:4px">
+            <span style="width:28px;text-align:center;font-size:${i<3?'1.1rem':'.8rem'};${i>=3?'color:var(--t2)':''}">${medal}</span>
+            <span style="flex:1;font-size:.82rem;${isYou?'font-weight:700;color:var(--t)':'color:var(--t2)'}">Familj${isYou?' (du)':''}</span>
+            <span style="font-size:.68rem;color:var(--t2)">❤️${f.members}</span>
+            <span style="font-size:.68rem;color:var(--t2)">📊${f.quizWeek}/v</span>
+            ${f.streak>0?`<span style="font-size:.68rem;color:var(--w)">🔥${f.streak}</span>`:''}
+            <span style="font-size:.85rem;font-weight:700;color:${col}">${f.score}</span>
+        </div>`;
+    });
+
+    html+=`<div style="margin-top:14px;padding:14px;background:rgba(255,255,255,.03);border-radius:10px">
+        <div style="font-size:.78rem;font-weight:600;margin-bottom:8px">Så räknas poängen</div>
+        <div style="font-size:.72rem;color:var(--t2);line-height:1.6">
+            <div style="margin-bottom:4px">❤️ <strong>Nätverksstorlek</strong> — fler engagerade vuxna = högre poäng</div>
+            <div style="margin-bottom:4px">📊 <strong>Quiz-frekvens</strong> — regelbundna quiz per vecka</div>
+            <div style="margin-bottom:4px">🔥 <strong>Streak</strong> — dagar i rad med quiz</div>
+            <div>📉 <strong>Avtar</strong> — poängen sjunker vid inaktivitet</div>
+        </div>
+    </div>`;
+
+    html+=`<div style="margin-top:12px;padding:12px;background:rgba(0,184,148,.06);border-radius:10px;font-size:.78rem;color:var(--ok);line-height:1.5;text-align:center">
+        💡 Familjer som klättrar i ligan bjuder in fler till sitt trygghetsnätverk — det driver organisk tillväxt och stärker barns trygghet i hela kommunen.
+    </div>`;
+
+    html+=`</div>`;
+
     // === RECRUITMENT CTA ===
     html+=`<div style="background:linear-gradient(135deg,rgba(108,92,231,.1),rgba(0,206,201,.06));border:1px solid rgba(108,92,231,.15);border-radius:16px;padding:24px;text-align:center;margin-top:16px">
         <div style="font-size:1.2rem;margin-bottom:8px">🌱</div>
