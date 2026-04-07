@@ -2877,7 +2877,7 @@ function renderMoodisParent(){
     // Research-backed motivation for parents
     const parentTips=[
         '🔬 Forskning visar att barn som vet att vuxna aktivt lyssnar vågar vara mer ärliga om sina känslor.',
-        '🧠 Att testa din förståelse genom quiz stärker din relation till ditt barn — varje gång.',
+        '🧠 Att testa din förståelse genom quiz stärker din relation till barnet — varje gång.',
         '❤️ En av de starkaste skyddsfaktorerna för barn är att ha engagerade vuxna runt sig.',
         '🌱 Barn vars föräldrar förstår hur de mår i olika miljöer får hjälp tidigare när något inte stämmer.',
         '💜 Varje quiz du gör signalerar till ditt barn: jag bryr mig om hur du mår.',
@@ -3382,7 +3382,7 @@ function showQuizResults(){
     const validations=[
         `Tack att du tog dig tid 💜 Genom att göra detta quiz har du visat ${esc(_quiz.childName)} att du aktivt vill förstå hen. Forskning visar att det är en av de viktigaste sakerna en förälder kan göra.`,
         `Du gör skillnad 💜 Bara genom att engagera dig här stärker du ${esc(_quiz.childName)}s trygghet. Barn som har vuxna som aktivt försöker förstå dem mår bättre.`,
-        `Det här betyder mer än du tror 💜 Att regelbundet reflektera över ditt barns känslor bygger en starkare relation — oavsett hur många rätt du fick.`
+        `Det här betyder mer än du tror 💜 Att regelbundet reflektera över ${esc(_quiz.childName)}s känslor bygger en starkare relation — oavsett hur många rätt du fick.`
     ];
     html+=`<div style="background:rgba(108,92,231,.06);border-radius:12px;padding:14px;margin:16px 0;font-size:.8rem;color:var(--t2);line-height:1.6;text-align:left">${validations[total%validations.length]}</div>`;
 
