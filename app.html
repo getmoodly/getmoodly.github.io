@@ -3352,6 +3352,14 @@ function showQuizResults(){
     else if(pct>=40)html+=`<div style="font-size:.88rem;color:var(--w);margin:8px 0">💛 På god väg! Fortsätt göra quizet — din förståelse växer.</div>`;
     else html+=`<div style="font-size:.88rem;color:var(--bad);margin:8px 0">💜 Varje quiz hjälper dig förstå ${esc(_quiz.childName)} bättre. Fortsätt!</div>`;
 
+    // Research-backed validation of parent's effort
+    const validations=[
+        `Tack att du tog dig tid 💜 Genom att göra detta quiz har du visat ${esc(_quiz.childName)} att du aktivt vill förstå hen. Forskning visar att det är en av de viktigaste sakerna en förälder kan göra.`,
+        `Du gör skillnad 💜 Bara genom att engagera dig här stärker du ${esc(_quiz.childName)}s trygghet. Barn som har vuxna som aktivt försöker förstå dem mår bättre.`,
+        `Det här betyder mer än du tror 💜 Att regelbundet reflektera över ditt barns känslor bygger en starkare relation — oavsett hur många rätt du fick.`
+    ];
+    html+=`<div style="background:rgba(108,92,231,.06);border-radius:12px;padding:14px;margin:16px 0;font-size:.8rem;color:var(--t2);line-height:1.6;text-align:left">${validations[total%validations.length]}</div>`;
+
     if(missed.length){
         html+=`<div style="text-align:left;margin:16px 0">
             <div style="font-size:.78rem;color:var(--t2);margin-bottom:8px;font-weight:600">Det här visste du inte:</div>`;
