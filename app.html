@@ -5133,25 +5133,31 @@ async function loadNetworkMembers(d){
     if(!sb||!sbUser||!d.familyId)return;
     try{
         const{data}=await sb.from('network_members').select('*').eq('family_id',d.familyId);
-        if(!data)return;
+        const roleEmoji=r=>r==='mamma'?'👩':r==='pappa'?'👨':r==='mormor'||r==='farmor'?'👵':r==='morfar'||r==='farfar'?'👴':'👤';
         (d.familyProfiles||[]).forEach(fp=>{
             const el=document.getElementById('network-members-'+fp.id);
             if(!el)return;
-            const members=data.filter(m=>m.child_id===fp.id);
+            // Match by child_id OR child_name (handles ID mismatches)
+            const members=(data||[]).filter(m=>m.child_id===fp.id||m.child_name===fp.name);
             if(!members.length){
                 el.innerHTML=`<div style="font-size:.75rem;color:var(--t2);text-align:center;padding:4px 0">Ingen har gått med ännu</div>`;
-                return;
+            }else{
+                el.innerHTML=members.map(m=>
+                    `<div style="display:flex;align-items:center;gap:8px;padding:6px 0;border-bottom:1px solid rgba(255,255,255,.04);font-size:.82rem">
+                        <span>${roleEmoji(m.member_role)}</span>
+                        <span style="flex:1">${esc(m.member_name||'Okänd')} <span style="color:var(--t2);font-size:.7rem">${esc(m.member_role||'')}</span></span>
+                        <span style="font-size:.68rem;color:var(--ok)">✓</span>
+                    </div>`
+                ).join('');
             }
-            const roleEmoji=r=>r==='mamma'?'👩':r==='pappa'?'👨':r==='mormor'||r==='farmor'?'👵':r==='morfar'||r==='farfar'?'👴':'👤';
-            el.innerHTML=members.map(m=>
-                `<div style="display:flex;align-items:center;gap:8px;padding:6px 0;border-bottom:1px solid rgba(255,255,255,.04);font-size:.82rem">
-                    <span>${roleEmoji(m.member_role)}</span>
-                    <span style="flex:1">${esc(m.member_name||'Okänd')} <span style="color:var(--t2);font-size:.7rem">${esc(m.member_role||'')}</span></span>
-                    <span style="font-size:.68rem;color:var(--ok)">Ansluten</span>
-                </div>`
-            ).join('');
         });
-    }catch(e){}
+    }catch(e){
+        // Fallback — hide loading text
+        (d.familyProfiles||[]).forEach(fp=>{
+            const el=document.getElementById('network-members-'+fp.id);
+            if(el)el.innerHTML=`<div style="font-size:.75rem;color:var(--t2);text-align:center;padding:4px 0">Kunde inte ladda</div>`;
+        });
+    }
 }
 
 async function shareNetworkInvite(childId,childName){
