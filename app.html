@@ -2849,6 +2849,7 @@ function renderMoodisParent(){
     }
 
     // === CHILD CHECK-IN BUTTONS (prominent, top of page) ===
+    const dayLabels=['Mån','Tis','Ons','Tor','Fre','Lör','Sön'];
     html+=`<div style="margin-bottom:16px">`;
     d.familyProfiles.forEach(fp=>{
         const cd=getFullChildData(fp.storageKey);
@@ -2858,19 +2859,38 @@ function renderMoodisParent(){
         const total=cd?(cd.places||[]).length:0;
         const allDone=total>0&&checked>=total;
 
+        // Build 7-day activity dots
+        let dots='';
+        const now=new Date();
+        for(let i=6;i>=0;i--){
+            const day=new Date(now);day.setDate(day.getDate()-i);
+            const ds=day.toDateString();
+            const dayIdx=(day.getDay()+6)%7; // Monday=0
+            const hadCheckin=cd?(cd.placeCheckins||[]).some(c=>new Date(c.ts).toDateString()===ds&&!c.skipped):false;
+            const isToday=i===0;
+            const col=hadCheckin?'var(--ok)':isToday?'var(--a)':'rgba(255,255,255,.15)';
+            dots+=`<div style="text-align:center;flex:1"><div style="width:8px;height:8px;border-radius:50%;background:${col};margin:0 auto 2px"></div><div style="font-size:.5rem;color:var(--t2)">${dayLabels[dayIdx]}</div></div>`;
+        }
+
         if(allDone){
-            html+=`<div style="display:flex;align-items:center;gap:10px;padding:10px 14px;background:rgba(0,184,148,.08);border-radius:12px;margin-bottom:8px">
-                <span style="font-size:1.3rem">${emoji}</span>
-                <span style="flex:1;font-size:.85rem;color:var(--ok)">✅ ${esc(fp.name)} har pratat med Moodis</span>
+            html+=`<div style="padding:12px 14px;background:rgba(0,184,148,.08);border-radius:12px;margin-bottom:8px">
+                <div style="display:flex;align-items:center;gap:10px;margin-bottom:8px">
+                    <span style="font-size:1.3rem">${emoji}</span>
+                    <span style="flex:1;font-size:.85rem;color:var(--ok)">✅ ${esc(fp.name)} har pratat med Moodis</span>
+                </div>
+                <div style="display:flex;gap:2px">${dots}</div>
             </div>`;
         }else{
-            html+=`<button onclick="switchToProfile('${esc(fp.storageKey)}','${esc(fp.name)}')" style="display:flex;align-items:center;gap:10px;width:100%;padding:14px;background:linear-gradient(135deg,rgba(108,92,231,.15),rgba(162,155,254,.1));border:1px solid rgba(108,92,231,.25);border-radius:12px;margin-bottom:8px;cursor:pointer;border:1px solid rgba(108,92,231,.2)">
-                <span style="font-size:1.5rem">${emoji}</span>
-                <div style="flex:1;text-align:left">
-                    <div style="font-size:.9rem;font-weight:700;color:var(--t)">Låt ${esc(fp.name)} prata med Moodis</div>
-                    <div style="font-size:.72rem;color:var(--t2)">${total>0?checked+'/'+total+' platser':'Inga platser ännu'}</div>
+            html+=`<button onclick="switchToProfile('${esc(fp.storageKey)}','${esc(fp.name)}')" style="display:flex;flex-direction:column;width:100%;padding:14px;background:linear-gradient(135deg,rgba(108,92,231,.15),rgba(162,155,254,.1));border:1px solid rgba(108,92,231,.2);border-radius:12px;margin-bottom:8px;cursor:pointer">
+                <div style="display:flex;align-items:center;gap:10px;width:100%;margin-bottom:8px">
+                    <span style="font-size:1.5rem">${emoji}</span>
+                    <div style="flex:1;text-align:left">
+                        <div style="font-size:.9rem;font-weight:700;color:var(--t)">Låt ${esc(fp.name)} prata med Moodis</div>
+                        <div style="font-size:.72rem;color:var(--t2)">${total>0?checked+'/'+total+' platser':'Inga platser ännu'}</div>
+                    </div>
+                    <span style="font-size:1.1rem;color:var(--pl)">→</span>
                 </div>
-                <span style="font-size:1.1rem;color:var(--pl)">→</span>
+                <div style="display:flex;gap:2px">${dots}</div>
             </button>`;
         }
     });
