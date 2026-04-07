@@ -2756,9 +2756,9 @@ function moodisAnimate(pts,oldStage,wasBonus){
 }
 
 function moodisReact(score){
-    if(score>=4)return pick(['Det låter jättebra! 😄','Vad kul att höra! ✨','Så bra! Det gör Moodis glad 🌟','Härligt! 😊']);
-    if(score===3)return pick(['Okej, tack för att du berättar! 😊','Förstår! Alla dagar är lite olika 🌤️','Tack! Moodis lyssnar alltid 💜']);
-    return pick(['Tack för att du delar, det är modigt ❤️','Moodis finns här för dig 💜','Alla dagar är inte lika — det är okej 🌈','Tack att du berättar — det hjälper 💜']);
+    if(score>=4)return pick(['Tack för att du berättar! 😊','Moodis hör dig 💜','Tack att du delar! ✨']);
+    if(score===3)return pick(['Tack för att du berättar! 😊','Alla dagar är olika — det är helt okej 💜','Moodis lyssnar alltid 😊']);
+    return pick(['Tack för att du berättar — det är modigt ❤️','Moodis finns alltid här för dig 💜','Tack att du delar hur du mår 🌈','Alla känslor är viktiga 💜']);
 }
 
 function checkStreakRewards(d){
@@ -3299,8 +3299,14 @@ function showQuizResults(){
 
     html+=`<button class="btn ba" style="margin-top:16px;padding:12px 24px" onclick="_quiz.active=false;renderMoodis()">Se insikter →</button>`;
 
+    // Parent nudge — tell child you care
+    html+=`<div style="margin-top:20px;background:rgba(108,92,231,.06);border-radius:12px;padding:16px;text-align:center">
+        <div style="font-size:.85rem;font-weight:600;margin-bottom:6px">💡 Tips</div>
+        <div style="font-size:.8rem;color:var(--t2);line-height:1.5">Berätta för ${esc(_quiz.childName)} att du gör quiz för att förstå hen bättre. Barn som vet att vuxna aktivt lyssnar vågar vara mer ärliga med sina känslor.</div>
+    </div>`;
+
     // Sharing prompts after quiz
-    html+=`<div style="margin-top:24px;padding-top:20px;border-top:1px solid rgba(255,255,255,.06)">
+    html+=`<div style="margin-top:16px;padding-top:16px;border-top:1px solid rgba(255,255,255,.06)">
         <div style="font-size:.82rem;font-weight:600;text-align:center;margin-bottom:12px">Vill du stärka ${esc(_quiz.childName)}s trygghet?</div>
         <div style="display:flex;gap:8px;flex-direction:column;align-items:center">
             <button class="btn bs" style="width:100%;max-width:280px;padding:12px;font-size:.82rem" onclick="_quiz.active=false;shareNetworkInvite('${esc(_quiz.childKey.replace('moodly_child_',''))}','${esc(_quiz.childName)}')">💜 Bjud in familj till trygghetsnätverket</button>
@@ -3364,7 +3370,7 @@ function renderMoodis(){
 
         // Honesty nudge — only at start
         if(!todayCheckins.length&&step==='mood'){
-            html+=`<div style="text-align:center;font-size:.72rem;color:var(--t2);margin:8px 0 12px">💜 Moodis växer mest när du berättar hur du verkligen mår</div>`;
+            html+=`<div style="text-align:center;font-size:.75rem;color:var(--t2);margin:8px 0 12px;line-height:1.4">💜 Alla känslor är okej — det finns inga rätta eller fel svar</div>`;
             // Trust network message for children — based on parent's engagement
             const parentD=APK===PARENT_KEY?null:getFullChildData(PARENT_KEY);
             const pData=parentD||d;
@@ -3402,10 +3408,10 @@ function renderMoodis(){
     } else {
         // === ALL DONE — ENGAGEMENT MODE ===
         html+=`<div style="text-align:center;font-size:1rem;margin:8px 0;color:var(--t)">${pick([
-            'Tack för att du delade din dag med mig! 💜',
-            'Nu förstår jag din dag bättre — tack! 🌟',
-            'Tack att du var ärlig! Det hjälper Moodis hjälpa dig 💜',
-            'Moodis gör sitt bästa för att alla dagar ska bli bra — tack för din hjälp! 🌈'
+            'Tack för att du berättade! 💜',
+            'Moodis lyssnade på allt — tack! 🌟',
+            'Alla känslor är viktiga — tack att du delar 💜',
+            'Du hjälper Moodis förstå dig bättre 🌈'
         ])}</div>`;
 
         if(streak>=3)html+=`<div style="text-align:center;font-size:.9rem;color:var(--w);margin:6px 0">🔥 ${streak} dagar i rad!</div>`;
