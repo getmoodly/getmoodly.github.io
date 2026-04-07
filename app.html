@@ -3134,12 +3134,9 @@ let _quiz={active:false,childKey:'',childName:'',questions:[],idx:0,correct:0,re
 
 function getQuizQuestions(cd,childName){
     const insights=cd.moodisInsights||[];
-    const recent=insights.filter(i=>{
-        const age=Date.now()-new Date(i.ts).getTime();
-        return age<3*864e5&&i.answer;
-    });
+    const recent=insights.filter(i=>i.answer);
     const questions=[];
-    // Get LATEST check-ins per place (not just today — handles sync delays)
+    // Get LATEST check-in per place — use all available data
     const allCheckins=(cd.placeCheckins||[]).filter(c=>!c.skipped&&c.score>0);
     const latestPerPlace={};
     allCheckins.forEach(c=>{
@@ -3147,8 +3144,7 @@ function getQuizQuestions(cd,childName){
             latestPerPlace[c.placeId]=c;
         }
     });
-    // Only use check-ins from last 3 days
-    const recentCheckins=Object.values(latestPerPlace).filter(c=>Date.now()-new Date(c.ts).getTime()<3*864e5);
+    const recentCheckins=Object.values(latestPerPlace);
     recentCheckins.forEach(ci=>{
         const place=(cd.places||[]).find(p=>p.id===ci.placeId);
         if(!place||ci.score===0)return;
