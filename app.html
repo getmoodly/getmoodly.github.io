@@ -3168,22 +3168,25 @@ function getQuizQuestions(cd,childName){
             });
         }
     });
-    // Fun + deep questions from moodisInsights (these have their own options)
+    // Fun + deep questions from moodisInsights — deduplicate by question text
+    const seenQuestions=new Set(questions.map(q=>q.question));
     recent.forEach(ins=>{
-        // Skip follow-up types — already handled above from check-in data
-        if(ins.tag==='why'||ins.tag==='who'||ins.tag==='body')return;
+        if(ins.tag==='why'||ins.tag==='who'||ins.tag==='body'||ins.tag==='feeling')return;
         if(!ins.question||!ins.options||ins.options.length<2)return;
+        const qText=esc(ins.question);
+        if(seenQuestions.has(qText))return; // Skip duplicates
+        seenQuestions.add(qText);
         questions.push({
-            question:esc(ins.question),
+            question:qText,
             options:ins.options,
             answer:ins.rawAnswer||ins.answer,
             type:ins.tag||'fun',
             placeName:ins.placeName||''
         });
     });
-    // Shuffle
+    // Shuffle and limit to 8 questions (keeps quiz short and focused)
     for(let i=questions.length-1;i>0;i--){const j=Math.floor(Math.random()*(i+1));[questions[i],questions[j]]=[questions[j],questions[i]]}
-    return questions.slice(0,15);
+    return questions.slice(0,8);
 }
 
 function startParentQuiz(childKey,childName){
@@ -5283,15 +5286,14 @@ function renderMoodisNetwork(){
         else break;
     }
 
-    // Trygghetsgrad for network member
-    const tgNetwork=calcTrygghetsgrad(d,d.networkChildId);
-    html+=renderTrygghetsgrad(tgNetwork,childName);
-
-    // Personal engagement
-    html+=`<div style="display:flex;justify-content:center;gap:20px;margin-bottom:16px;padding:10px;background:rgba(255,255,255,.03);border-radius:10px">
-        <div style="text-align:center"><div style="font-size:1.1rem;font-weight:700;color:var(--ok)">${totalQuizzes}</div><div style="font-size:.68rem;color:var(--t2)">Quiz gjorda</div></div>
-        ${quizStreak>1?`<div style="text-align:center"><div style="font-size:1.1rem;font-weight:700;color:var(--w)">🔥${quizStreak}</div><div style="font-size:.68rem;color:var(--t2)">Dagar i rad</div></div>`:''}
-        ${thisWeek>0?`<div style="text-align:center"><div style="font-size:1.1rem;font-weight:700;color:var(--a)">${thisWeek}</div><div style="font-size:.68rem;color:var(--t2)">Denna vecka</div></div>`:''}
+    // Simple engagement summary — no confusing score
+    html+=`<div style="background:rgba(108,92,231,.06);border-radius:12px;padding:16px;margin-bottom:16px;text-align:center">
+        <div style="font-size:.82rem;color:var(--t);margin-bottom:8px">Ditt engagemang för ${esc(childName)}</div>
+        <div style="display:flex;justify-content:center;gap:24px">
+            <div><div style="font-size:1.3rem;font-weight:700;color:var(--ok)">${totalQuizzes}</div><div style="font-size:.68rem;color:var(--t2)">Quiz gjorda</div></div>
+            ${quizStreak>1?`<div><div style="font-size:1.3rem;font-weight:700;color:var(--w)">🔥${quizStreak}</div><div style="font-size:.68rem;color:var(--t2)">Dagar i rad</div></div>`:''}
+        </div>
+        ${totalQuizzes>0?`<div style="font-size:.75rem;color:var(--t2);margin-top:8px">Varje quiz stärker din relation till ${esc(childName)} 💜</div>`:''}
     </div>`;
 
     if(quizResult){
