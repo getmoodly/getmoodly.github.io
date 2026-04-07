@@ -2848,6 +2848,20 @@ function renderMoodisParent(){
         el.innerHTML=html+'</div>';return;
     }
 
+    // Research-backed motivation for parents
+    const parentTips=[
+        '🔬 Forskning visar att barn som vet att vuxna aktivt lyssnar vågar vara mer ärliga om sina känslor.',
+        '🧠 Att testa din förståelse genom quiz stärker din relation till ditt barn — varje gång.',
+        '❤️ En av de starkaste skyddsfaktorerna för barn är att ha engagerade vuxna runt sig.',
+        '🌱 Barn vars föräldrar förstår hur de mår i olika miljöer får hjälp tidigare när något inte stämmer.',
+        '💜 Varje quiz du gör signalerar till ditt barn: jag bryr mig om hur du mår.',
+        '📊 Kontinuerlig förståelse slår enstaka frågor — precis som i hälsovården.',
+        '🗣️ Barn som får uttrycka sina känslor regelbundet utvecklar starkare självkänsla.',
+        '🤝 Ju fler vuxna i barnets nätverk som engagerar sig, desto tryggare blir barnet.'
+    ];
+    const tipIdx=Math.floor(Date.now()/86400000)%parentTips.length;
+    html+=`<div style="background:rgba(108,92,231,.06);border-radius:10px;padding:12px 14px;margin-bottom:14px;font-size:.78rem;color:var(--t2);line-height:1.5">${parentTips[tipIdx]}</div>`;
+
     // === CHILD CHECK-IN BUTTONS (prominent, top of page) ===
     const dayLabels=['Mån','Tis','Ons','Tor','Fre','Lör','Sön'];
     html+=`<div style="margin-bottom:16px">`;
