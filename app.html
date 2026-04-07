@@ -3959,7 +3959,7 @@ function switchToParent(){
 function childEmoji(fp){return fp?.gender==='pojke'?'👦':fp?.gender==='flicka'?'👧':'🧒'}
 
 // ===== RENDER FAMILY PAGE =====
-function renderFamily(){
+async function renderFamily(){
     const d=ld();
     let html='';
 
@@ -4121,11 +4121,11 @@ function renderFamily(){
     html+=`<div class="section-sep"></div>
     <div class="ct">⚙️ Inställningar</div>`;
 
-    // Account
+    // Account — try to get user if sbUser not set yet
+    if(!sbUser&&sb){try{const{data}=await sb.auth.getUser();if(data?.user)sbUser=data.user}catch(e){}}
     if(sbUser){
         html+=`<div class="cd"><div class="ct">🔑 Konto</div>
             <div class="sett-row"><span>E-post</span><span style="font-size:.78rem;color:var(--t2)">${sbUser.email}</span></div>
-            <div class="sett-row"><span>Synk</span><span style="font-size:.78rem" id="sync-status">${getSyncStatus()}</span></div>
             <button class="btn bs" onclick="signOut()" style="margin-top:8px">Logga ut</button></div>`;
     }else{
         html+=`<div class="cd"><div class="ct">🔑 Konto</div>
