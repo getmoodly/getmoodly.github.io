@@ -5215,10 +5215,17 @@ async function processNetworkJoin(){
             return;
         }
 
-        // New user or non-parent — set as network role
+        // New user or existing network member
         d.role='network';
         d.firstVisit=false;
-        d.onboarded=new Date().toISOString();
+        d.onboarded=d.onboarded||new Date().toISOString();
+        // Support multiple children
+        if(!d.networkChildren)d.networkChildren=[];
+        const alreadyConnected=d.networkChildren.find(c=>c.childId===data.childId);
+        if(!alreadyConnected){
+            d.networkChildren.push({childId:data.childId,childName:data.childName,familyId:data.familyId,adminName:data.adminName});
+        }
+        // Set as active child (latest added)
         d.networkChildId=data.childId;
         d.networkChildName=data.childName;
         d.networkFamilyId=data.familyId;
@@ -5231,10 +5238,22 @@ async function processNetworkJoin(){
 }
 
 // ===== NETWORK MEMBER VIEW (role=network) =====
+function switchNetworkChild(childId){
+    const d=ld();
+    const child=(d.networkChildren||[]).find(c=>c.childId===childId);
+    if(!child)return;
+    d.networkChildId=child.childId;
+    d.networkChildName=child.childName;
+    d.networkFamilyId=child.familyId;
+    sv(d);
+    renderMoodis();
+}
+
 function renderMoodisNetwork(){
     const d=ld();
     const el=document.getElementById('pg-moodis');
     const childName=d.networkChildName||'barnet';
+    const children=d.networkChildren||[];
 
     let html='<div style="padding:12px 0">';
     html+=`<div style="text-align:center;margin-bottom:16px">
@@ -5242,6 +5261,16 @@ function renderMoodisNetwork(){
         <div style="font-size:1rem;font-weight:700">${esc(childName)}s trygghetsnätverk</div>
         <div style="font-size:.78rem;color:var(--t2);margin-top:4px">Du hjälper ${esc(childName)} genom att förstå hen bättre</div>
     </div>`;
+
+    // Child selector if connected to multiple children
+    if(children.length>1){
+        html+=`<div style="display:flex;gap:8px;justify-content:center;margin-bottom:16px">`;
+        children.forEach(c=>{
+            const active=c.childId===d.networkChildId;
+            html+=`<button onclick="switchNetworkChild('${esc(c.childId)}')" style="padding:8px 16px;border-radius:20px;border:1px solid ${active?'var(--p)':'rgba(255,255,255,.1)'};background:${active?'var(--p)':'rgba(255,255,255,.04)'};color:${active?'#fff':'var(--t2)'};font-size:.82rem;font-weight:600;cursor:pointer">${esc(c.childName)}</button>`;
+        });
+        html+=`</div>`;
+    }
 
     // Step 1: Name + role MUST be set before anything else
     if(!d.userName||!d.familyRole){
