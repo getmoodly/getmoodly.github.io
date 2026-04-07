@@ -4017,23 +4017,23 @@ function renderFamily(){
 
         // Network invites per child
         html+=`<div class="cd"><div class="ct">💜 Trygghetsnätverk</div>
-            <p style="font-size:.78rem;color:var(--t2);margin-bottom:12px;line-height:1.5">Ju fler som engagerar sig regelbundet, desto högre trygghetsgrad.</p>`;
+            <p style="font-size:.78rem;color:var(--t2);margin-bottom:12px;line-height:1.5">Bjud in familj och släkt — de får göra quiz och lära känna dina barn bättre.</p>`;
         d.familyProfiles.forEach(fp=>{
             const emoji=childEmoji(fp);
-            const tg=calcTrygghetsgrad(d,fp.id);
-
             html+=`<div style="background:rgba(108,92,231,.06);border-radius:12px;padding:14px;margin-bottom:10px">
-                <div style="display:flex;align-items:center;gap:8px;margin-bottom:12px">
+                <div style="display:flex;align-items:center;gap:8px;margin-bottom:10px">
                     <span style="font-size:1.2rem">${emoji}</span>
-                    <span style="font-weight:600;font-size:.88rem;flex:1">${esc(fp.name)}</span>
-                </div>`;
-
-            html+=renderTrygghetsgrad(tg,fp.name);
-
-            html+=`<button class="btn ba" onclick="shareNetworkInvite('${esc(fp.id)}','${esc(fp.name)}')" style="width:100%;font-size:.82rem;padding:10px">Bjud in fler till nätverket</button>
+                    <span style="font-weight:600;font-size:.88rem;flex:1">${esc(fp.name)}s nätverk</span>
+                </div>
+                <div id="network-members-${esc(fp.id)}" style="margin-bottom:10px">
+                    <div style="font-size:.75rem;color:var(--t2);text-align:center">Laddar...</div>
+                </div>
+                <button class="btn ba" onclick="shareNetworkInvite('${esc(fp.id)}','${esc(fp.name)}')" style="width:100%;font-size:.82rem;padding:10px">Bjud in till ${esc(fp.name)}s nätverk</button>
             </div>`;
         });
         html+=`</div>`;
+        // Load network members async
+        if(sbUser)loadNetworkMembers(d);
     }
 
     // Share with other parents
@@ -5129,6 +5129,31 @@ function scheduleSyncChildData(){
 }
 
 // ===== NETWORK INVITE =====
+async function loadNetworkMembers(d){
+    if(!sb||!sbUser||!d.familyId)return;
+    try{
+        const{data}=await sb.from('network_members').select('*').eq('family_id',d.familyId);
+        if(!data)return;
+        (d.familyProfiles||[]).forEach(fp=>{
+            const el=document.getElementById('network-members-'+fp.id);
+            if(!el)return;
+            const members=data.filter(m=>m.child_id===fp.id);
+            if(!members.length){
+                el.innerHTML=`<div style="font-size:.75rem;color:var(--t2);text-align:center;padding:4px 0">Ingen har gått med ännu</div>`;
+                return;
+            }
+            const roleEmoji=r=>r==='mamma'?'👩':r==='pappa'?'👨':r==='mormor'||r==='farmor'?'👵':r==='morfar'||r==='farfar'?'👴':'👤';
+            el.innerHTML=members.map(m=>
+                `<div style="display:flex;align-items:center;gap:8px;padding:6px 0;border-bottom:1px solid rgba(255,255,255,.04);font-size:.82rem">
+                    <span>${roleEmoji(m.member_role)}</span>
+                    <span style="flex:1">${esc(m.member_name||'Okänd')} <span style="color:var(--t2);font-size:.7rem">${esc(m.member_role||'')}</span></span>
+                    <span style="font-size:.68rem;color:var(--ok)">Ansluten</span>
+                </div>`
+            ).join('');
+        });
+    }catch(e){}
+}
+
 async function shareNetworkInvite(childId,childName){
     const d=ld();
     // Find child data and push to Supabase for network members
@@ -5233,6 +5258,20 @@ async function processNetworkJoin(){
         if(!d.familyRole)d.familyRole='';
         sv(d);
         localStorage.removeItem('moodly_network_join');
+        // Save to Supabase so admin can see who joined
+        if(sbUser){
+            try{
+                await sb.from('network_members').upsert({
+                    family_id:data.familyId,
+                    child_id:data.childId,
+                    child_name:data.childName,
+                    member_name:d.userName||'',
+                    member_role:d.familyRole||'',
+                    member_email:sbUser.email||'',
+                    joined_at:new Date().toISOString()
+                });
+            }catch(e){}
+        }
         toast('Du gick med i '+data.childName+'s trygghetsnätverk!');
     }catch(e){localStorage.removeItem('moodly_network_join')}
 }
