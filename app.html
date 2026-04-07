@@ -3385,10 +3385,6 @@ function renderMoodis(){
             html+=`</div>`;
             html+=`<div style="display:flex;justify-content:space-between;padding:0 16px;font-size:.68rem;color:var(--t2)"><span>Dåligt</span><span>Jättebra</span></div>`;
             html+=`<div style="text-align:center;margin-top:12px"><button style="background:none;border:none;color:var(--t2);font-size:.75rem;cursor:pointer;padding:8px" onclick="moodisSkipPlace('${place.id}')">Var inte där →</button></div>`;
-        } else if(step==='react'){
-            // Brief Moodis reaction before next place
-            html+=`<div style="text-align:center;font-size:1rem;margin:16px 0;color:var(--t)">${moodisReact(score)}</div>`;
-            setTimeout(()=>{moodisFlow.step='mood';moodisFlow.currentScore=null;renderMoodis()},1200);
         }
 
         // Place dots
@@ -3464,9 +3460,11 @@ function moodisCheckIn(placeId,score){
     checkInPlace(placeId,score);
     moodisFlow.currentScore=score;
     moodisFlow.currentPlaceId=placeId;
-    moodisFlow.step='react';
+    moodisFlow.step='mood'; // Stay on mood — next unchecked place will show
     moodisFlow.todayPts+=5;
     moodisFlow.questionCount++;
+    // Show Moodis reaction as toast
+    toast(moodisReact(score));
     renderMoodis();
     setTimeout(()=>moodisAnimate(5,oldStage,isDailyBonusActive(ld())),50);
 }
@@ -3846,6 +3844,8 @@ function addPlaceToChild(storageKey,type,customName){
 
 function switchToProfile(storageKey,name){
     APK=storageKey;
+    // Reset moodis flow for new child
+    moodisFlow={placeIdx:0,step:'mood',currentScore:null,currentPlaceId:null,funIdx:0,deepIdx:0,todayPts:0,_date:new Date().toDateString(),questionCount:0};
     document.getElementById('profile-banner').style.display='flex';
     document.getElementById('profile-banner-text').textContent='Visar: '+name;
     document.querySelectorAll('.pg').forEach(pg=>{pg.style.paddingTop='48px'});
