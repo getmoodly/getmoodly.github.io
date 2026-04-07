@@ -2598,7 +2598,7 @@ const DEEP_QUESTIONS=[
 function getDeepQuestions(){return DEEP_QUESTIONS}
 
 // Max questions per session after check-ins
-const MAX_BONUS_QUESTIONS=4;
+const MAX_BONUS_QUESTIONS=5;
 
 // Fun questions with frequency control
 const FUN_QUESTIONS=[
@@ -3417,11 +3417,13 @@ function renderMoodis(){
         // Next question — never repeats
         const nextQ=getNextQuestion(d);
         if(nextQ){
+            // Store current question globally so onclick doesn't need complex escaping
+            window._currentBonusQ=nextQ;
             const isDeep=nextQ.type==='deep';
             html+=`<div class="challenge-card" style="${isDeep?'border:1px solid rgba(108,92,231,.3)':''}">
                 <div style="font-size:.7rem;color:var(--a);margin-bottom:6px;text-transform:uppercase;letter-spacing:.05em">${isDeep?'💜 Reflektionsfråga':'🎮 Bonusfråga'} +${nextQ.pts} 🪙</div>
                 <div class="challenge-text">${esc(nextQ.text)}</div>
-                <div class="challenge-options" style="margin-top:14px">${nextQ.options.map(o=>`<button class="challenge-opt" onclick="moodisAnswer('${esc(o)}',${nextQ.pts},'${nextQ.tag||'fun'}','${esc(nextQ.text)}','${esc(JSON.stringify(nextQ.options))}')" style="padding:10px 18px;font-size:.88rem">${o}</button>`).join('')}</div>
+                <div class="challenge-options" style="margin-top:14px">${nextQ.options.map((o,i)=>`<button class="challenge-opt" onclick="answerBonusQ(${i})" style="padding:10px 18px;font-size:.88rem">${o}</button>`).join('')}</div>
             </div>`;
         }else{
             html+=`<div class="challenge-card"><div style="font-size:1.5rem;margin-bottom:8px">🌟</div>
@@ -3515,6 +3517,12 @@ function moodisFeeling(answer){
     setTimeout(()=>moodisAnimate(pts,oldStage),50);
 }
 
+
+function answerBonusQ(optionIndex){
+    const q=window._currentBonusQ;
+    if(!q||!q.options[optionIndex])return;
+    moodisAnswer(q.options[optionIndex],q.pts,q.tag||'fun',q.text,JSON.stringify(q.options));
+}
 
 function moodisAnswer(answer,pts,tag,questionText,optionsJson){
     const actualPts=addMoodisPts(pts);
