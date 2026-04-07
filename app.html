@@ -649,7 +649,7 @@
         <p>Berätta lite om dig så vi kan göra appen till din.</p>
         <input type="text" id="child-ob-name" placeholder="Ditt namn..." maxlength="30">
         <select id="child-ob-age" style="width:100%;padding:12px;background:rgba(255,255,255,.06);border:1px solid rgba(255,255,255,.12);border-radius:var(--rs);color:var(--t);font-size:.95rem;outline:none;margin-bottom:16px;text-align:center">
-            <option value="6-9">6–9 år</option><option value="10-13">10–13 år</option><option value="14-17">14–17 år</option>
+            <option value="3-5">3–5 år</option><option value="6-9">6–9 år</option><option value="10-13">10–13 år</option><option value="14-17">14–17 år</option>
         </select>
         <button class="btn bp" onclick="finishChildOnboarding()">Starta Moodly!</button>
         <p id="child-ob-status" style="font-size:.75rem;color:var(--t2);margin-top:12px"></p>
@@ -2348,7 +2348,7 @@ function renderOb3Info(el){
             <input type="text" id="ob-child-name" placeholder="Barnets namn" maxlength="30" style="width:100%;padding:12px;background:rgba(255,255,255,.06);border:1px solid rgba(255,255,255,.12);border-radius:var(--rs);color:var(--t);font-size:.95rem;text-align:center;outline:none;margin-bottom:8px">
             <div style="display:flex;gap:8px;margin-bottom:12px">
                 <select id="ob-child-age" style="flex:1;padding:10px;background:rgba(255,255,255,.06);border:1px solid rgba(255,255,255,.12);border-radius:var(--rs);color:var(--t);font-size:.88rem;outline:none;text-align:center">
-                    <option value="" disabled selected>Ålder</option><option value="6-9">6–9 år</option><option value="10-13">10–13 år</option><option value="14-17">14–17 år</option>
+                    <option value="" disabled selected>Ålder</option><option value="3-5">3–5 år</option><option value="6-9">6–9 år</option><option value="10-13">10–13 år</option><option value="14-17">14–17 år</option>
                 </select>
                 <select id="ob-child-gender" style="flex:1;padding:10px;background:rgba(255,255,255,.06);border:1px solid rgba(255,255,255,.12);border-radius:var(--rs);color:var(--t);font-size:.88rem;outline:none;text-align:center">
                     <option value="" disabled selected>Kön</option><option value="flicka">Flicka</option><option value="pojke">Pojke</option><option value="annat">Annat</option>
@@ -4025,7 +4025,7 @@ function renderFamily(){
         html+=`<div class="cd" id="add-child-step1"><div class="ct">+ Lägg till barn</div>
             <div class="sett-row"><span>Namn</span><input class="sett-input" id="new-child-name" placeholder=""></div>
             <div class="sett-row"><span>Åldersgrupp</span><select id="new-child-age">
-                <option value="6-9">6-9 år</option><option value="10-13">10-13 år</option><option value="14-17">14-17 år</option>
+                <option value="3-5">3-5 år</option><option value="6-9">6-9 år</option><option value="10-13">10-13 år</option><option value="14-17">14-17 år</option>
             </select></div>
             <button class="btn ba" onclick="addChildStep1()" style="margin-top:8px">Nästa →</button>
         </div>
