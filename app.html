@@ -3313,6 +3313,17 @@ function showQuizResults(){
         <div style="font-size:.8rem;color:var(--t2);line-height:1.5">Berätta för ${esc(_quiz.childName)} att du gör quiz för att förstå hen bättre. Barn som vet att vuxna aktivt lyssnar vågar vara mer ärliga med sina känslor.</div>
     </div>`;
 
+    // Feedback prompt after quiz
+    html+=`<div style="margin-top:16px;background:rgba(0,184,148,.06);border-radius:12px;padding:16px;text-align:center">
+        <div style="font-size:.85rem;font-weight:600;margin-bottom:6px">💬 Hur upplevde du Moodly?</div>
+        <div style="font-size:.78rem;color:var(--t2);margin-bottom:10px">Din feedback hjälper oss göra Moodly bättre</div>
+        <div style="display:flex;gap:8px;justify-content:center;margin-bottom:8px">
+            <button onclick="submitQuickFeedback('bra')" style="font-size:1.5rem;width:44px;height:44px;border-radius:50%;border:2px solid rgba(255,255,255,.08);background:rgba(255,255,255,.04);cursor:pointer">😊</button>
+            <button onclick="submitQuickFeedback('okej')" style="font-size:1.5rem;width:44px;height:44px;border-radius:50%;border:2px solid rgba(255,255,255,.08);background:rgba(255,255,255,.04);cursor:pointer">😐</button>
+            <button onclick="submitQuickFeedback('dåligt')" style="font-size:1.5rem;width:44px;height:44px;border-radius:50%;border:2px solid rgba(255,255,255,.08);background:rgba(255,255,255,.04);cursor:pointer">😕</button>
+        </div>
+    </div>`;
+
     // Sharing prompts after quiz
     html+=`<div style="margin-top:16px;padding-top:16px;border-top:1px solid rgba(255,255,255,.06)">
         <div style="font-size:.82rem;font-weight:600;text-align:center;margin-bottom:12px">Vill du stärka ${esc(_quiz.childName)}s trygghet?</div>
@@ -3534,6 +3545,18 @@ function moodisFeeling(answer){
     setTimeout(()=>moodisAnimate(pts,oldStage),50);
 }
 
+
+async function submitQuickFeedback(rating){
+    const d=ld();
+    try{
+        await fetch(SUPABASE_URL+'/rest/v1/contact_messages',{
+            method:'POST',
+            headers:{'Content-Type':'application/json','apikey':SUPABASE_ANON,'Authorization':'Bearer '+SUPABASE_ANON},
+            body:JSON.stringify({name:d.userName||'',email:sbUser?.email||'',subject:'App feedback: '+rating,message:'Quick feedback after quiz: '+rating})
+        });
+    }catch(e){}
+    toast('Tack for din feedback! 💜');
+}
 
 function answerBonusQ(optionIndex){
     const q=window._currentBonusQ;
