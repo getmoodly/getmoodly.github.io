@@ -1,4 +1,4 @@
-const CACHE_NAME = 'moodly-v12';
+const CACHE_NAME = 'moodly-v13';
 const ASSETS = [
   './app.html',
   './manifest.json'
@@ -70,6 +70,9 @@ self.addEventListener('notificationclick', e => {
 
 // Message handler
 self.addEventListener('message', e => {
+  if (e.data?.type === 'SKIP_WAITING') {
+    self.skipWaiting();
+  }
   if (e.data?.type === 'SCHEDULE_REMINDER') {
     const hour = e.data.hour || 17;
     const minute = e.data.minute || 0;

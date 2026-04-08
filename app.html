@@ -1102,6 +1102,8 @@ function syncProfile(d){
         unlocked_avatars:d.unlockedAvatars||['default'],
         daily_reward_claimed:d.dailyRewardClaimed||null,
         kommun:d.kommun||'',
+        role:d.role||'parent',
+        family_id:d.familyId||'',
         updated_at:new Date().toISOString()
     });
 }
@@ -2809,7 +2811,7 @@ function getNextQuestion(d){
     if(!unaskedDeep.length&&!unaskedFun.length)return null;
 
     // First 3 after places: deep priority
-    if(afterPlaceCount<3&&unaskedDeep.length){
+    if(moodisFlow._bonusCount<3&&unaskedDeep.length){
         const q=unaskedDeep[0];
         asked.add(q.text);
         return{type:'deep',...q};
@@ -5636,13 +5638,32 @@ async function startNetworkQuiz(){
     toast('Väntar på data — föräldern behöver dela inbjudan igen efter att barnet pratat med Moodis');
 }
 
-// Register service worker
+// Register service worker with auto-update
 if('serviceWorker' in navigator){
     navigator.serviceWorker.register('sw.js').then(reg=>{
         if(localStorage.getItem('moodly_notif')==='on'&&reg.active){
             reg.active.postMessage({type:'SCHEDULE_REMINDER',hour:17,minute:0});
         }
+        // Check for updates immediately
+        reg.update();
+        // Check for updates every 30 min
+        setInterval(()=>reg.update(),30*60*1000);
+        // When a new SW is found, tell it to activate immediately
+        reg.addEventListener('updatefound',()=>{
+            const nw=reg.installing;
+            if(!nw)return;
+            nw.addEventListener('statechange',()=>{
+                if(nw.state==='installed'&&navigator.serviceWorker.controller){
+                    // New version ready — tell it to take over
+                    nw.postMessage({type:'SKIP_WAITING'});
+                }
+            });
+        });
     }).catch(e=>{console.warn('SW registration failed:',e)});
+    // When new SW takes control, reload to get fresh content
+    navigator.serviceWorker.addEventListener('controllerchange',()=>{
+        if(!document.hidden)location.reload();
+    });
 }
 
 // Offline indicator
