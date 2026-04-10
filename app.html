@@ -922,12 +922,13 @@ async function migrateLocalToRemote(){
         }
     }
 
-    // Sync checkins (parent + all children)
+    // Sync checkins (parent + all children). Privacy: comment is intentionally
+    // never sent to Supabase — see syncCheckin() for the canonical reasoning.
     for(const c of d.placeCheckins){
         const checkedAt=new Date(c.ts).toISOString().slice(0,10);
         await sb.from('place_checkins').upsert({
             user_id:sbUser.id,place_id:c.placeId,score:c.score,
-            comment:c.comment||null,checked_at:checkedAt,ts:c.ts
+            comment:null,checked_at:checkedAt,ts:c.ts
         },{onConflict:'user_id,place_id,checked_at'});
     }
     for(const fp of (d.familyProfiles||[])){
@@ -937,7 +938,7 @@ async function migrateLocalToRemote(){
             const checkedAt=new Date(c.ts).toISOString().slice(0,10);
             await sb.from('place_checkins').upsert({
                 user_id:sbUser.id,place_id:c.placeId,score:c.score,
-                comment:c.comment||null,checked_at:checkedAt,ts:c.ts
+                comment:null,checked_at:checkedAt,ts:c.ts
             },{onConflict:'user_id,place_id,checked_at'});
         }
     }
@@ -1047,7 +1048,10 @@ async function pullRemoteData(){
                 let changed=false;
                 checkins.forEach(rc=>{
                     const existing=pd.placeCheckins.findIndex(c=>c.placeId===rc.place_id&&new Date(c.ts).toDateString()===new Date(rc.ts).toDateString());
-                    const entry={ts:rc.ts,placeId:rc.place_id,score:rc.score,comment:rc.comment||'',tags:rc.tags||[]};
+                    // Privacy: never restore remote comments to local — comments
+                    // are device-local. Any legacy rows in Supabase that still
+                    // contain a comment are dropped on read.
+                    const entry={ts:rc.ts,placeId:rc.place_id,score:rc.score,comment:'',tags:rc.tags||[]};
                     if(existing>=0){
                         if(new Date(rc.ts)>new Date(pd.placeCheckins[existing].ts)){
                             pd.placeCheckins[existing]=entry;changed=true;
@@ -1097,9 +1101,15 @@ async function pullRemoteData(){
                         });
                         // Reconstruct a full child localStorage entry so
                         // getFullChildData / renderHome / check-in flows work.
+                        // Privacy: strip any comment field from legacy rows so
+                        // device-local-only-comments stay device-local on restore.
+                        const safeRemoteCheckins=(blob.placeCheckins||[]).map(c=>{
+                            const{comment,...rest}=c;
+                            return rest;
+                        });
                         const childData={
                             places:blob.places||[],
-                            placeCheckins:blob.placeCheckins||[],
+                            placeCheckins:safeRemoteCheckins,
                             benchmarks:[],checkins:[],micro:[],
                             xp:0,level:1,
                             points:blob.points||0,
@@ -1138,9 +1148,13 @@ async function pullRemoteData(){
 function syncCheckin(placeId,score,comment,ts,tags){
     if(!sbUser)return;
     const checkedAt=new Date(ts).toISOString().slice(0,10);
+    // Privacy: free-text comments are device-local only. We never send the
+    // comment to Supabase so the child's words can't be read by anyone else,
+    // not even via direct database access. The comment lives in localStorage
+    // for the writer's own history.
     enqueue('place_checkins','upsert',{
         user_id:sbUser.id,place_id:placeId,score,
-        comment:comment||null,tags:(tags&&tags.length)?tags:null,
+        comment:null,tags:(tags&&tags.length)?tags:null,
         checked_at:checkedAt,ts
     },null,'user_id,place_id,checked_at');
 }
@@ -1798,7 +1812,9 @@ function renderParentView(){
                 // Show today's tags or top weekly tags
                 if(tc?.tags&&tc.tags.length){const sc=tc.score<=2?'neg':tc.score>=4?'pos':'neu';html+=`<div class="fam-tags">${tc.tags.map(t=>`<span class="fam-tag ${sc}">${esc(t)}</span>`).join('')}</div>`}
                 else if(last7.length){const tagC={};last7.forEach(c=>(c.tags||[]).forEach(t=>{tagC[t]=(tagC[t]||0)+1}));const top=Object.entries(tagC).sort((a,b)=>b[1]-a[1]).slice(0,2);if(top.length)html+=`<div class="fam-tags"><span style="font-size:.6rem;color:var(--t2);margin-right:2px">Veckan:</span>${top.map(([t])=>`<span class="fam-tag neu">${esc(t)}</span>`).join('')}</div>`}
-                if(tc?.comment)html+=`<div class="fam-place-comment">"${esc(tc.comment)}"</div>`;
+                // Privacy: parents only see scores + trends, never the child's
+                // free-text comment. The comment is kept in localStorage/Supabase
+                // for the child's own history but never rendered in parent views.
                 if(tc)html+=renderReactRow(fp.storageKey,'',p.id);
             });
             html+=`</div>`;
@@ -2173,9 +2189,8 @@ function renderHomeInsights(d){
         const last7=getPlaceCheckins(d,ps.id,7).slice(-7);
         let bars='';
         for(let i=0;i<7;i++){const e=last7[i];if(e){const h=Math.round((e.score/5)*100);const bc=e.score>=4?'var(--ok)':e.score>=3?'var(--w)':'var(--bad)';bars+=`<div class="ins-bar" style="height:${h}%;background:${bc}"></div>`}else{bars+=`<div class="ins-bar" style="height:10%;background:rgba(255,255,255,.06)"></div>`}}
-        // Recent comments
-        const recentComments=getPlaceCheckins(d,ps.id,7).filter(c=>c.comment).slice(-2);
-        let commHtml=recentComments.map(c=>`<div class="place-prev-comment">"${c.comment}"</div>`).join('');
+        // Privacy: insights show trends and scores only — never the child's
+        // free-text comment.
 
         html+=`<div class="ins-card">
             <div class="ins-header"><div class="ins-place"><span class="ico">${pt.icon}</span><span class="nm">${ps.name}</span></div><div class="ins-avg" style="color:${col}">${ps.avg}</div></div>
@@ -2185,7 +2200,6 @@ function renderHomeInsights(d){
             </div>
             <div class="ins-bars">${bars}</div>
             <div class="ins-meta"><span>7 dagar sedan</span><span>Idag</span></div>
-            ${commHtml}
         </div>`;
     });
 
@@ -3753,14 +3767,33 @@ function dismissParentGuide(){
 
 async function submitQuickFeedback(rating){
     const d=ld();
+    // Anonymous quick feedback. We deliberately do NOT send the user's name
+    // or email — the only context is rating + role + kommun + children_count
+    // so we can spot patterns without identifying anyone. Goes to the
+    // feedback table (not contact_messages) so all feedback lives in one place.
+    const ratingMap={'bra':5,'okej':3,'dåligt':1};
+    const payload={
+        rating:ratingMap[rating]||null,
+        text:'Snabbfeedback efter quiz: '+rating,
+        role:d.role||'unknown',
+        kommun:d.kommun||null,
+        children_count:(d.familyProfiles||[]).length,
+        created_at:new Date().toISOString()
+    };
     try{
-        await fetch(SUPABASE_URL+'/rest/v1/contact_messages',{
-            method:'POST',
-            headers:{'Content-Type':'application/json','apikey':SUPABASE_ANON,'Authorization':'Bearer '+SUPABASE_ANON},
-            body:JSON.stringify({name:d.userName||'',email:sbUser?.email||'',subject:'App feedback: '+rating,message:'Quick feedback after quiz: '+rating})
-        });
-    }catch(e){}
-    toast('Tack for din feedback! 💜');
+        if(sb){
+            await sb.from('feedback').insert(payload);
+        }else{
+            const pending=JSON.parse(localStorage.getItem('moodly_feedback_pending')||'[]');
+            pending.push(payload);
+            localStorage.setItem('moodly_feedback_pending',JSON.stringify(pending));
+        }
+    }catch(e){
+        const pending=JSON.parse(localStorage.getItem('moodly_feedback_pending')||'[]');
+        pending.push(payload);
+        localStorage.setItem('moodly_feedback_pending',JSON.stringify(pending));
+    }
+    toast('Tack för din feedback! 💜');
 }
 
 function answerBonusQ(optionIndex){
@@ -4418,9 +4451,8 @@ async function loadRemoteFamilyMembers(){
                     const avg=Math.round(placeCheckins.reduce((a,c)=>a+c.score,0)/placeCheckins.length*10)/10;
                     const pt=PT[mp.type]||PT.other;
                     const col=avg>=4?'var(--ok)':avg>=3?'var(--w)':'var(--bad)';
-                    const lastComment=placeCheckins.filter(c=>c.comment).slice(-1)[0]?.comment;
+                    // Privacy: never render free-text comments to other family members
                     html+=`<div class="fam-place-row"><span>${pt.icon}</span><span style="flex:1">${mp.name}</span><span class="fam-place-score" style="color:${col}">${avg}</span></div>`;
-                    if(lastComment)html+=`<div class="fam-place-comment">"${lastComment}"</div>`;
                 });
 
                 // Alert: low mood 3+ days
@@ -4471,8 +4503,8 @@ function getChildDetailedData(storageKey){
             const prev7=checks.filter(c=>{const age=Date.now()-new Date(c.ts).getTime();return age>=7*864e5&&age<14*864e5}).map(c=>c.score);
             let trend='flat';
             if(last7.length>=2&&prev7.length>=2){const l=last7.reduce((a,b)=>a+b,0)/last7.length;const p2=prev7.reduce((a,b)=>a+b,0)/prev7.length;if(l-p2>0.3)trend='up';else if(p2-l>0.3)trend='dn'}
-            const recentComments=checks.filter(c=>c.comment).slice(-1);
-            return{...p,avg,trend,lastComment:recentComments[0]?.comment||''};
+            // Privacy: comments are intentionally NOT exposed via this helper
+            return{...p,avg,trend};
         });
         const alerts=[];
         (cd.places||[]).forEach(p=>{
@@ -4867,10 +4899,14 @@ async function submitFeedback(){
     const text=document.getElementById('fb-text').value.trim();
     if(!text&&!_fbRating){toast('Skriv något eller välj betyg');return}
     const d=ld();
+    // Anonymous: deliberately do NOT include user_id so the modal's
+    // "Alla svar är anonyma" promise holds. Role/kommun/children_count are
+    // included as loose demographic context so Marcus can group patterns,
+    // but cannot identify a specific user from these fields alone.
     const feedback={rating:_fbRating||null,text:text||null,role:d.role||'unknown',kommun:d.kommun||null,children_count:(d.familyProfiles||[]).length,created_at:new Date().toISOString()};
-    if(sb&&sbUser){
+    if(sb){
         try{
-            await sb.from('feedback').insert({user_id:sbUser.id,...feedback});
+            await sb.from('feedback').insert(feedback);
         }catch(e){
             // Save locally if Supabase fails
             const pending=JSON.parse(localStorage.getItem('moodly_feedback_pending')||'[]');
@@ -5367,6 +5403,12 @@ async function syncChildDataForNetwork(){
         // Skip only if child is entirely empty (no places, no check-ins, no insights).
         // Otherwise always sync so the child survives cache clear / device switch.
         if(!insights.length&&!checkins.length&&!places.length)continue;
+        // Privacy: strip free-text comments before uploading. Comments stay
+        // device-local; only the score + tags + timestamp travel to the cloud.
+        const safeCheckins=checkins.slice(-100).map(c=>{
+            const{comment,...rest}=c;
+            return rest;
+        });
         try{
             await sb.from('shared_child_data').upsert({
                 family_id:d.familyId,
@@ -5374,7 +5416,7 @@ async function syncChildDataForNetwork(){
                 child_name:fp.name,
                 data:{
                     places:cd.places||[],
-                    placeCheckins:checkins.slice(-100),
+                    placeCheckins:safeCheckins,
                     moodisInsights:insights.slice(-100),
                     selectedAvatar:cd.selectedAvatar||'default',
                     points:cd.points||0,
@@ -5439,9 +5481,14 @@ async function shareNetworkInvite(childId,childName){
     if(fp){
         const cd=getFullChildData(fp.storageKey);
         if(cd&&sbUser){
+            // Privacy: strip free-text comments before uploading
+            const safeCheckins=(cd.placeCheckins||[]).slice(-100).map(c=>{
+                const{comment,...rest}=c;
+                return rest;
+            });
             const sharedData={
                 places:cd.places||[],
-                placeCheckins:(cd.placeCheckins||[]).slice(-100),
+                placeCheckins:safeCheckins,
                 moodisInsights:(cd.moodisInsights||[]).slice(-100),
                 selectedAvatar:cd.selectedAvatar||'default',
                 points:cd.points||0,
