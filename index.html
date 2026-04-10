@@ -72,14 +72,14 @@
         .privacy-grid{display:grid;grid-template-columns:repeat(2,1fr);gap:16px;margin-top:32px}
         .priv-card{display:flex;gap:12px;align-items:flex-start;padding:20px;background:var(--c1);border-radius:12px;border:1px solid rgba(255,255,255,.05)}
         .priv-card .ico{font-size:1.3rem;flex-shrink:0}
-        .priv-card h4{font-size:.88rem;font-weight:700;margin-bottom:4px}
+        .priv-card h3{font-size:.88rem;font-weight:700;margin-bottom:4px}
         .priv-card p{font-size:.78rem;color:var(--t2);line-height:1.5}
 
         /* DATA VISION */
         .data-section{text-align:center}
         .data-examples{display:grid;grid-template-columns:repeat(2,1fr);gap:16px;margin-top:32px;text-align:left}
         .data-card{padding:20px;background:rgba(255,255,255,.03);border-radius:12px;border-left:3px solid var(--p)}
-        .data-card h4{font-size:.85rem;font-weight:700;margin-bottom:6px;color:var(--pl)}
+        .data-card h3{font-size:.85rem;font-weight:700;margin-bottom:6px;color:var(--pl)}
         .data-card p{font-size:.78rem;color:var(--t2);line-height:1.5}
 
         /* CTA */
@@ -127,6 +127,8 @@
         </div>
     </div>
 </nav>
+
+<main>
 
 <!-- HERO -->
 <section class="hero">
@@ -306,10 +308,10 @@
         <h2 class="section-title reveal">Integritet först</h2>
         <p class="section-sub reveal reveal-d1">Moodly är byggt med barnets integritet som grund. Alltid.</p>
         <div class="privacy-grid">
-            <div class="priv-card reveal"><span class="ico">👨‍👩‍👧</span><div><h4>Familjen äger datan</h4><p>All data tillhör familjen. Aldrig Moodly, aldrig kommunen, aldrig tredje part.</p></div></div>
-            <div class="priv-card reveal reveal-d1"><span class="ico">🔒</span><div><h4>Aldrig individer</h4><p>Aggregerad statistik kräver minst 10 barn per grupp. Ingen individ kan identifieras.</p></div></div>
-            <div class="priv-card reveal reveal-d2"><span class="ico">🧒</span><div><h4>Barnet bestämmer</h4><p>Barnet delar frivilligt. Föräldrar ser trender och mönster — aldrig individuella svar.</p></div></div>
-            <div class="priv-card reveal reveal-d3"><span class="ico">🇪🇺</span><div><h4>GDPR från grunden</h4><p>Data lagras inom EU. Exportera eller radera all data när som helst.</p></div></div>
+            <div class="priv-card reveal"><span class="ico">👨‍👩‍👧</span><div><h3>Familjen äger datan</h3><p>All data tillhör familjen. Aldrig Moodly, aldrig kommunen, aldrig tredje part.</p></div></div>
+            <div class="priv-card reveal reveal-d1"><span class="ico">🔒</span><div><h3>Aldrig individer</h3><p>Aggregerad statistik kräver minst 10 barn per grupp. Ingen individ kan identifieras.</p></div></div>
+            <div class="priv-card reveal reveal-d2"><span class="ico">🧒</span><div><h3>Barnet bestämmer</h3><p>Barnet delar frivilligt. Föräldrar ser trender och mönster — aldrig individuella svar.</p></div></div>
+            <div class="priv-card reveal reveal-d3"><span class="ico">🇪🇺</span><div><h3>GDPR från grunden</h3><p>Data lagras inom EU. Exportera eller radera all data när som helst.</p></div></div>
         </div>
     </div>
 </section>
@@ -321,19 +323,19 @@
         <p class="section-sub reveal reveal-d1">Med tillräckligt många familjer kan Moodly synliggöra mönster som ingen annan ser — anonymiserat och aggregerat.</p>
         <div class="data-examples">
             <div class="data-card reveal">
-                <h4>Per platstyp</h4>
+                <h3>Per platstyp</h3>
                 <p>"Flickor 10-13 mår 22% sämre på idrotten än pojkar i samma ålder. Vanligaste orsaken: fick inte spela."</p>
             </div>
             <div class="data-card reveal reveal-d1">
-                <h4>Per kommun</h4>
+                <h3>Per kommun</h3>
                 <p>"Barn i Vaxholm trivs bättre i skolan än genomsnittet i Stockholms län. Vad gör Vaxholm rätt?"</p>
             </div>
             <div class="data-card reveal reveal-d2">
-                <h4>Tidiga varningar</h4>
+                <h3>Tidiga varningar</h3>
                 <p>"Välmåendet på fritids har sjunkit 15% senaste månaden bland 6-9-åringar i västra stadsdelen."</p>
             </div>
             <div class="data-card reveal reveal-d3">
-                <h4>Trygghetsnätverk</h4>
+                <h3>Trygghetsnätverk</h3>
                 <p>"Barn med 3+ engagerade vuxna i sitt nätverk rapporterar 35% högre välmående."</p>
             </div>
         </div>
@@ -349,28 +351,28 @@
             <div class="priv-card reveal" style="margin-bottom:16px;border-left:3px solid var(--p)">
                 <span class="ico">📊</span>
                 <div>
-                    <h4>Individuell baseline</h4>
+                    <h3>Individuell baseline</h3>
                     <p>Varje barn jämförs mot sin egen normalnivå — aldrig mot andra barn. Vi beräknar ett individuellt basvärde baserat på barnets historiska mående per plats. Avvikelser från detta basvärde ger tidiga varningssignaler.</p>
                 </div>
             </div>
             <div class="priv-card reveal reveal-d1" style="margin-bottom:16px;border-left:3px solid var(--a)">
                 <span class="ico">📈</span>
                 <div>
-                    <h4>Z-score för mående</h4>
+                    <h3>Z-score för mående</h3>
                     <p>Vi använder statistiska z-scores för att mäta hur mycket ett barns aktuella mående avviker från dess egen baseline. En negativ avvikelse under tid triggar insikter till föräldern — innan det blivit en kris.</p>
                 </div>
             </div>
             <div class="priv-card reveal reveal-d2" style="margin-bottom:16px;border-left:3px solid var(--ok)">
                 <span class="ico">🔬</span>
                 <div>
-                    <h4>Platsbaserad granularitet</h4>
+                    <h3>Platsbaserad granularitet</h3>
                     <p>Till skillnad från generella mående-mätningar mäter Moodly per plats — skola, idrott, fritids, hem. Det gör att vi kan identifiera exakt vilka miljöer som fungerar och vilka som inte gör det.</p>
                 </div>
             </div>
             <div class="priv-card reveal reveal-d3" style="border-left:3px solid var(--w)">
                 <span class="ico">🧩</span>
                 <div>
-                    <h4>Engagemang som mätetal</h4>
+                    <h3>Engagemang som mätetal</h3>
                     <p>Trygghetsnätverket runt barnet mäts genom engagemang — hur ofta vuxna gör quiz, inte hur rätt de svarar. Forskning visar att vuxnas aktiva intresse för barnets vardag har direkt koppling till barnets trygghet.</p>
                 </div>
             </div>
@@ -672,7 +674,7 @@
         <form id="contact-form" style="margin-top:28px" onsubmit="return submitContact(event)">
             <input type="text" id="cf-name" placeholder="Ditt namn" required style="width:100%;padding:14px;background:rgba(255,255,255,.06);border:1px solid rgba(255,255,255,.12);border-radius:10px;color:#fff;font-size:.9rem;outline:none;margin-bottom:10px">
             <input type="email" id="cf-email" placeholder="E-post" required style="width:100%;padding:14px;background:rgba(255,255,255,.06);border:1px solid rgba(255,255,255,.12);border-radius:10px;color:#fff;font-size:.9rem;outline:none;margin-bottom:10px">
-            <select id="cf-subject" style="width:100%;padding:14px;background:rgba(255,255,255,.06);border:1px solid rgba(255,255,255,.12);border-radius:10px;color:#fff;font-size:.9rem;outline:none;margin-bottom:10px">
+            <select id="cf-subject" aria-label="Ärende" style="width:100%;padding:14px;background:rgba(255,255,255,.06);border:1px solid rgba(255,255,255,.12);border-radius:10px;color:#fff;font-size:.9rem;outline:none;margin-bottom:10px">
                 <option value="Allmän fråga">Allmän fråga</option>
                 <option value="Demo för kommun/skola">Demo för kommun/skola</option>
                 <option value="Forskningssamarbete">Forskningssamarbete</option>
@@ -717,6 +719,8 @@ async function submitContact(e){
     btn.disabled=false;btn.textContent='Skicka meddelande';
 }
 </script>
+
+</main>
 
 <footer>
     <div class="container">
