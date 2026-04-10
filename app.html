@@ -799,7 +799,14 @@ async function authSubmit(){
 
 
 
+let _authReadyForUid=null;
 async function onAuthReady(session){
+    const uid=session?.user?.id||null;
+    // Guard: prevent double-init when both signUp's explicit call and the
+    // onAuthStateChange SIGNED_IN listener fire for the same user (otherwise
+    // every Supabase query during onboarding runs twice)
+    if(uid&&_authReadyForUid===uid)return;
+    _authReadyForUid=uid;
     sbUser=session?.user||null;
     document.getElementById('auth-screen').classList.add('h');
     document.getElementById('auth-submit').disabled=false;
@@ -1057,7 +1064,7 @@ async function pullRemoteData(){
         }
 
         // Pull family membership
-        const{data:membership}=await sb.from('family_members').select('family_id,role,families(id,name,invite_code)').eq('user_id',sbUser.id).limit(1).single();
+        const{data:membership}=await sb.from('family_members').select('family_id,role,families(id,name,invite_code)').eq('user_id',sbUser.id).maybeSingle();
         if(membership){
             const d=ld();
             d.familyId=membership.family_id;
@@ -2317,7 +2324,7 @@ function obNext(step){
     document.getElementById(stepId).classList.add('on');
     if(step===3){renderOb3()}
     if(step===5){
-        const parts=obChildren.map(c=>c.name+' ('+c.places.length+' platser)');
+        const parts=obChildren.map(c=>c.name+' ('+c.places.length+(c.places.length===1?' plats':' platser')+')');
         const names=parts.length>1?parts.slice(0,-1).join(', ')+' och '+parts[parts.length-1]:parts[0];
         document.getElementById('ob5-summary').innerHTML='<strong>'+esc(names)+'</strong> — redo att börja! Ge din telefon till barnet eller lägg till Moodly på barnets egen enhet senare under Profil.';
     }
@@ -2340,7 +2347,7 @@ function renderOb3Info(el){
         obChildren.forEach((c,i)=>{
             const emoji=c.gender==='pojke'?'👦':c.gender==='flicka'?'👧':'🧒';
             html+=`<div style="display:flex;align-items:center;gap:8px;padding:8px 12px;background:var(--c2);border-radius:8px;margin-bottom:6px">
-                <span>${emoji}</span><span style="flex:1;font-size:.84rem;font-weight:600">${esc(c.name)} <span style="font-size:.68rem;color:var(--t2)">${esc(c.ageGroup)} • ${c.places.length} platser</span></span>
+                <span>${emoji}</span><span style="flex:1;font-size:.84rem;font-weight:600">${esc(c.name)} <span style="font-size:.68rem;color:var(--t2)">${esc(c.ageGroup)} • ${c.places.length} ${c.places.length===1?'plats':'platser'}</span></span>
                 </div>`;
         });
         html+=`</div>`;
@@ -2960,7 +2967,7 @@ function renderMoodisParent(){
         html+=`<div style="display:flex;align-items:center;gap:10px;margin:16px 0 12px;padding-bottom:8px;border-bottom:1px solid rgba(255,255,255,.06)">
             <span style="font-size:1.5rem">${avatar}</span>
             <div style="flex:1"><div style="font-weight:700;font-size:.95rem">${esc(fp.name)}</div>
-            <div style="font-size:.72rem;color:var(--t2)">${streak>0?'🔥 '+streak+' dagar i rad • ':''}${todayCheckins.length?'✅ Pratat med Moodis':'⏳ Väntar på check-in'}</div></div>
+            <div style="font-size:.72rem;color:var(--t2)">${streak>0?'🔥 '+streak+(streak===1?' dag':' dagar')+' i rad • ':''}${todayCheckins.length?'✅ Pratat med Moodis':'⏳ Väntar på check-in'}</div></div>
         </div>`;
 
         // === QUIZ SECTION (always first) ===
@@ -5908,6 +5915,7 @@ if(sb){
         }
         if(event==='SIGNED_OUT'){
             sbUser=null;
+            _authReadyForUid=null;
         }
     });
     // Fallback: if onAuthStateChange doesn't fire within 2s, proceed
