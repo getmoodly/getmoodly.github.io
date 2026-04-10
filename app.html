@@ -5409,6 +5409,12 @@ async function syncChildDataForNetwork(){
     if(APK===PARENT_KEY){d=ld()}
     else{try{const r=sok?localStorage.getItem(PARENT_KEY):null;d=r?JSON.parse(r):ld()}catch(e){d=ld()}}
     if(!d||d.role!=='parent'||!d.familyProfiles||!d.familyProfiles.length||!d.familyId)return;
+    // Skip if familyId is still the placeholder fam_<ts> from finishOnboarding's
+    // pre-await branch. The new RLS policy on shared_child_data requires a
+    // matching family_members row, which doesn't exist for placeholder ids and
+    // would generate a 403. The real swap happens in finishOnboarding after
+    // families/family_members are inserted, and a follow-up sync runs then.
+    if(String(d.familyId).startsWith('fam_'))return;
     for(const fp of d.familyProfiles){
         const cd=getFullChildData(fp.storageKey);
         if(!cd)continue;
