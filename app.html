@@ -2302,7 +2302,7 @@ function obValidateAndNext(step){
     const val=kommunInput?kommunInput.value.trim():'';
     if(val&&!isValidKommun(val)){
         hint.style.color='var(--bad)';
-        hint.textContent='Välj en kommun från listan — t.ex. "'+KOMMUNER.find(k=>k.toLowerCase().startsWith(val.toLowerCase().slice(0,2)))||'Stockholm'+'"';
+        hint.textContent='Välj en kommun från listan — t.ex. "'+(KOMMUNER.find(k=>k.toLowerCase().startsWith(val.toLowerCase().slice(0,2)))||'Stockholm')+'"';
         kommunInput.focus();
         return;
     }
