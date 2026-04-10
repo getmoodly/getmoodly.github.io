@@ -709,7 +709,7 @@
 </div>
 
 <div class="toast" id="toast"></div>
-<div class="offline-bar" id="offline-bar">Ingen internetanslutning — dina check-ins sparas lokalt</div>
+<div class="offline-bar" id="offline-bar" role="status" aria-live="polite" aria-hidden="true">Ingen internetanslutning — dina check-ins sparas lokalt</div>
 
 <script>
 // ===================================================================
@@ -1479,7 +1479,7 @@ function renderHome(){
     if(isChild&&allDone){
         document.getElementById('home-sub').textContent='🎉 Alla platser klara — bra jobbat!';
     }else{
-        document.getElementById('home-sub').textContent=totalPlaces===0?'Lägg till dina platser för att börja':allDone?`Alla ${totalPlaces} platser checkade idag!`:`${checkedCount}/${totalPlaces} platser checkade idag`;
+        document.getElementById('home-sub').textContent=totalPlaces===0?'Lägg till dina platser för att börja':allDone?(totalPlaces===1?'1 plats checkad idag!':`Alla ${totalPlaces} platser checkade idag!`):`${checkedCount}/${totalPlaces} ${totalPlaces===1?'plats':'platser'} ${totalPlaces===1?'checkad':'checkade'} idag`;
     }
 
     // Streak + points
@@ -2937,7 +2937,7 @@ function renderMoodisParent(){
                     <span style="font-size:1.5rem">${emoji}</span>
                     <div style="flex:1;text-align:left">
                         <div style="font-size:.9rem;font-weight:700;color:var(--t)">Låt ${esc(fp.name)} prata med Moodis</div>
-                        <div style="font-size:.72rem;color:var(--t2)">${total>0?checked+'/'+total+' platser':'Inga platser ännu'}</div>
+                        <div style="font-size:.72rem;color:var(--t2)">${total>0?checked+'/'+total+' '+(total===1?'plats':'platser'):'Inga platser ännu'}</div>
                     </div>
                     <span style="font-size:1.1rem;color:var(--pl)">→</span>
                 </div>
@@ -2983,7 +2983,7 @@ function renderMoodisParent(){
             html+=`<div style="background:linear-gradient(135deg,rgba(108,92,231,.12),rgba(162,155,254,.08));border:1px solid rgba(108,92,231,.25);border-radius:16px;padding:24px;text-align:center;margin-bottom:16px">
                 <div style="font-size:2rem;margin-bottom:10px">🧩</div>
                 <div style="font-size:1.05rem;font-weight:700;color:var(--t);margin-bottom:6px">Hur väl känner du ${esc(fp.name)}?</div>
-                <div style="font-size:.82rem;color:var(--t2);margin-bottom:4px">${esc(fp.name)} svarade på ${quizQs.length} frågor genom Moodis</div>
+                <div style="font-size:.82rem;color:var(--t2);margin-bottom:4px">${esc(fp.name)} svarade på ${quizQs.length} ${quizQs.length===1?'fråga':'frågor'} genom Moodis</div>
                 <div style="font-size:.78rem;color:var(--t2);margin-bottom:16px">Testa om du kan matcha svaren — det tar 2 minuter!</div>
                 <button class="btn ba" style="padding:12px 28px;font-size:.92rem;width:auto" onclick="startParentQuiz('${esc(fp.storageKey)}','${esc(fp.name)}')">Starta quiz →</button>
             </div>`;
@@ -3980,6 +3980,12 @@ function doRenameChildPlace(storageKey,placeId){
     const place=cd.places.find(p=>p.id===placeId);
     if(place)place.name=newName;
     if(sok)localStorage.setItem(storageKey,JSON.stringify(cd));
+    // Sync to Supabase so the rename survives re-login / device switch
+    if(sb&&sbUser&&navigator.onLine){
+        sb.from('places').update({name:newName}).eq('id',placeId).eq('user_id',sbUser.id).then(({error})=>{
+            if(error)console.warn('rename place sync failed',error);
+        });
+    }
     document.getElementById('confirm-overlay').remove();
     toast('Plats omdöpt!');
     renderFamily();
@@ -3991,6 +3997,15 @@ function doRemoveChildPlace(storageKey,placeId){
     cd.places=cd.places.filter(p=>p.id!==placeId);
     cd.placeCheckins=(cd.placeCheckins||[]).filter(c=>c.placeId!==placeId);
     if(sok)localStorage.setItem(storageKey,JSON.stringify(cd));
+    // Sync to Supabase so the deletion survives re-login / device switch
+    if(sb&&sbUser&&navigator.onLine){
+        sb.from('place_checkins').delete().eq('user_id',sbUser.id).eq('place_id',placeId).then(({error})=>{
+            if(error)console.warn('delete checkins sync failed',error);
+        });
+        sb.from('places').delete().eq('id',placeId).eq('user_id',sbUser.id).then(({error})=>{
+            if(error)console.warn('delete place sync failed',error);
+        });
+    }
     toast('Plats borttagen');
     renderFamily();
 }
@@ -5082,7 +5097,7 @@ function buildParentSummaryText(){
             const worst=todayChecks.reduce((a,b)=>b.score<a.score?b:a);
             const worstPlace=cd.places.find(p=>p.id===worst.placeId);
             const worstMood=MOODS[worst.score-1]?.emoji||'';
-            let line=`${fp.name}: ${checkedCount}/${totalPlaces} platser, snitt ${avg}/5`;
+            let line=`${fp.name}: ${checkedCount}/${totalPlaces} ${totalPlaces===1?'plats':'platser'}, snitt ${avg}/5`;
             if(worst.score<=2&&worstPlace)line+=` — Lägst: ${worstPlace.name} ${worstMood}`;
             lines.push(line);
         }
@@ -5675,7 +5690,7 @@ if('serviceWorker' in navigator){
 
 // Offline indicator
 const offlineBar=document.getElementById('offline-bar');
-function updateOnlineStatus(){offlineBar.classList.toggle('show',!navigator.onLine)}
+function updateOnlineStatus(){const off=!navigator.onLine;offlineBar.classList.toggle('show',off);offlineBar.setAttribute('aria-hidden',off?'false':'true')}
 window.addEventListener('online',updateOnlineStatus);
 window.addEventListener('offline',updateOnlineStatus);
 updateOnlineStatus();
