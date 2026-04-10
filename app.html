@@ -1072,6 +1072,64 @@ async function pullRemoteData(){
             sv(d);
         }
 
+        // Restore children from shared_child_data if localStorage was cleared /
+        // user is on a new device. We rehydrate familyProfiles + each child's
+        // full blob from the jsonb store so the rest of the app picks it up.
+        try{
+            const dNow=ld();
+            if(dNow.familyId&&dNow.role==='parent'){
+                const{data:sharedRows,error:sharedErr}=await sb.from('shared_child_data').select('child_id,child_name,data').eq('family_id',dNow.familyId);
+                if(sharedErr)throw sharedErr;
+                if(Array.isArray(sharedRows)&&sharedRows.length){
+                    if(!dNow.familyProfiles)dNow.familyProfiles=[];
+                    let added=0;
+                    for(const row of sharedRows){
+                        if(!row||!row.child_id)continue;
+                        if(dNow.familyProfiles.some(fp=>fp.id===row.child_id))continue;
+                        const storageKey='moodly_child_'+row.child_id;
+                        const blob=row.data||{};
+                        dNow.familyProfiles.push({
+                            id:row.child_id,
+                            name:row.child_name||'Barn',
+                            ageGroup:blob.ageGroup||'6-9',
+                            gender:blob.gender||'',
+                            storageKey
+                        });
+                        // Reconstruct a full child localStorage entry so
+                        // getFullChildData / renderHome / check-in flows work.
+                        const childData={
+                            places:blob.places||[],
+                            placeCheckins:blob.placeCheckins||[],
+                            benchmarks:[],checkins:[],micro:[],
+                            xp:0,level:1,
+                            points:blob.points||0,
+                            streak:blob.streak||0,
+                            firstVisit:false,
+                            baseline:null,
+                            userName:row.child_name||'',
+                            onboarded:new Date().toISOString(),
+                            alertsSeen:[],
+                            familyId:dNow.familyId,
+                            role:'child',
+                            familyProfiles:[],
+                            parentKey:PARENT_KEY,
+                            unlockedAvatars:['default'],
+                            selectedAvatar:blob.selectedAvatar||'default',
+                            dailyRewardClaimed:null,
+                            kommun:dNow.kommun||'',
+                            moodis:{stage:'egg',hat:null,color:'purple',ownedHats:[],mood:'neutral',_lastStage:null,totalPts:0},
+                            moodisInsights:blob.moodisInsights||[]
+                        };
+                        if(sok)localStorage.setItem(storageKey,JSON.stringify(childData));
+                        added++;
+                    }
+                    if(added){
+                        sv(dNow);
+                    }
+                }
+            }
+        }catch(e){console.warn('restore children from shared_child_data failed',e)}
+
         renderHome();
     }catch(e){}
 }
@@ -1315,6 +1373,7 @@ function checkInPlace(placeId,score){
     const ci=d.placeCheckins.find(c=>c.placeId===placeId&&new Date(c.ts).toDateString()===today);
     syncCheckin(placeId,score,comment,new Date().toISOString(),ci?.tags||[]);
     if(pts>0)syncProfile(d);
+    scheduleSyncChildData();
     renderHome();
     if(allDoneNow&&!wasAllDone){if(d.role==='parent'){showCelebration('Alla platser klara! 🎉 +'+pts+' poäng');setTimeout(()=>go('insikter'),2500)}}
     else if(pts>5){toast(`+${pts} poäng!`)}
@@ -2464,7 +2523,7 @@ function obConfirmPlace(){
     toast(PT[child.places[child.places.length-1].type]?.icon+' '+name+' tillagd!');
 }
 
-function finishOnboarding(){
+async function finishOnboarding(){
     const userName=document.getElementById('user-name-input').value.trim();
     const kommun=normalizeKommun((document.getElementById('user-kommun-input')?.value||'').trim());
     const d=ld();
@@ -2494,6 +2553,35 @@ function finishOnboarding(){
     document.getElementById('app').style.display='';
     buildNav();go('moodis');
     obChildren=[];
+
+    // Auto-create a real Supabase family row so children survive cache clear /
+    // device switch. Defensive: never block onboarding if the network call fails.
+    try{
+        const needsRealFamily=sbUser&&sb&&navigator.onLine&&(!d.familyId||String(d.familyId).startsWith('fam_'));
+        if(needsRealFamily){
+            const{data:famRow,error:famErr}=await sb.from('families').insert({name:'Min familj',created_by:sbUser.id}).select().single();
+            if(famErr)throw famErr;
+            if(famRow&&famRow.id){
+                const{error:memErr}=await sb.from('family_members').insert({family_id:famRow.id,user_id:sbUser.id,role:'parent',display_name:d.userName||''});
+                if(memErr)throw memErr;
+                // Swap in the real uuid everywhere it matters
+                const d2=ld();
+                d2.familyId=String(famRow.id);
+                d2.role='parent';
+                (d2.familyProfiles||[]).forEach(fp=>{
+                    const cd=getFullChildData(fp.storageKey);
+                    if(cd){cd.familyId=d2.familyId;if(sok)localStorage.setItem(fp.storageKey,JSON.stringify(cd))}
+                });
+                sv(d2);
+                syncProfile(d2);
+            }
+        }
+    }catch(e){
+        console.warn('auto-family create failed',e);
+    }
+    // Ensure child blobs land in shared_child_data so they can be restored
+    // after cache clear, regardless of whether the parent opens Moodis first.
+    try{syncChildDataForNetwork()}catch(e){console.warn('initial child sync failed',e)}
 }
 
 // ===== NAV =====
@@ -3915,8 +4003,16 @@ function refreshStep2(storageKey,name){
 
 function removeChild(idx){
     const d=ld();if(!d.familyProfiles[idx])return;
+    const removedChildId=d.familyProfiles[idx].id;
     if(sok)localStorage.removeItem(d.familyProfiles[idx].storageKey);
     d.familyProfiles.splice(idx,1);sv(d);
+    // Delete shared blob so it won't be restored on re-login
+    if(sb&&sbUser&&navigator.onLine&&d.familyId&&removedChildId){
+        sb.from('shared_child_data').delete().eq('family_id',d.familyId).eq('child_id',removedChildId).then(({error})=>{
+            if(error)console.warn('delete shared_child_data failed',error);
+        });
+    }
+    scheduleSyncChildData();
     renderFamily();
 }
 function removeChildConfirm(idx,name){
@@ -3986,6 +4082,8 @@ function doRenameChildPlace(storageKey,placeId){
             if(error)console.warn('rename place sync failed',error);
         });
     }
+    // Refresh shared_child_data so the child blob stays consistent
+    scheduleSyncChildData();
     document.getElementById('confirm-overlay').remove();
     toast('Plats omdöpt!');
     renderFamily();
@@ -4006,6 +4104,8 @@ function doRemoveChildPlace(storageKey,placeId){
             if(error)console.warn('delete place sync failed',error);
         });
     }
+    // Refresh shared_child_data so the child blob stays consistent
+    scheduleSyncChildData();
     toast('Plats borttagen');
     renderFamily();
 }
@@ -5252,15 +5352,21 @@ function renderTrygghetsgrad(tg,childName){
 
 async function syncChildDataForNetwork(){
     if(!sbUser)return;
-    // Find parent data — only parent syncs
-    const d=ld();
-    if(d.role!=='parent'||!d.familyProfiles||!d.familyProfiles.length||!d.familyId)return;
+    // Find parent data — only parent syncs. Always read from the parent key so
+    // the sync still runs when the parent is currently viewing a child profile.
+    let d;
+    if(APK===PARENT_KEY){d=ld()}
+    else{try{const r=sok?localStorage.getItem(PARENT_KEY):null;d=r?JSON.parse(r):ld()}catch(e){d=ld()}}
+    if(!d||d.role!=='parent'||!d.familyProfiles||!d.familyProfiles.length||!d.familyId)return;
     for(const fp of d.familyProfiles){
         const cd=getFullChildData(fp.storageKey);
         if(!cd)continue;
         const insights=cd.moodisInsights||[];
         const checkins=cd.placeCheckins||[];
-        if(!insights.length&&!checkins.length)continue;
+        const places=cd.places||[];
+        // Skip only if child is entirely empty (no places, no check-ins, no insights).
+        // Otherwise always sync so the child survives cache clear / device switch.
+        if(!insights.length&&!checkins.length&&!places.length)continue;
         try{
             await sb.from('shared_child_data').upsert({
                 family_id:d.familyId,
@@ -5272,7 +5378,9 @@ async function syncChildDataForNetwork(){
                     moodisInsights:insights.slice(-100),
                     selectedAvatar:cd.selectedAvatar||'default',
                     points:cd.points||0,
-                    streak:calcPlaceStreak(cd)
+                    streak:calcPlaceStreak(cd),
+                    ageGroup:fp.ageGroup||'',
+                    gender:fp.gender||''
                 },
                 updated_at:new Date().toISOString()
             },{onConflict:'family_id,child_id'});
