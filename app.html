@@ -953,10 +953,17 @@ async function migrateLocalToRemote(){
     localStorage.setItem('moodly_migrated_'+sbUser.id,'1');
 }
 
+let _pullRemoteInFlight=null;
 async function pullRemoteData(){
     if(!sb||!sbUser||!navigator.onLine)return;
     // Only pull to parent profile — don't overwrite child profiles
     if(APK!==PARENT_KEY)return;
+    // Guard: pullRemoteData is reachable from both onAuthReady (line 819) and
+    // tryRestoreFromRemote (line ~5821). If both fire for the same user we
+    // would otherwise run every Supabase query twice. Coalesce concurrent
+    // calls so the second caller awaits the first instead of duplicating it.
+    if(_pullRemoteInFlight)return _pullRemoteInFlight;
+    _pullRemoteInFlight=(async()=>{
     try{
         // Pull profile
         const{data:prof}=await sb.from('profiles').select('*').eq('id',sbUser.id).single();
@@ -976,6 +983,7 @@ async function pullRemoteData(){
             if(remoteUpdated>=localUpdated){
                 d.selectedAvatar=prof.selected_avatar||d.selectedAvatar;
                 if(prof.kommun)d.kommun=prof.kommun;
+                if(prof.family_role)d.familyRole=prof.family_role;
             }
             // Merge unlocked avatars
             const merged=new Set([...(d.unlockedAvatars||[]),...(prof.unlocked_avatars||[])]);
@@ -1142,6 +1150,8 @@ async function pullRemoteData(){
 
         renderHome();
     }catch(e){}
+    })();
+    try{await _pullRemoteInFlight}finally{_pullRemoteInFlight=null}
 }
 
 // Sync a single checkin to Supabase
@@ -1182,6 +1192,7 @@ function syncProfile(d){
         daily_reward_claimed:d.dailyRewardClaimed||null,
         kommun:d.kommun||'',
         role:d.role||'parent',
+        family_role:d.familyRole||'',
         family_id:d.familyId||'',
         updated_at:new Date().toISOString()
     });
@@ -4295,7 +4306,7 @@ async function renderFamily(){
         html+=`<div class="cd" id="add-child-step1"><div class="ct">+ Lägg till barn</div>
             <div class="sett-row"><span>Namn</span><input class="sett-input" id="new-child-name" placeholder=""></div>
             <div class="sett-row"><span>Åldersgrupp</span><select id="new-child-age">
-                <option value="3-5">3-5 år</option><option value="6-9">6-9 år</option><option value="10-13">10-13 år</option><option value="14-17">14-17 år</option>
+                <option value="3-5">3–5 år</option><option value="6-9">6–9 år</option><option value="10-13">10–13 år</option><option value="14-17">14–17 år</option>
             </select></div>
             <button class="btn ba" onclick="addChildStep1()" style="margin-top:8px">Nästa →</button>
         </div>
@@ -4403,7 +4414,7 @@ async function loadInviteCode(){
         if(data){
             el.innerHTML=`<div style="background:var(--c2);border-radius:var(--rs);padding:12px;text-align:center;margin-bottom:8px">
                 <div style="font-size:.72rem;color:var(--t2);margin-bottom:4px">Inbjudningskod</div>
-                <div style="font-size:1.3rem;font-weight:800;letter-spacing:4px;color:var(--pl)">${data.invite_code.toUpperCase()}</div>
+                <div style="font-size:1.3rem;font-weight:800;letter-spacing:4px;color:var(--pl)">${esc(data.invite_code)}</div>
                 <div style="font-size:.68rem;color:var(--t2);margin-top:4px">Dela koden — den som har den kan gå med i din familj</div>
             </div>`;
         }
@@ -4590,9 +4601,9 @@ async function finishChildOnboarding(){
     if(sbUser){
         await processJoinCode();
         try{
-            const code=pendingJoinCode||localStorage.getItem('moodly_join_code');
+            const code=(pendingJoinCode||localStorage.getItem('moodly_join_code')||'').trim().toLowerCase();
             if(code){
-                const{data:fam}=await sb.from('families').select('id').eq('invite_code',code).single();
+                const{data:fam}=await sb.from('families').select('id').eq('invite_code',code).maybeSingle();
                 if(fam){
                     // Update child's role in family
                     await sb.from('family_members').update({display_name:name,age_group:ageGroup,role:'child'}).eq('family_id',fam.id).eq('user_id',sbUser.id);
@@ -4621,6 +4632,10 @@ async function finishChildOnboarding(){
     document.getElementById('ob').classList.add('h');
     document.getElementById('app').style.display='';
     const cd=ld();
+    // Rebuild nav so the child header reads "{name}s Moodly" instead of the
+    // initial "Barns Moodly" placeholder set when buildNav first ran with an
+    // empty userName.
+    buildNav();
     go(cd.role==='parent'||(cd.familyProfiles&&cd.familyProfiles.length)?'home':'moodis');
     showCelebration('Välkommen till Moodly! 🎉');
 }
@@ -6056,14 +6071,28 @@ function initApp(){
 async function processJoinCode(){
     const code=localStorage.getItem('moodly_join_code');
     if(!code||!sbUser)return;
+    // Normalize to lowercase — invite codes are stored lowercase in the DB
+    // (gen_random_bytes hex), so a manually-typed uppercase code would 400.
+    const normalized=String(code).trim().toLowerCase();
     try{
-        const{data,error}=await sb.rpc('join_family',{p_invite_code:code,p_role:'member'});
-        if(!error&&data){
+        const{data,error}=await sb.rpc('join_family',{p_invite_code:normalized,p_role:'member'});
+        if(error){
+            // Surface the failure instead of silently dropping the join.
+            console.warn('join_family failed',error);
+            const msg=error.message&&error.message.toLowerCase().includes('invalid')
+                ?'Inbjudningskoden gäller inte längre — be om en ny länk'
+                :'Kunde inte gå med i familjen just nu — försök igen senare';
+            toast(msg);
+        }else if(data){
             localStorage.removeItem('moodly_join_code');
             toast('Du gick med i familjen!');
             pullRemoteData();
+            return;
         }
-    }catch(e){}
+    }catch(e){
+        console.warn('join_family threw',e);
+        toast('Kunde inte gå med i familjen just nu — försök igen senare');
+    }
     localStorage.removeItem('moodly_join_code');
 }
 
