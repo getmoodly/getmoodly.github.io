@@ -5604,6 +5604,7 @@ async function processNetworkJoin(){
         d.networkAdminName=data.adminName;
         if(!d.familyRole)d.familyRole='';
         sv(d);
+        syncProfile(d);
         localStorage.removeItem('moodly_network_join');
         // Save to Supabase so admin can see who joined
         if(sbUser){
