@@ -3383,6 +3383,8 @@ function getQuizQuestions(cd,childName){
         }
     });
     // Fun + deep questions from moodisInsights — deduplicate by question text
+    // Sort NEWEST FIRST so deduplication keeps the latest answer, not the oldest
+    recent.sort((a,b)=>new Date(b.ts||0).getTime()-new Date(a.ts||0).getTime());
     const seenQuestions=new Set(questions.map(q=>q.question));
     recent.forEach(ins=>{
         if(ins.tag==='why'||ins.tag==='who'||ins.tag==='body'||ins.tag==='feeling')return;
